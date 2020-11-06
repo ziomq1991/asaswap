@@ -70,13 +70,13 @@ def state():
         )),
         App.localPut(
             Int(0),
-            Bytes('USDC_LIQUIDITY'),
-            App.localGet(Int(0), Bytes('USDC_LIQUIDITY')) - Gtxn[1].asset_amount()
+            Bytes('USER_USDC_LIQUIDITY'),
+            App.localGet(Int(0), Bytes('USER_USDC_LIQUIDITY')) - Gtxn[1].asset_amount()
         ),
         App.localPut(
             Int(0),
-            Bytes('ALGOS_LIQUIDITY'),
-            App.localGet(Int(0), Bytes('ALGOS_LIQUIDITY')) - Gtxn[2].amount()
+            Bytes('USER_ALGOS_LIQUIDITY'),
+            App.localGet(Int(0), Bytes('USER_ALGOS_LIQUIDITY')) - Gtxn[2].amount()
         ),
         App.globalPut(
             Bytes('USDC_LIQUIDITY'),
@@ -106,8 +106,8 @@ def state():
                 Gtxn[1].asset_receiver() == App.globalGet(Bytes('ESCROW')),
                 Gtxn[2].receiver() == App.globalGet(Bytes('ESCROW'))
             ),
-            Gtxn[1].asset_amount() >= App.localGet(Int(0), Bytes('USDC_L    IQUIDITY')),
-            Gtxn[2].amount() >= App.localGet(Int(0), Bytes('ALGOS_LIQUIDITY')),
+            Gtxn[1].asset_amount() >= App.localGet(Int(0), Bytes('USER_USDC_LIQUIDITY')),
+            Gtxn[2].amount() >= App.localGet(Int(0), Bytes('USER_ALGOS_LIQUIDITY')),
             Gtxn[1].asset_amount() / Gtxn[2].amount() == App.globalGet(Bytes('EXCHANGE_RATE'))
         )),
         If(
