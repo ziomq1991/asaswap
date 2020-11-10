@@ -1,0 +1,395 @@
+#pragma version 2
+txn ApplicationID
+int 0
+==
+bnz l0
+txn OnCompletion
+int UpdateApplication
+==
+bnz l1
+txn OnCompletion
+int OptIn
+==
+bnz l2
+txna ApplicationArgs 0
+byte "ADD_LIQUIDITY"
+==
+bnz l3
+txna ApplicationArgs 0
+byte "REMOVE_LIQUIDITY"
+==
+bnz l4
+txna ApplicationArgs 0
+byte "SWAP"
+==
+bnz l5
+txna ApplicationArgs 0
+byte "WITHDRAW"
+==
+bnz l6
+err
+l0:
+byte "USDC_LIQUIDITY"
+int 0
+app_global_put
+byte "ALGOS_LIQUIDITY"
+int 0
+app_global_put
+byte "TOTAL_LIQUIDITY_TOKENS"
+int 0
+app_global_put
+byte "CREATOR"
+txn Sender
+app_global_put
+int 1
+return
+b l7
+l1:
+txn Sender
+byte "CREATOR"
+app_global_get
+==
+txn NumAppArgs
+int 1
+==
+&&
+bnz l8
+err
+l8:
+byte "ESCROW"
+txna ApplicationArgs 0
+app_global_put
+int 1
+return
+b l7
+l2:
+int 0
+byte "USER_USDC_LIQUIDITY"
+int 0
+app_local_put
+int 0
+byte "USER_ALGOS_LIQUIDITY"
+int 0
+app_local_put
+int 0
+byte "USDC_TO_WITHDRAW"
+int 0
+app_local_put
+int 0
+byte "ALGOS_TO_WITHDRAW"
+int 0
+app_local_put
+int 1
+return
+b l7
+l3:
+global GroupSize
+int 3
+==
+gtxn 0 TypeEnum
+int appl
+==
+&&
+gtxn 1 TypeEnum
+int axfer
+==
+&&
+gtxn 2 TypeEnum
+int pay
+==
+&&
+gtxn 2 Amount
+int 1000000
+*
+gtxn 1 AssetAmount
+/
+byte "EXCHANGE_RATE"
+app_global_get
+==
+&&
+bnz l9
+err
+l9:
+int 0
+byte "USER_USDC_LIQUIDITY"
+int 0
+byte "USDC_LIQUIDITY"
+app_local_get
+gtxn 1 AssetAmount
++
+app_local_put
+int 0
+byte "USER_ALGOS_LIQUIDITY"
+int 0
+byte "ALGOS_LIQUIDITY"
+app_local_get
+gtxn 2 Amount
++
+app_local_put
+byte "USDC_LIQUIDITY"
+byte "USDC_LIQUIDITY"
+app_global_get
+gtxn 1 AssetAmount
++
+app_global_put
+byte "ALGOS_LIQUIDITY"
+byte "ALGOS_LIQUIDITY"
+app_global_get
+gtxn 2 Amount
++
+app_global_put
+byte "EXCHANGE_RATE"
+byte "ALGOS_LIQUIDITY"
+app_global_get
+int 1000000
+*
+byte "USDC_LIQUIDITY"
+app_global_get
+/
+app_global_put
+int 1
+return
+b l7
+l4:
+global GroupSize
+int 3
+==
+gtxn 0 TypeEnum
+int appl
+==
+&&
+gtxn 1 TypeEnum
+int axfer
+==
+&&
+gtxn 2 TypeEnum
+int pay
+==
+&&
+gtxn 1 AssetAmount
+int 0
+byte "USER_USDC_LIQUIDITY"
+app_local_get
+>=
+&&
+gtxn 2 Amount
+int 0
+byte "USER_ALGOS_LIQUIDITY"
+app_local_get
+>=
+&&
+gtxn 2 Amount
+int 1000000
+*
+gtxn 1 AssetAmount
+/
+byte "EXCHANGE_RATE"
+app_global_get
+==
+&&
+bnz l10
+err
+l10:
+int 0
+byte "USER_USDC_LIQUIDITY"
+int 0
+byte "USER_USDC_LIQUIDITY"
+app_local_get
+gtxn 1 AssetAmount
+-
+app_local_put
+int 0
+byte "USER_ALGOS_LIQUIDITY"
+int 0
+byte "USER_ALGOS_LIQUIDITY"
+app_local_get
+gtxn 2 Amount
+-
+app_local_put
+byte "USDC_LIQUIDITY"
+byte "USDC_LIQUIDITY"
+app_global_get
+gtxn 1 AssetAmount
+-
+app_global_put
+byte "ALGOS_LIQUIDITY"
+byte "ALGOS_LIQUIDITY"
+app_global_get
+gtxn 2 Amount
+-
+app_global_put
+byte "EXCHANGE_RATE"
+byte "ALGOS_LIQUIDITY"
+app_global_get
+int 1000000
+*
+byte "USDC_LIQUIDITY"
+app_global_get
+/
+app_global_put
+int 1
+return
+b l7
+l5:
+global GroupSize
+int 2
+==
+gtxn 0 TypeEnum
+int appl
+==
+&&
+gtxn 1 AssetReceiver
+byte "ESCROW"
+app_global_get
+==
+gtxn 1 Receiver
+byte "ESCROW"
+app_global_get
+==
+||
+&&
+bnz l11
+err
+l11:
+gtxn 1 TypeEnum
+int axfer
+==
+gtxn 1 AssetReceiver
+byte "ESCROW"
+app_global_get
+==
+&&
+bnz l12
+gtxn 1 TypeEnum
+int pay
+==
+gtxn 1 Receiver
+byte "ESCROW"
+app_global_get
+==
+&&
+bnz l13
+int 0
+return
+b l14
+l13:
+byte "ALGOS_LIQUIDITY"
+byte "ALGOS_LIQUIDITY"
+app_global_get
+gtxn 1 Amount
++
+app_global_put
+int 0
+byte "USDC_TO_WITHDRAW"
+gtxn 1 Amount
+int 100
+*
+int 103
+/
+int 1000000
+*
+byte "EXCHANGE_RATE"
+app_global_get
+/
+app_local_put
+byte "USDC_LIQUIDITY"
+byte "USDC_LIQUIDITY"
+app_global_get
+int 0
+byte "USDC_TO_WITHDRAW"
+app_local_get
+-
+app_global_put
+l14:
+b l15
+l12:
+byte "USDC_LIQUIDITY"
+byte "USDC_LIQUIDITY"
+app_global_get
+gtxn 1 AssetAmount
++
+app_global_put
+int 0
+byte "ALGOS_TO_WITHDRAW"
+byte "EXCHANGE_RATE"
+app_global_get
+gtxn 1 AssetAmount
+int 100
+*
+int 103
+/
+*
+int 1000000
+/
+app_local_put
+byte "ALGOS_LIQUIDITY"
+byte "ALGOS_LIQUIDITY"
+app_global_get
+int 0
+byte "ALGOS_TO_WITHDRAW"
+app_local_get
+-
+app_global_put
+l15:
+byte "EXCHANGE_RATE"
+byte "USDC_LIQUIDITY"
+app_global_get
+int 1000000
+*
+byte "ALGOS_LIQUIDITY"
+app_global_get
+/
+app_global_put
+int 1
+return
+b l7
+l6:
+global GroupSize
+int 2
+==
+bnz l16
+err
+l16:
+gtxn 1 TypeEnum
+int axfer
+==
+bnz l17
+gtxn 1 TypeEnum
+int pay
+==
+bnz l19
+int 0
+return
+b l21
+l19:
+gtxn 1 Amount
+int 0
+byte "ALGOS_TO_WITHDRAW"
+app_local_get
+==
+bnz l20
+err
+l20:
+int 0
+byte "ALGOS_TO_WITHDRAW"
+int 0
+app_local_put
+l21:
+b l22
+l17:
+gtxn 1 AssetAmount
+int 0
+byte "USDC_TO_WITHDRAW"
+app_local_get
+==
+bnz l18
+err
+l18:
+int 0
+byte "USDC_TO_WITHDRAW"
+int 0
+app_local_put
+l22:
+int 1
+return
+l7:
