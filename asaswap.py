@@ -1,8 +1,8 @@
 from pyteal import *
 
 
-def state(decimal_points):
-    decimal_points = Int(decimal_points)
+def state(ratio_decimal_points):
+    ratio_decimal_points = Int(ratio_decimal_points)
 
     is_creator = Txn.sender() == App.globalGet(Bytes('CREATOR'))
 
@@ -48,7 +48,7 @@ def state(decimal_points):
             Gtxn[0].type_enum() == TxnType.ApplicationCall,
             Gtxn[1].type_enum() == TxnType.AssetTransfer,
             Gtxn[2].type_enum() == TxnType.Payment,
-            Gtxn[2].amount() * decimal_points / Gtxn[1].asset_amount() == App.globalGet(Bytes('EXCHANGE_RATE')),
+            Gtxn[2].amount() * ratio_decimal_points / Gtxn[1].asset_amount() == App.globalGet(Bytes('EXCHANGE_RATE')),
         )),
         If(
             App.globalGet(Bytes('TOTAL_LIQUIDITY_TOKENS')) == Int(0),
@@ -78,7 +78,7 @@ def state(decimal_points):
         ),
         App.globalPut(
             Bytes('EXCHANGE_RATE'),
-            App.globalGet(Bytes('ALGOS_BALANCE')) * decimal_points / App.globalGet(Bytes('USDC_BALANCE'))
+            App.globalGet(Bytes('ALGOS_BALANCE')) * ratio_decimal_points / App.globalGet(Bytes('USDC_BALANCE'))
         ),
         Return(Int(1))
     ])
@@ -97,7 +97,7 @@ def state(decimal_points):
         App.globalPut(Bytes('USDC_BALANCE'), App.globalGet(Bytes('USDC_BALANCE')) - usdc_calc),
         App.globalPut(
             Bytes('EXCHANGE_RATE'),
-            App.globalGet(Bytes('ALGOS_BALANCE')) * decimal_points / App.globalGet(Bytes('USDC_BALANCE'))
+            App.globalGet(Bytes('ALGOS_BALANCE')) * ratio_decimal_points / App.globalGet(Bytes('USDC_BALANCE'))
         ),
         Return(Int(1))
     ])
@@ -126,7 +126,7 @@ def state(decimal_points):
                     Bytes('ALGOS_TO_WITHDRAW'),
                     (App.globalGet(Bytes('EXCHANGE_RATE'))
                      * (Gtxn[1].asset_amount() * Int(100) / Int(103)))
-                    / decimal_points
+                    / ratio_decimal_points
                 ),
                 App.globalPut(
                     Bytes('ALGOS_BALANCE'),
@@ -146,7 +146,7 @@ def state(decimal_points):
                     App.localPut(
                         Int(0),
                         Bytes('USDC_TO_WITHDRAW'),
-                        (Gtxn[1].amount() * Int(100) / Int(103)) * decimal_points / App.globalGet(
+                        (Gtxn[1].amount() * Int(100) / Int(103)) * ratio_decimal_points / App.globalGet(
                             Bytes('EXCHANGE_RATE'))
                     ),
                     App.globalPut(
@@ -159,7 +159,7 @@ def state(decimal_points):
         ),
         App.globalPut(
             Bytes('EXCHANGE_RATE'),
-            (App.globalGet(Bytes('USDC_BALANCE')) * decimal_points / App.globalGet(Bytes('ALGOS_BALANCE')))
+            (App.globalGet(Bytes('USDC_BALANCE')) * ratio_decimal_points / App.globalGet(Bytes('ALGOS_BALANCE')))
         ),
         Return(Int(1))
     ])
