@@ -6,9 +6,21 @@ def state(decimal_points):
 
     is_creator = Txn.sender() == App.globalGet(Bytes('CREATOR'))
 
+    liquidity_calc = Gtxn[2].amount() * App.globalGet(
+        Bytes('TOTAL_LIQUIDITY_TOKENS')
+    ) / App.globalGet(Bytes('ALGOS_BALANCE'))
+
+    algos_calc = App.globalGet(Bytes('ALGOS_BALANCE')) * (
+        App.localGet(Int(0), Bytes('USER_LIQUIDITY_TOKENS')
+    ) / App.globalGet(Bytes('TOTAL_LIQUIDITY_TOKENS')))
+
+    usdc_calc = App.globalGet(Bytes('USDC_BALANCE')) * (
+        App.localGet(Int(0), Bytes('USER_LIQUIDITY_TOKENS')
+    ) / App.globalGet(Bytes('TOTAL_LIQUIDITY_TOKENS')))
+
     on_create = Seq([
-        App.globalPut(Bytes('USDC_LIQUIDITY'), Int(0)),
-        App.globalPut(Bytes('ALGOS_LIQUIDITY'), Int(0)),
+        App.globalPut(Bytes('USDC_BALANCE'), Int(0)),
+        App.globalPut(Bytes('ALGOS_BALANCE'), Int(0)),
         App.globalPut(Bytes('TOTAL_LIQUIDITY_TOKENS'), Int(0)),
         App.globalPut(Bytes('CREATOR'), Txn.sender()),
         Return(Int(1))
@@ -24,10 +36,9 @@ def state(decimal_points):
     ])
 
     on_register = Seq([
-        App.localPut(Int(0), Bytes('USER_USDC_LIQUIDITY'), Int(0)),
-        App.localPut(Int(0), Bytes('USER_ALGOS_LIQUIDITY'), Int(0)),
         App.localPut(Int(0), Bytes('USDC_TO_WITHDRAW'), Int(0)),
         App.localPut(Int(0), Bytes('ALGOS_TO_WITHDRAW'), Int(0)),
+        App.localPut(Int(0), Bytes('USER_LIQUIDITY_TOKENS'), Int(0)),
         Return(Int(1))
     ])
 
@@ -39,27 +50,35 @@ def state(decimal_points):
             Gtxn[2].type_enum() == TxnType.Payment,
             Gtxn[2].amount() * decimal_points / Gtxn[1].asset_amount() == App.globalGet(Bytes('EXCHANGE_RATE')),
         )),
-        App.localPut(
-            Int(0),
-            Bytes('USER_USDC_LIQUIDITY'),
-            App.localGet(Int(0), Bytes('USDC_LIQUIDITY')) + Gtxn[1].asset_amount()
-        ),
-        App.localPut(
-            Int(0),
-            Bytes('USER_ALGOS_LIQUIDITY'),
-            App.localGet(Int(0), Bytes('ALGOS_LIQUIDITY')) + Gtxn[2].amount()
+        If(
+            App.globalGet(Bytes('TOTAL_LIQUIDITY_TOKENS')) == Int(0),
+            Seq([
+                App.globalPut(Bytes('TOTAL_LIQUIDITY_TOKENS'), Gtxn[2].amount()),
+                App.localPut(Int(0), Bytes('TOTAL_LIQUIDITY_TOKENS'), Gtxn[2].amount())
+            ]),
+            Seq([
+                App.localPut(
+                    Int(0),
+                    Bytes('USER_LIQUIDITY_TOKENS'),
+                    App.localGet(Int(0), Bytes('USER_LIQUIDITY_TOKENS')) + liquidity_calc
+                ),
+                App.globalPut(
+                    Bytes('TOTAL_LIQUIDITY_TOKENS'),
+                    App.globalGet(Bytes('TOTAL_LIQUIDITY_TOKENS')) + liquidity_calc
+                )
+            ])
         ),
         App.globalPut(
-            Bytes('USDC_LIQUIDITY'),
-            App.globalGet(Bytes('USDC_LIQUIDITY')) + Gtxn[1].asset_amount()
+            Bytes('USDC_BALANCE'),
+            App.globalGet(Bytes('USDC_BALANCE')) + Gtxn[1].asset_amount()
         ),
         App.globalPut(
-            Bytes('ALGOS_LIQUIDITY'),
-            App.globalGet(Bytes('ALGOS_LIQUIDITY')) + Gtxn[2].amount()
+            Bytes('ALGOS_BALANCE'),
+            App.globalGet(Bytes('ALGOS_BALANCE')) + Gtxn[2].amount()
         ),
         App.globalPut(
             Bytes('EXCHANGE_RATE'),
-            App.globalGet(Bytes('ALGOS_LIQUIDITY')) * decimal_points / App.globalGet(Bytes('USDC_LIQUIDITY'))
+            App.globalGet(Bytes('ALGOS_BALANCE')) * decimal_points / App.globalGet(Bytes('USDC_BALANCE'))
         ),
         Return(Int(1))
     ])
@@ -67,34 +86,18 @@ def state(decimal_points):
     on_remove_liquidity = Seq([
         Assert(And(
             Global.group_size() == Int(3),
-            Gtxn[0].type_enum() == TxnType.ApplicationCall,
-            Gtxn[1].type_enum() == TxnType.AssetTransfer,
-            Gtxn[2].type_enum() == TxnType.Payment,
-            Gtxn[1].asset_amount() >= App.localGet(Int(0), Bytes('USER_USDC_LIQUIDITY')),
-            Gtxn[2].amount() >= App.localGet(Int(0), Bytes('USER_ALGOS_LIQUIDITY')),
-            Gtxn[2].amount() * decimal_points / Gtxn[1].asset_amount() == App.globalGet(Bytes('EXCHANGE_RATE')),
+            Txn.application_args.length() == Int(2),
+            App.localGet(Int(0), Bytes('USER_LIQUIDITY_TOKENS')) >= Txn.application_args[1],
+            App.globalGet(Bytes('ALGOS_BALANCE')) > algos_calc,
+            App.globalGet(Bytes('USDC_BALANCE')) > usdc_calc,
         )),
-        App.localPut(
-            Int(0),
-            Bytes('USER_USDC_LIQUIDITY'),
-            App.localGet(Int(0), Bytes('USER_USDC_LIQUIDITY')) - Gtxn[1].asset_amount()
-        ),
-        App.localPut(
-            Int(0),
-            Bytes('USER_ALGOS_LIQUIDITY'),
-            App.localGet(Int(0), Bytes('USER_ALGOS_LIQUIDITY')) - Gtxn[2].amount()
-        ),
-        App.globalPut(
-            Bytes('USDC_LIQUIDITY'),
-            App.globalGet(Bytes('USDC_LIQUIDITY')) - Gtxn[1].asset_amount()
-        ),
-        App.globalPut(
-            Bytes('ALGOS_LIQUIDITY'),
-            App.globalGet(Bytes('ALGOS_LIQUIDITY')) - Gtxn[2].amount()
-        ),
+        App.localPut(Int(0), Bytes('ALGOS_TO_WITHDRAW'), algos_calc),
+        App.localPut(Int(0), Bytes('USDC_TO_WITHDRAW'), usdc_calc),
+        App.globalPut(Bytes('ALGOS_BALANCE'), App.globalGet(Bytes('ALGOS_BALANCE')) - algos_calc),
+        App.globalPut(Bytes('USDC_BALANCE'), App.globalGet(Bytes('USDC_BALANCE')) - usdc_calc),
         App.globalPut(
             Bytes('EXCHANGE_RATE'),
-            App.globalGet(Bytes('ALGOS_LIQUIDITY')) * decimal_points / App.globalGet(Bytes('USDC_LIQUIDITY'))
+            App.globalGet(Bytes('ALGOS_BALANCE')) * decimal_points / App.globalGet(Bytes('USDC_BALANCE'))
         ),
         Return(Int(1))
     ])
@@ -115,8 +118,8 @@ def state(decimal_points):
             ),
             Seq([
                 App.globalPut(
-                    Bytes('USDC_LIQUIDITY'),
-                    App.globalGet(Bytes('USDC_LIQUIDITY')) + Gtxn[1].asset_amount()
+                    Bytes('USDC_BALANCE'),
+                    App.globalGet(Bytes('USDC_BALANCE')) + Gtxn[1].asset_amount()
                 ),
                 App.localPut(
                     Int(0),
@@ -126,8 +129,8 @@ def state(decimal_points):
                     / decimal_points
                 ),
                 App.globalPut(
-                    Bytes('ALGOS_LIQUIDITY'),
-                    App.globalGet(Bytes('ALGOS_LIQUIDITY')) - App.localGet(Int(0), Bytes('ALGOS_TO_WITHDRAW'))
+                    Bytes('ALGOS_BALANCE'),
+                    App.globalGet(Bytes('ALGOS_BALANCE')) - App.localGet(Int(0), Bytes('ALGOS_TO_WITHDRAW'))
                 ),
             ]),
             If(
@@ -137,8 +140,8 @@ def state(decimal_points):
                 ),
                 Seq([
                     App.globalPut(
-                        Bytes('ALGOS_LIQUIDITY'),
-                        App.globalGet(Bytes('ALGOS_LIQUIDITY')) + Gtxn[1].amount()
+                        Bytes('ALGOS_BALANCE'),
+                        App.globalGet(Bytes('ALGOS_BALANCE')) + Gtxn[1].amount()
                     ),
                     App.localPut(
                         Int(0),
@@ -147,8 +150,8 @@ def state(decimal_points):
                             Bytes('EXCHANGE_RATE'))
                     ),
                     App.globalPut(
-                        Bytes('USDC_LIQUIDITY'),
-                        App.globalGet(Bytes('USDC_LIQUIDITY')) - App.localGet(Int(0), Bytes('USDC_TO_WITHDRAW'))
+                        Bytes('USDC_BALANCE'),
+                        App.globalGet(Bytes('USDC_BALANCE')) - App.localGet(Int(0), Bytes('USDC_TO_WITHDRAW'))
                     ),
                 ]),
                 Return(Int(0))
@@ -156,7 +159,7 @@ def state(decimal_points):
         ),
         App.globalPut(
             Bytes('EXCHANGE_RATE'),
-            (App.globalGet(Bytes('USDC_LIQUIDITY')) * decimal_points / App.globalGet(Bytes('ALGOS_LIQUIDITY')))
+            (App.globalGet(Bytes('USDC_BALANCE')) * decimal_points / App.globalGet(Bytes('ALGOS_BALANCE')))
         ),
         Return(Int(1))
     ])
