@@ -6,6 +6,8 @@ def state(ratio_decimal_points):
 
     is_creator = Txn.sender() == App.globalGet(Bytes('CREATOR'))
 
+    tx_ratio = Gtxn[1].asset_amount() * ratio_decimal_points / Gtxn[2].amount()
+
     liquidity_calc = Gtxn[2].amount() * App.globalGet(
         Bytes('TOTAL_LIQUIDITY_TOKENS')
     ) / App.globalGet(Bytes('ALGOS_BALANCE'))
@@ -48,8 +50,22 @@ def state(ratio_decimal_points):
             Gtxn[0].type_enum() == TxnType.ApplicationCall,
             Gtxn[1].type_enum() == TxnType.AssetTransfer,
             Gtxn[2].type_enum() == TxnType.Payment,
-            Gtxn[2].amount() * ratio_decimal_points / Gtxn[1].asset_amount() == App.globalGet(Bytes('EXCHANGE_RATE')),
+            Gtxn[1].asset_receiver() == App.globalGet(Bytes('ESCROW')),
+            Gtxn[2].receiver() == App.globalGet(Bytes('ESCROW')),
         )),
+        If(
+            App.globalGet(Bytes('EXCHANGE_RATE')) > tx_ratio,
+            Assert(
+                App.globalGet(Bytes('EXCHANGE_RATE')) - tx_ratio
+                * ratio_decimal_points / App.globalGet(Bytes('EXCHANGE_RATE'))
+                < Int(10000)
+            ),
+            Assert(
+                tx_ratio - App.globalGet(Bytes('EXCHANGE_RATE'))
+                * ratio_decimal_points / App.globalGet(Bytes('EXCHANGE_RATE'))
+                < Int(10000)
+            )
+        ),
         If(
             App.globalGet(Bytes('TOTAL_LIQUIDITY_TOKENS')) == Int(0),
             Seq([
@@ -87,14 +103,14 @@ def state(ratio_decimal_points):
         Assert(And(
             Global.group_size() == Int(3),
             Txn.application_args.length() == Int(2),
-            App.localGet(Int(0), Bytes('USER_LIQUIDITY_TOKENS')) >= Txn.application_args[1],
+            App.localGet(Int(0), Bytes('USER_LIQUIDITY_TOKENS')) >= Btoi(Txn.application_args[1]),
             App.globalGet(Bytes('ALGOS_BALANCE')) > algos_calc,
             App.globalGet(Bytes('USDC_BALANCE')) > usdc_calc,
         )),
         App.localPut(Int(0), Bytes('ALGOS_TO_WITHDRAW'), algos_calc),
         App.localPut(Int(0), Bytes('USDC_TO_WITHDRAW'), usdc_calc),
-        App.globalPut(Bytes('ALGOS_BALANCE'), App.globalGet(Bytes('ALGOS_BALANCE')) - algos_calc),
-        App.globalPut(Bytes('USDC_BALANCE'), App.globalGet(Bytes('USDC_BALANCE')) - usdc_calc),
+        App.globalPut(Bytes('ALGOS_BALANCE'), App.globalGet(Bytes('ALGOS_BALANCE')) - (algos_calc + Int(1000))),
+        App.globalPut(Bytes('USDC_BALANCE'), App.globalGet(Bytes('USDC_BALANCE')) - (usdc_calc + Int(1000))),
         App.globalPut(
             Bytes('EXCHANGE_RATE'),
             App.globalGet(Bytes('ALGOS_BALANCE')) * ratio_decimal_points / App.globalGet(Bytes('USDC_BALANCE'))
@@ -146,8 +162,8 @@ def state(ratio_decimal_points):
                     App.localPut(
                         Int(0),
                         Bytes('USDC_TO_WITHDRAW'),
-                        (Gtxn[1].amount() * Int(100) / Int(103)) * ratio_decimal_points / App.globalGet(
-                            Bytes('EXCHANGE_RATE'))
+                        (Gtxn[1].amount() * Int(100) / Int(103))
+                        * ratio_decimal_points / App.globalGet(Bytes('EXCHANGE_RATE'))
                     ),
                     App.globalPut(
                         Bytes('USDC_BALANCE'),
@@ -157,6 +173,7 @@ def state(ratio_decimal_points):
                 Return(Int(0))
             )
         ),
+        App.globalPut(Bytes('ALGOS_BALANCE'), App.globalGet(Bytes('ALGOS_BALANCE') - Int(1000))),
         App.globalPut(
             Bytes('EXCHANGE_RATE'),
             (App.globalGet(Bytes('USDC_BALANCE')) * ratio_decimal_points / App.globalGet(Bytes('ALGOS_BALANCE')))
