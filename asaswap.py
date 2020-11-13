@@ -218,7 +218,7 @@ def escrow(app_id):
     return If(
         And(
             Global.group_size() == Int(2),
-            Gtxn[0].application_id() == app_id,
+            Gtxn[0].application_id() == Int(app_id),
             Gtxn[0].type_enum() == TxnType.ApplicationCall,
             Or(
                 Gtxn[1].type_enum() == TxnType.AssetTransfer,
