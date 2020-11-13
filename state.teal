@@ -300,6 +300,8 @@ byte "TOTAL_LIQUIDITY_TOKENS"
 app_global_get
 /
 *
+int 1000
++
 -
 app_global_put
 byte "USDC_BALANCE"
@@ -314,6 +316,8 @@ byte "TOTAL_LIQUIDITY_TOKENS"
 app_global_get
 /
 *
+int 1000
++
 -
 app_global_put
 byte "EXCHANGE_RATE"
@@ -429,6 +433,12 @@ app_local_get
 -
 app_global_put
 l21:
+byte "ALGOS_BALANCE"
+byte "ALGOS_BALANCE"
+app_global_get
+int 1000
+-
+app_global_put
 byte "EXCHANGE_RATE"
 byte "USDC_BALANCE"
 app_global_get
