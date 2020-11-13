@@ -173,7 +173,7 @@ def state(ratio_decimal_points):
                 Return(Int(0))
             )
         ),
-        App.globalPut(Bytes('ALGOS_BALANCE'), App.globalGet(Bytes('ALGOS_BALANCE') - Int(1000))),
+        App.globalPut(Bytes('ALGOS_BALANCE'), App.globalGet(Bytes('ALGOS_BALANCE')) - Int(1000)),
         App.globalPut(
             Bytes('EXCHANGE_RATE'),
             (App.globalGet(Bytes('USDC_BALANCE')) * ratio_decimal_points / App.globalGet(Bytes('ALGOS_BALANCE')))
