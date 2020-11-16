@@ -199,13 +199,13 @@ app_global_get
 app_global_put
 b l16
 l15:
+int 0
+byte "USER_LIQUIDITY_TOKENS"
+gtxn 2 Amount
+app_local_put
 byte "TOTAL_LIQUIDITY_TOKENS"
 gtxn 2 Amount
 app_global_put
-int 0
-byte "TOTAL_LIQUIDITY_TOKENS"
-gtxn 2 Amount
-app_local_put
 l16:
 byte "USDC_BALANCE"
 byte "USDC_BALANCE"
@@ -351,99 +351,93 @@ gtxn 0 TypeEnum
 int appl
 ==
 &&
-gtxn 1 AssetReceiver
-byte "ESCROW"
-app_global_get
-==
-gtxn 1 Receiver
-byte "ESCROW"
-app_global_get
-==
-||
-&&
 bnz l18
 err
 l18:
 gtxn 1 TypeEnum
 int axfer
 ==
-gtxn 1 AssetReceiver
-byte "ESCROW"
-app_global_get
-==
-&&
 bnz l19
 gtxn 1 TypeEnum
 int pay
 ==
+bnz l21
+int 0
+return
+b l23
+l21:
 gtxn 1 Receiver
 byte "ESCROW"
 app_global_get
 ==
-&&
-bnz l20
-int 0
-return
-b l21
-l20:
-byte "ALGOS_BALANCE"
-byte "ALGOS_BALANCE"
-app_global_get
-gtxn 1 Amount
-+
-app_global_put
-int 0
-byte "USDC_TO_WITHDRAW"
-gtxn 1 Amount
-int 100
-*
-int 103
-/
-int 1000000
-*
-byte "EXCHANGE_RATE"
-app_global_get
-/
-app_local_put
-byte "USDC_BALANCE"
-byte "USDC_BALANCE"
-app_global_get
-int 0
-byte "USDC_TO_WITHDRAW"
-app_local_get
--
-app_global_put
-l21:
-b l22
-l19:
-byte "USDC_BALANCE"
-byte "USDC_BALANCE"
-app_global_get
-gtxn 1 AssetAmount
-+
-app_global_put
-int 0
-byte "ALGOS_TO_WITHDRAW"
-byte "EXCHANGE_RATE"
-app_global_get
-gtxn 1 AssetAmount
-int 100
-*
-int 103
-/
-*
-int 1000000
-/
-app_local_put
-byte "ALGOS_BALANCE"
-byte "ALGOS_BALANCE"
-app_global_get
-int 0
-byte "ALGOS_TO_WITHDRAW"
-app_local_get
--
-app_global_put
+bnz l22
+err
 l22:
+byte "ALGOS_BALANCE"
+byte "ALGOS_BALANCE"
+app_global_get
+gtxn 1 Amount
++
+app_global_put
+int 0
+byte "USDC_TO_WITHDRAW"
+gtxn 1 Amount
+int 100
+*
+int 103
+/
+int 1000000
+*
+byte "EXCHANGE_RATE"
+app_global_get
+/
+app_local_put
+byte "USDC_BALANCE"
+byte "USDC_BALANCE"
+app_global_get
+int 0
+byte "USDC_TO_WITHDRAW"
+app_local_get
+-
+app_global_put
+l23:
+b l24
+l19:
+gtxn 1 AssetReceiver
+byte "ESCROW"
+app_global_get
+==
+bnz l20
+err
+l20:
+byte "USDC_BALANCE"
+byte "USDC_BALANCE"
+app_global_get
+gtxn 1 AssetAmount
++
+app_global_put
+int 0
+byte "ALGOS_TO_WITHDRAW"
+byte "EXCHANGE_RATE"
+app_global_get
+gtxn 1 AssetAmount
+int 100
+*
+int 103
+/
+*
+int 1000000
+/
+app_local_put
+byte "ALGOS_BALANCE"
+byte "ALGOS_BALANCE"
+app_global_get
+int 0
+byte "ALGOS_TO_WITHDRAW"
+app_local_get
+-
+app_global_put
+l24:
 byte "ALGOS_BALANCE"
 byte "ALGOS_BALANCE"
 app_global_get
@@ -466,49 +460,59 @@ l7:
 global GroupSize
 int 2
 ==
-bnz l23
+bnz l25
 err
-l23:
+l25:
 gtxn 1 TypeEnum
 int axfer
 ==
-bnz l24
+bnz l26
 gtxn 1 TypeEnum
 int pay
 ==
-bnz l26
+bnz l28
 int 0
 return
-b l28
-l26:
+b l30
+l28:
 gtxn 1 Amount
 int 0
 byte "ALGOS_TO_WITHDRAW"
 app_local_get
 ==
-bnz l27
+gtxn 1 Sender
+byte "ESCROW"
+app_global_get
+==
+&&
+bnz l29
 err
-l27:
+l29:
 int 0
 byte "ALGOS_TO_WITHDRAW"
 int 0
 app_local_put
-l28:
-b l29
-l24:
+l30:
+b l31
+l26:
 gtxn 1 AssetAmount
 int 0
 byte "USDC_TO_WITHDRAW"
 app_local_get
 ==
-bnz l25
+gtxn 1 AssetSender
+byte "ESCROW"
+app_global_get
+==
+&&
+bnz l27
 err
-l25:
+l27:
 int 0
 byte "USDC_TO_WITHDRAW"
 int 0
 app_local_put
-l29:
+l31:
 int 1
 return
 l8:
