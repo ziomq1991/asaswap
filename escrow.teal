@@ -1,9 +1,21 @@
 #pragma version 2
 global GroupSize
+int 1
+==
+txn TypeEnum
+int axfer
+==
+&&
+txn Amount
+int 0
+==
+&&
+bnz l34
+global GroupSize
 int 2
 ==
 gtxn 0 ApplicationID
-int 13128229
+int 123
 ==
 &&
 gtxn 0 TypeEnum
@@ -18,7 +30,16 @@ int pay
 ==
 ||
 &&
-bz l30
+bnz l35
+int 0
+return
+b l36
+l35:
 int 1
 return
-l30:
+l36:
+b l37
+l34:
+int 1
+return
+l37:
