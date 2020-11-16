@@ -1,2 +1,26 @@
 #pragma version 2
+int 0
+byte "USDC_TO_WITHDRAW"
+app_local_get
+int 0
+==
+int 0
+byte "ALGOS_TO_WITHDRAW"
+app_local_get
+int 0
+==
+&&
+int 0
+byte "USER_LIQUIDITY_TOKENS"
+app_local_get
+int 0
+==
+&&
+bnz l30
+int 0
+return
+b l31
+l30:
 int 1
+return
+l31:

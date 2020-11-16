@@ -206,11 +206,24 @@ def state(ratio_decimal_points):
     return Cond(
         [Txn.application_id() == Int(0), on_create],
         [Txn.on_completion() == OnComplete.UpdateApplication, on_update],
+        [Txn.on_completion() == OnComplete.DeleteApplication, Return(is_creator)],
         [Txn.on_completion() == OnComplete.OptIn, on_register],
         [Txn.application_args[0] == Bytes('ADD_LIQUIDITY'), on_add_liquidity],
         [Txn.application_args[0] == Bytes('REMOVE_LIQUIDITY'), on_remove_liquidity],
         [Txn.application_args[0] == Bytes('SWAP'), on_swap],
         [Txn.application_args[0] == Bytes('WITHDRAW'), on_withdraw]
+    )
+
+
+def clear():
+    return If(
+        And(
+            App.localGet(Int(0), Bytes('USDC_TO_WITHDRAW')) == Int(0),
+            App.localGet(Int(0), Bytes('ALGOS_TO_WITHDRAW')) == Int(0),
+            App.localGet(Int(0), Bytes('USER_LIQUIDITY_TOKENS')) == Int(0),
+        ),
+        Return(Int(1)),
+        Return(Int(0))
     )
 
 
@@ -230,5 +243,9 @@ def escrow(app_id):
 
 
 with open('state.teal', 'w') as f:
-    compiled_gig = compileTeal(state(1000000), Mode.Application)
-    f.write(compiled_gig)
+    state_teal = compileTeal(state(1000000), Mode.Application)
+    f.write(state_teal)
+
+with open('clear.teal', 'w') as f:
+    clear_teal = compileTeal(clear(), Mode.Application)
+    f.write(clear_teal)
