@@ -69,8 +69,8 @@ def state(ratio_decimal_points):
         If(
             App.globalGet(Bytes('TOTAL_LIQUIDITY_TOKENS')) == Int(0),
             Seq([
+                App.localPut(Int(0), Bytes('USER_LIQUIDITY_TOKENS'), Gtxn[2].amount()),
                 App.globalPut(Bytes('TOTAL_LIQUIDITY_TOKENS'), Gtxn[2].amount()),
-                App.localPut(Int(0), Bytes('TOTAL_LIQUIDITY_TOKENS'), Gtxn[2].amount())
             ]),
             Seq([
                 App.localPut(
@@ -122,17 +122,13 @@ def state(ratio_decimal_points):
         Assert(And(
             Global.group_size() == Int(2),
             Gtxn[0].type_enum() == TxnType.ApplicationCall,
-            Or(
-                Gtxn[1].asset_receiver() == App.globalGet(Bytes('ESCROW')),
-                Gtxn[1].receiver() == App.globalGet(Bytes('ESCROW'))
-            ),
         )),
         If(
-            And(
-                Gtxn[1].type_enum() == TxnType.AssetTransfer,
-                Gtxn[1].asset_receiver() == App.globalGet(Bytes('ESCROW')),
-            ),
+            Gtxn[1].type_enum() == TxnType.AssetTransfer,
             Seq([
+                Assert(
+                    Gtxn[1].asset_receiver() == App.globalGet(Bytes('ESCROW')),
+                ),
                 App.globalPut(
                     Bytes('USDC_BALANCE'),
                     App.globalGet(Bytes('USDC_BALANCE')) + Gtxn[1].asset_amount()
@@ -150,11 +146,11 @@ def state(ratio_decimal_points):
                 ),
             ]),
             If(
-                And(
-                    Gtxn[1].type_enum() == TxnType.Payment,
-                    Gtxn[1].receiver() == App.globalGet(Bytes('ESCROW')),
-                ),
+                Gtxn[1].type_enum() == TxnType.Payment,
                 Seq([
+                    Assert(
+                        Gtxn[1].receiver() == App.globalGet(Bytes('ESCROW')),
+                    ),
                     App.globalPut(
                         Bytes('ALGOS_BALANCE'),
                         App.globalGet(Bytes('ALGOS_BALANCE')) + Gtxn[1].amount()
@@ -188,13 +184,19 @@ def state(ratio_decimal_points):
         If(
             Gtxn[1].type_enum() == TxnType.AssetTransfer,
             Seq([
-                Assert(Gtxn[1].asset_amount() == App.localGet(Int(0), Bytes('USDC_TO_WITHDRAW'))),
+                Assert(And(
+                    Gtxn[1].asset_amount() == App.localGet(Int(0), Bytes('USDC_TO_WITHDRAW')),
+                    Gtxn[1].asset_sender() == App.globalGet(Bytes('ESCROW')),
+                )),
                 App.localPut(Int(0), Bytes('USDC_TO_WITHDRAW'), Int(0))
             ]),
             If(
                 Gtxn[1].type_enum() == TxnType.Payment,
                 Seq([
-                    Assert(Gtxn[1].amount() == App.localGet(Int(0), Bytes('ALGOS_TO_WITHDRAW'))),
+                    Assert(And(
+                        Gtxn[1].amount() == App.localGet(Int(0), Bytes('ALGOS_TO_WITHDRAW')),
+                        Gtxn[1].sender() == App.globalGet(Bytes('ESCROW')),
+                    )),
                     App.localPut(Int(0), Bytes('ALGOS_TO_WITHDRAW'), Int(0))
                 ]),
                 Return(Int(0))
