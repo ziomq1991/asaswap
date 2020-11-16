@@ -232,15 +232,24 @@ def clear():
 def escrow(app_id):
     return If(
         And(
-            Global.group_size() == Int(2),
-            Gtxn[0].application_id() == Int(app_id),
-            Gtxn[0].type_enum() == TxnType.ApplicationCall,
-            Or(
-                Gtxn[1].type_enum() == TxnType.AssetTransfer,
-                Gtxn[1].type_enum() == TxnType.Payment,
-            )
+            Global.group_size() == Int(1),
+            Txn.type_enum() == TxnType.AssetTransfer,
+            Txn.asset_amount() == Int(0)
         ),
-        Return(Int(1))
+        Return(Int(1)),
+        If(
+            And(
+                Global.group_size() == Int(2),
+                Gtxn[0].application_id() == Int(app_id),
+                Gtxn[0].type_enum() == TxnType.ApplicationCall,
+                Or(
+                    Gtxn[1].type_enum() == TxnType.AssetTransfer,
+                    Gtxn[1].type_enum() == TxnType.Payment,
+                )
+            ),
+            Return(Int(1)),
+            Return(Int(0))
+        )
     )
 
 
@@ -251,3 +260,7 @@ with open('state.teal', 'w') as f:
 with open('clear.teal', 'w') as f:
     clear_teal = compileTeal(clear(), Mode.Application)
     f.write(clear_teal)
+
+with open('escrow.teal', 'w') as f:
+    escrow_teal = compileTeal(escrow(123), Mode.Signature)
+    f.write(escrow_teal)
