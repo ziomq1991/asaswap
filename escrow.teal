@@ -6,11 +6,10 @@ txn TypeEnum
 int axfer
 ==
 &&
-txn Amount
+txn AssetAmount
 int 0
 ==
 &&
-bnz l34
 global GroupSize
 int 2
 ==
@@ -30,16 +29,4 @@ int pay
 ==
 ||
 &&
-bnz l35
-int 0
-return
-b l36
-l35:
-int 1
-return
-l36:
-b l37
-l34:
-int 1
-return
-l37:
+||

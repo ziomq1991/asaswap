@@ -1,6 +1,6 @@
 #pragma version 2
 int 0
-byte "USDC_TO_WITHDRAW"
+byte "TOKENS_TO_WITHDRAW"
 app_local_get
 int 0
 ==
@@ -16,11 +16,3 @@ app_local_get
 int 0
 ==
 &&
-bnz l32
-int 0
-return
-b l33
-l32:
-int 1
-return
-l33:
