@@ -42,7 +42,7 @@ app_global_put
 byte "TOTAL_LIQUIDITY_TOKENS"
 int 0
 app_global_put
-byte "CREATOR"
+byte "CREATOR_ADDR"
 txn Sender
 app_global_put
 int 1
@@ -50,7 +50,7 @@ return
 b l8
 l1:
 txn Sender
-byte "CREATOR"
+byte "CREATOR_ADDR"
 app_global_get
 ==
 txn NumAppArgs
@@ -60,7 +60,7 @@ int 1
 bnz l9
 err
 l9:
-byte "ESCROW"
+byte "ESCROW_ADDR"
 txna ApplicationArgs 0
 app_global_put
 int 1
@@ -68,7 +68,7 @@ return
 b l8
 l2:
 txn Sender
-byte "CREATOR"
+byte "CREATOR_ADDR"
 app_global_get
 ==
 return
@@ -106,12 +106,12 @@ int pay
 ==
 &&
 gtxn 1 AssetReceiver
-byte "ESCROW"
+byte "ESCROW_ADDR"
 app_global_get
 ==
 &&
 gtxn 2 Receiver
-byte "ESCROW"
+byte "ESCROW_ADDR"
 app_global_get
 ==
 &&
@@ -253,10 +253,10 @@ app_global_get
 int 0
 byte "USER_LIQUIDITY_TOKENS"
 app_local_get
+*
 byte "TOTAL_LIQUIDITY_TOKENS"
 app_global_get
 /
-*
 >
 &&
 byte "TOKENS_BALANCE"
@@ -266,10 +266,10 @@ app_global_get
 int 0
 byte "USER_LIQUIDITY_TOKENS"
 app_local_get
+*
 byte "TOTAL_LIQUIDITY_TOKENS"
 app_global_get
 /
-*
 >
 &&
 bnz l17
@@ -282,10 +282,10 @@ app_global_get
 int 0
 byte "USER_LIQUIDITY_TOKENS"
 app_local_get
+*
 byte "TOTAL_LIQUIDITY_TOKENS"
 app_global_get
 /
-*
 app_local_put
 int 0
 byte "TOKENS_TO_WITHDRAW"
@@ -294,10 +294,10 @@ app_global_get
 int 0
 byte "USER_LIQUIDITY_TOKENS"
 app_local_get
+*
 byte "TOTAL_LIQUIDITY_TOKENS"
 app_global_get
 /
-*
 app_local_put
 byte "ALGOS_BALANCE"
 byte "ALGOS_BALANCE"
@@ -307,10 +307,10 @@ app_global_get
 int 0
 byte "USER_LIQUIDITY_TOKENS"
 app_local_get
+*
 byte "TOTAL_LIQUIDITY_TOKENS"
 app_global_get
 /
-*
 -
 app_global_put
 byte "TOKENS_BALANCE"
@@ -321,10 +321,10 @@ app_global_get
 int 0
 byte "USER_LIQUIDITY_TOKENS"
 app_local_get
+*
 byte "TOTAL_LIQUIDITY_TOKENS"
 app_global_get
 /
-*
 -
 app_global_put
 byte "EXCHANGE_RATE"
@@ -361,7 +361,7 @@ bnz l20
 err
 l19:
 gtxn 1 AssetReceiver
-byte "ESCROW"
+byte "ESCROW_ADDR"
 app_global_get
 ==
 bnz l22
@@ -397,7 +397,7 @@ app_global_put
 b l21
 l20:
 gtxn 1 Receiver
-byte "ESCROW"
+byte "ESCROW_ADDR"
 app_global_get
 ==
 bnz l23
@@ -457,30 +457,8 @@ bnz l25
 gtxn 1 TypeEnum
 int pay
 ==
-bnz l27
-int 0
-return
-b l29
-l27:
-gtxn 1 Amount
-int 0
-byte "ALGOS_TO_WITHDRAW"
-app_local_get
-==
-gtxn 1 Sender
-byte "ESCROW"
-app_global_get
-==
-&&
-bnz l28
+bnz l26
 err
-l28:
-int 0
-byte "ALGOS_TO_WITHDRAW"
-int 0
-app_local_put
-l29:
-b l30
 l25:
 gtxn 1 AssetAmount
 int 0
@@ -488,18 +466,37 @@ byte "TOKENS_TO_WITHDRAW"
 app_local_get
 ==
 gtxn 1 AssetSender
-byte "ESCROW"
+byte "ESCROW_ADDR"
 app_global_get
 ==
 &&
-bnz l26
+bnz l28
 err
-l26:
+l28:
 int 0
 byte "TOKENS_TO_WITHDRAW"
 int 0
 app_local_put
-l30:
+b l27
+l26:
+gtxn 1 Amount
+int 0
+byte "ALGOS_TO_WITHDRAW"
+app_local_get
+==
+gtxn 1 Sender
+byte "ESCROW_ADDR"
+app_global_get
+==
+&&
+bnz l29
+err
+l29:
+int 0
+byte "ALGOS_TO_WITHDRAW"
+int 0
+app_local_put
+l27:
 byte "ALGOS_BALANCE"
 byte "ALGOS_BALANCE"
 app_global_get
