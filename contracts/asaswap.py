@@ -7,6 +7,7 @@ def state(ratio_decimal_points: int, fee_pct: int):
     TOTAL_LIQUIDITY_TOKENS = GlobalState('TOTAL_LIQUIDITY_TOKENS')
     ALGOS_BALANCE = GlobalState('ALGOS_BALANCE')
     TOKENS_BALANCE = GlobalState('TOKENS_BALANCE')
+    # exchange rate, always as ASA:ALGOS and in ratio_decimal_points precision
     EXCHANGE_RATE = GlobalState('EXCHANGE_RATE')
     ESCROW_ADDR = GlobalState('ESCROW_ADDR')
     CREATOR_ADDR = GlobalState('CREATOR_ADDR')
