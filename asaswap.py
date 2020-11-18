@@ -21,8 +21,6 @@ def state(ratio_decimal_points):
 
     is_creator = Txn.sender() == CREATOR_ADDR.get()
 
-    tx_ratio = Gtxn[1].asset_amount() * ratio_decimal_points / Gtxn[2].amount()
-    liquidity_calc = Gtxn[2].amount() * TOTAL_LIQUIDITY_TOKENS.get() / ALGOS_BALANCE.get()
     algos_calc = ALGOS_BALANCE.get() * USER_LIQUIDITY_TOKENS.get() / TOTAL_LIQUIDITY_TOKENS.get()
     token_calc = TOKENS_BALANCE.get() * USER_LIQUIDITY_TOKENS.get() / TOTAL_LIQUIDITY_TOKENS.get()
 
@@ -52,6 +50,8 @@ def state(ratio_decimal_points):
         Return(Int(1))
     ])
 
+    tx_ratio = Gtxn[1].asset_amount() * ratio_decimal_points / Gtxn[2].amount()
+    liquidity_calc = Gtxn[2].amount() * TOTAL_LIQUIDITY_TOKENS.get() / ALGOS_BALANCE.get()
     on_add_liquidity = Seq([
         Assert(And(
             Global.group_size() == Int(3),
@@ -60,6 +60,8 @@ def state(ratio_decimal_points):
             Gtxn[2].type_enum() == TxnType.Payment,
             Gtxn[1].asset_receiver() == ESCROW_ADDR.get(),
             Gtxn[2].receiver() == ESCROW_ADDR.get(),
+            ALGOS_TO_WITHDRAW.get() == Int(0),
+            TOKENS_TO_WITHDRAW.get() == Int(0),
         )),
         If(
             # Check if transactions exchange rate matches or is max 1% different from current
@@ -92,6 +94,8 @@ def state(ratio_decimal_points):
             USER_LIQUIDITY_TOKENS.get() >= Btoi(Txn.application_args[1]),
             ALGOS_BALANCE.get() > algos_calc,
             TOKENS_BALANCE.get() > token_calc,
+            ALGOS_TO_WITHDRAW.get() == Int(0),
+            TOKENS_TO_WITHDRAW.get() == Int(0),
         )),
         ALGOS_TO_WITHDRAW.put(algos_calc),
         TOKENS_TO_WITHDRAW.put(token_calc),
@@ -101,10 +105,13 @@ def state(ratio_decimal_points):
         Return(Int(1))
     ])
 
+    fee_pct = 3
     on_swap = Seq([
         Assert(And(
             Global.group_size() == Int(2),
             Gtxn[0].type_enum() == TxnType.ApplicationCall,
+            ALGOS_TO_WITHDRAW.get() == Int(0),
+            TOKENS_TO_WITHDRAW.get() == Int(0),
         )),
         Cond(
             [
@@ -113,8 +120,8 @@ def state(ratio_decimal_points):
                     Assert(Gtxn[1].asset_receiver() == ESCROW_ADDR.get()),
                     TOKENS_BALANCE.put(TOKENS_BALANCE.get() + Gtxn[1].asset_amount()),
                     ALGOS_TO_WITHDRAW.put(
-                        (EXCHANGE_RATE.get() * (Gtxn[1].asset_amount() * Int(100) / Int(103)))
-                        / ratio_decimal_points
+                        # same as (exchange_rate * asset_amount * ((100 - fee_pct)/100)) / ratio_decimal_points
+                        (EXCHANGE_RATE.get() * Gtxn[1].asset_amount() * Int(100 - fee_pct)) / ratio_decimal_points * Int(100)
                     ),
                     ALGOS_BALANCE.put(ALGOS_BALANCE.get() - ALGOS_TO_WITHDRAW.get()),
                 ])
@@ -132,7 +139,7 @@ def state(ratio_decimal_points):
                 ])
             ]
         ),
-        EXCHANGE_RATE.put(TOKENS_BALANCE.get() * ratio_decimal_points / ALGOS_BALANCE.get()),
+        EXCHANGE_RATE.put((TOKENS_BALANCE.get() * ratio_decimal_points) / ALGOS_BALANCE.get()),
         Return(Int(1))
     ])
 
