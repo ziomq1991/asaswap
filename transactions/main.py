@@ -2,8 +2,8 @@ from pyteal import *
 from algosdk.future import transaction
 from algosdk.account import generate_account
 
-from asaswap import escrow
-from utils import client, compile_program, wait_for_confirmation, suggested_params
+from contracts.asaswap import escrow
+from transactions.utils import client, compile_program, wait_for_confirmation, suggested_params
 
 creator_priv_key, creator = generate_account()
 user_priv_key, user = generate_account()
@@ -14,8 +14,8 @@ create_app = transaction.ApplicationCreateTxn(
     creator,
     suggested_params,
     transaction.OnComplete.NoOpOC.real,
-    compile_program(client, open('state.teal', 'rb').read()),
-    compile_program(client, open('clear.teal', 'rb').read()),
+    compile_program(client, open('../contracts/state.teal', 'rb').read()),
+    compile_program(client, open('../contracts/clear.teal', 'rb').read()),
     transaction.StateSchema(num_byte_slices=2, num_uints=4),
     transaction.StateSchema(num_byte_slices=0, num_uints=3),
 )
@@ -31,15 +31,15 @@ transaction_response = client.pending_transaction_info(tx_id)
 app_id = transaction_response['application-index']
 
 # Create Escrow
-with open('escrow.teal', 'w') as f:
+with open('../contracts/escrow.teal', 'w') as f:
     escrow_teal = compileTeal(escrow(app_id), Mode.Signature)
     f.write(escrow_teal)
 
-compile_response = client.compile(open('escrow.teal', 'rb').read().decode('utf-8'))
+compile_response = client.compile(open('../contracts/escrow.teal', 'rb').read().decode('utf-8'))
 escrow_addr = compile_response['hash']
 
 # Opt In to asset using escrow
-lsig = transaction.LogicSig(compile_program(client, open('escrow.teal', 'rb').read()))
+lsig = transaction.LogicSig(compile_program(client, open('../contracts/escrow.teal', 'rb').read()))
 asset_opt_in = transaction.AssetTransferTxn(
     escrow_addr,
     suggested_params,
@@ -55,8 +55,8 @@ update_app = transaction.ApplicationUpdateTxn(
     creator,
     suggested_params,
     app_id,
-    compile_program(client, open('state.teal', 'rb').read()),
-    compile_program(client, open('clear.teal', 'rb').read()),
+    compile_program(client, open('../contracts/state.teal', 'rb').read()),
+    compile_program(client, open('../contracts/clear.teal', 'rb').read()),
     [escrow_addr.encode('utf-8')]
 )
 update_signed_txn = update_app.sign(creator_priv_key)
