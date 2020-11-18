@@ -3,10 +3,14 @@ from state import GlobalState, LocalState
 
 
 def state(ratio_decimal_points):
+    # Exchange rate decimal points
+    ratio_decimal_points = Int(ratio_decimal_points)
+
     # globals
     TOTAL_LIQUIDITY_TOKENS = GlobalState('TOTAL_LIQUIDITY_TOKENS')
     ALGOS_BALANCE = GlobalState('ALGOS_BALANCE')
     TOKENS_BALANCE = GlobalState('TOKENS_BALANCE')
+    # exchange rate, always as ASA:ALGOS and in ratio_decimal_points precision
     EXCHANGE_RATE = GlobalState('EXCHANGE_RATE')
     ESCROW_ADDR = GlobalState('ESCROW_ADDR')
     CREATOR_ADDR = GlobalState('CREATOR_ADDR')
@@ -14,9 +18,6 @@ def state(ratio_decimal_points):
     ALGOS_TO_WITHDRAW = LocalState('ALGOS_TO_WITHDRAW')
     TOKENS_TO_WITHDRAW = LocalState('TOKENS_TO_WITHDRAW')
     USER_LIQUIDITY_TOKENS = LocalState('USER_LIQUIDITY_TOKENS')
-
-    # Exchange rate decimal points
-    ratio_decimal_points = Int(ratio_decimal_points)
 
     is_creator = Txn.sender() == CREATOR_ADDR.get()
 
