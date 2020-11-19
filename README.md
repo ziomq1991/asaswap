@@ -13,7 +13,7 @@ users local data and can be withdrawn.
 ### Swap
 Swapping is performed by calling stateful contract in group with payment transaction to escrow with 
 desired amount of tokens/algos. The amount of tokens/algos to withdraw is then calculated based on 
-simple calculation: `(amount sent - 0.3% fee) * current ratio`.
+simple calculation: `(amount sent - 3% fee) * current ratio`.
 
 ### Withdrawal
 After swapping or removing liquidity in exchange for tokens/algos the money that user can withdraw is 

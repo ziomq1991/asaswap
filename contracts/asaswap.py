@@ -4,21 +4,21 @@ from .state import GlobalState, LocalState
 
 def state(ratio_decimal_points: int, fee_pct: int):
     # globals
-    TOTAL_LIQUIDITY_TOKENS = GlobalState('TOTAL_LIQUIDITY_TOKENS')
-    ALGOS_BALANCE = GlobalState('ALGOS_BALANCE')
-    TOKENS_BALANCE = GlobalState('TOKENS_BALANCE')
-    # exchange rate, always as ASA:ALGOS and in ratio_decimal_points precision
-    EXCHANGE_RATE = GlobalState('EXCHANGE_RATE')
-    ESCROW_ADDR = GlobalState('ESCROW_ADDR')
-    CREATOR_ADDR = GlobalState('CREATOR_ADDR')
-    ASSET_IDX = GlobalState('ASSET_IDX')
+    TOTAL_LIQUIDITY_TOKENS = GlobalState('TOTAL_LIQUIDITY_TOKENS')  # uint64
+    ALGOS_BALANCE = GlobalState('ALGOS_BALANCE')  # uint64
+    TOKENS_BALANCE = GlobalState('TOKENS_BALANCE')  # uint64
+    ESCROW_ADDR = GlobalState('ESCROW_ADDR')  # bytes
+    CREATOR_ADDR = GlobalState('CREATOR_ADDR')  # bytes
+    ASSET_IDX = GlobalState('ASSET_IDX')  # uint64
     # locals
-    ALGOS_TO_WITHDRAW = LocalState('ALGOS_TO_WITHDRAW')
-    TOKENS_TO_WITHDRAW = LocalState('TOKENS_TO_WITHDRAW')
-    USER_LIQUIDITY_TOKENS = LocalState('USER_LIQUIDITY_TOKENS')
+    ALGOS_TO_WITHDRAW = LocalState('ALGOS_TO_WITHDRAW')  # uint64
+    TOKENS_TO_WITHDRAW = LocalState('TOKENS_TO_WITHDRAW')  # uint64
+    USER_LIQUIDITY_TOKENS = LocalState('USER_LIQUIDITY_TOKENS')  # uint64
 
-    algos_calc = ALGOS_BALANCE.get() * USER_LIQUIDITY_TOKENS.get() / TOTAL_LIQUIDITY_TOKENS.get()
-    token_calc = TOKENS_BALANCE.get() * USER_LIQUIDITY_TOKENS.get() / TOTAL_LIQUIDITY_TOKENS.get()
+    # exchange rate, always as ASA:ALGOS and in ratio_decimal_points precision
+    EXCHANGE_RATE = ALGOS_BALANCE.get() * Int(ratio_decimal_points) / TOKENS_BALANCE.get()
+    ALGOS_CALC = ALGOS_BALANCE.get() * USER_LIQUIDITY_TOKENS.get() / TOTAL_LIQUIDITY_TOKENS.get()
+    TOKEN_CALC = TOKENS_BALANCE.get() * USER_LIQUIDITY_TOKENS.get() / TOTAL_LIQUIDITY_TOKENS.get()
 
     on_create = Seq([
         Assert(Txn.application_args.length() == Int(1)),
@@ -59,15 +59,13 @@ def state(ratio_decimal_points: int, fee_pct: int):
             Gtxn[1].asset_receiver() == ESCROW_ADDR.get(),
             Gtxn[2].receiver() == ESCROW_ADDR.get(),
             Gtxn[1].xfer_asset() == ASSET_IDX.get(),
-            ALGOS_TO_WITHDRAW.get() == Int(0),
-            TOKENS_TO_WITHDRAW.get() == Int(0),
         )),
         If(
             # Check if transactions exchange rate matches or is max 1% different from current
-            EXCHANGE_RATE.get() > tx_ratio,
-            Assert(EXCHANGE_RATE.get() - tx_ratio * Int(ratio_decimal_points) / EXCHANGE_RATE.get()
+            EXCHANGE_RATE > tx_ratio,
+            Assert(EXCHANGE_RATE - tx_ratio * Int(ratio_decimal_points) / EXCHANGE_RATE
                    < Int(int(0.01 * ratio_decimal_points))),
-            Assert(tx_ratio - EXCHANGE_RATE.get() * Int(ratio_decimal_points) / EXCHANGE_RATE.get()
+            Assert(tx_ratio - EXCHANGE_RATE * Int(ratio_decimal_points) / EXCHANGE_RATE
                    < Int(int(0.01 * ratio_decimal_points)))
         ),
         If(
@@ -84,7 +82,6 @@ def state(ratio_decimal_points: int, fee_pct: int):
         ),
         TOKENS_BALANCE.put(TOKENS_BALANCE.get() + Gtxn[1].asset_amount()),
         ALGOS_BALANCE.put(ALGOS_BALANCE.get() + Gtxn[2].amount()),
-        EXCHANGE_RATE.put(ALGOS_BALANCE.get() * Int(ratio_decimal_points) / TOKENS_BALANCE.get()),
         Return(Int(1))
     ])
 
@@ -93,16 +90,15 @@ def state(ratio_decimal_points: int, fee_pct: int):
             Global.group_size() == Int(1),
             Txn.application_args.length() == Int(2),
             USER_LIQUIDITY_TOKENS.get() >= Btoi(Txn.application_args[1]),
-            ALGOS_BALANCE.get() > algos_calc,
-            TOKENS_BALANCE.get() > token_calc,
+            ALGOS_BALANCE.get() > ALGOS_CALC,
+            TOKENS_BALANCE.get() > TOKEN_CALC,
             ALGOS_TO_WITHDRAW.get() == Int(0),
             TOKENS_TO_WITHDRAW.get() == Int(0),
         )),
-        ALGOS_TO_WITHDRAW.put(algos_calc),
-        TOKENS_TO_WITHDRAW.put(token_calc),
-        ALGOS_BALANCE.put(ALGOS_BALANCE.get() - algos_calc),
-        TOKENS_BALANCE.put(TOKENS_BALANCE.get() - token_calc),
-        EXCHANGE_RATE.put(ALGOS_BALANCE.get() * Int(ratio_decimal_points) / TOKENS_BALANCE.get()),
+        ALGOS_TO_WITHDRAW.put(ALGOS_CALC),
+        TOKENS_TO_WITHDRAW.put(TOKEN_CALC),
+        ALGOS_BALANCE.put(ALGOS_BALANCE.get() - ALGOS_TO_WITHDRAW.get()),
+        TOKENS_BALANCE.put(TOKENS_BALANCE.get() - TOKENS_TO_WITHDRAW.get()),
         Return(Int(1))
     ])
 
@@ -124,7 +120,7 @@ def state(ratio_decimal_points: int, fee_pct: int):
                     TOKENS_BALANCE.put(TOKENS_BALANCE.get() + Gtxn[1].asset_amount()),
                     ALGOS_TO_WITHDRAW.put(
                         # same as (exchange_rate * asset_amount * ((100 - fee_pct)/100)) / ratio_decimal_points
-                        (EXCHANGE_RATE.get() * Gtxn[1].asset_amount() * Int(100 - fee_pct))
+                        (EXCHANGE_RATE * Gtxn[1].asset_amount() * Int(100 - fee_pct))
                         / Int(ratio_decimal_points) * Int(100)
                     ),
                     ALGOS_BALANCE.put(ALGOS_BALANCE.get() - ALGOS_TO_WITHDRAW.get()),
@@ -137,51 +133,39 @@ def state(ratio_decimal_points: int, fee_pct: int):
                     ALGOS_BALANCE.put(ALGOS_BALANCE.get() + Gtxn[1].amount()),
                     TOKENS_TO_WITHDRAW.put(
                         (Gtxn[1].amount() * Int(100 - fee_pct))
-                        * Int(ratio_decimal_points) / Int(100) / EXCHANGE_RATE.get()
+                        * Int(ratio_decimal_points) / Int(100) / EXCHANGE_RATE
                     ),
                     TOKENS_BALANCE.put(TOKENS_BALANCE.get() - TOKENS_TO_WITHDRAW.get()),
                 ])
             ]
         ),
-        EXCHANGE_RATE.put(TOKENS_BALANCE.get() * Int(ratio_decimal_points) / ALGOS_BALANCE.get()),
         Return(Int(1))
     ])
 
     on_withdraw = Seq([
-        Assert(Global.group_size() == Int(2)),
-        Cond(
-            [
-                Gtxn[1].type_enum() == TxnType.AssetTransfer,
-                Seq([
-                    Assert(And(
-                        Gtxn[1].asset_amount() == TOKENS_TO_WITHDRAW.get(),
-                        Gtxn[1].asset_sender() == ESCROW_ADDR.get(),
-                        Gtxn[1].xfer_asset() == ASSET_IDX.get(),
-                    )),
-                    TOKENS_TO_WITHDRAW.put(Int(0)),
-                ])
-            ],
-            [
-                Gtxn[1].type_enum() == TxnType.Payment,
-                Seq([
-                    Assert(And(
-                        Gtxn[1].amount() == ALGOS_TO_WITHDRAW.get(),
-                        Gtxn[1].sender() == ESCROW_ADDR.get(),
-                    )),
-                    ALGOS_TO_WITHDRAW.put(Int(0)),
-                ]),
-            ]
-        ),
+        Assert(And(
+            Global.group_size() == Int(3),
+            Gtxn[1].type_enum() == TxnType.AssetTransfer,
+            Gtxn[1].asset_amount() == TOKENS_TO_WITHDRAW.get(),
+            Gtxn[1].asset_sender() == ESCROW_ADDR.get(),
+            Gtxn[1].xfer_asset() == ASSET_IDX.get(),
+            Gtxn[2].type_enum() == TxnType.Payment,
+            Gtxn[2].amount() == ALGOS_TO_WITHDRAW.get(),
+            Gtxn[2].sender() == ESCROW_ADDR.get(),
+        )),
+        TOKENS_TO_WITHDRAW.put(Int(0)),
+        ALGOS_TO_WITHDRAW.put(Int(0)),
         # Remove 1000 Algos that is taken as a fee
         ALGOS_BALANCE.put(ALGOS_BALANCE.get() - Int(1000)),
-        EXCHANGE_RATE.put((TOKENS_BALANCE.get() * Int(ratio_decimal_points)) / ALGOS_BALANCE.get()),
         Return(Int(1))
     ])
 
     return Cond(
         [Txn.application_id() == Int(0), on_create],
-        [Txn.on_completion() == OnComplete.UpdateApplication, Return(Int(0))],
-        [Txn.on_completion() == OnComplete.DeleteApplication, Return(Int(0))],
+        [Txn.on_completion() == Or(
+            OnComplete.UpdateApplication,
+            OnComplete.DeleteApplication
+        ), Return(Int(0))],
         [Txn.on_completion() == OnComplete.OptIn, on_register],
         [Txn.application_args[0] == Bytes('UPDATE'), on_update],
         [Txn.application_args[0] == Bytes('ADD_LIQUIDITY'), on_add_liquidity],
@@ -226,14 +210,14 @@ def escrow(app_id):
     )
 
 
-with open('state.teal', 'w') as f:
+with open('./contracts/state.teal', 'w') as f:
     state_teal = compileTeal(state(1000000, 3), Mode.Application)
     f.write(state_teal)
 
-with open('clear.teal', 'w') as f:
+with open('./contracts/clear.teal', 'w') as f:
     clear_teal = compileTeal(clear(), Mode.Application)
     f.write(clear_teal)
 
-with open('escrow.teal', 'w') as f:
+with open('./contracts/escrow.teal', 'w') as f:
     escrow_teal = compileTeal(escrow(123), Mode.Signature)
     f.write(escrow_teal)

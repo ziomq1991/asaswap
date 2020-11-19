@@ -5,44 +5,42 @@ int 0
 bnz l0
 txn OnCompletion
 int UpdateApplication
+int DeleteApplication
+||
 ==
 bnz l1
 txn OnCompletion
-int DeleteApplication
-==
-bnz l2
-txn OnCompletion
 int OptIn
 ==
-bnz l3
+bnz l2
 txna ApplicationArgs 0
 byte "UPDATE"
 ==
-bnz l4
+bnz l3
 txna ApplicationArgs 0
 byte "ADD_LIQUIDITY"
 ==
-bnz l5
+bnz l4
 txna ApplicationArgs 0
 byte "REMOVE_LIQUIDITY"
 ==
-bnz l6
+bnz l5
 txna ApplicationArgs 0
 byte "SWAP"
 ==
-bnz l7
+bnz l6
 txna ApplicationArgs 0
 byte "WITHDRAW"
 ==
-bnz l8
+bnz l7
 err
 l0:
 txn NumAppArgs
 int 1
 ==
-bnz l10
+bnz l9
 err
-l10:
+l9:
 byte "ASSET_IDX"
 txna ApplicationArgs 0
 app_global_put
@@ -60,16 +58,12 @@ txn Sender
 app_global_put
 int 1
 return
-b l9
+b l8
 l1:
 int 0
 return
-b l9
+b l8
 l2:
-int 0
-return
-b l9
-l3:
 int 0
 byte "TOKENS_TO_WITHDRAW"
 int 0
@@ -84,8 +78,8 @@ int 0
 app_local_put
 int 1
 return
-b l9
-l4:
+b l8
+l3:
 txn Sender
 byte "CREATOR_ADDR"
 app_global_get
@@ -94,16 +88,16 @@ txn NumAppArgs
 int 2
 ==
 &&
-bnz l11
+bnz l10
 err
-l11:
+l10:
 byte "ESCROW_ADDR"
 txna ApplicationArgs 1
 app_global_put
 int 1
 return
-b l9
-l5:
+b l8
+l4:
 global GroupSize
 int 3
 ==
@@ -134,61 +128,44 @@ byte "ASSET_IDX"
 app_global_get
 ==
 &&
-int 0
-byte "ALGOS_TO_WITHDRAW"
-app_local_get
-int 0
-==
-&&
-int 0
-byte "TOKENS_TO_WITHDRAW"
-app_local_get
-int 0
-==
-&&
-bnz l12
+bnz l11
 err
-l12:
-byte "EXCHANGE_RATE"
+l11:
+byte "ALGOS_BALANCE"
 app_global_get
+int 1000000
+*
+byte "TOKENS_BALANCE"
+app_global_get
+/
 gtxn 1 AssetAmount
 int 1000000
 *
 gtxn 2 Amount
 /
 >
-bnz l13
+bnz l12
 gtxn 1 AssetAmount
 int 1000000
 *
 gtxn 2 Amount
 /
-byte "EXCHANGE_RATE"
+byte "ALGOS_BALANCE"
 app_global_get
 int 1000000
 *
-byte "EXCHANGE_RATE"
+byte "TOKENS_BALANCE"
 app_global_get
-/
--
-int 10000
-<
-bnz l15
-err
-l15:
-b l16
-l13:
-byte "EXCHANGE_RATE"
-app_global_get
-gtxn 1 AssetAmount
-int 1000000
-*
-gtxn 2 Amount
 /
 int 1000000
 *
-byte "EXCHANGE_RATE"
+byte "ALGOS_BALANCE"
 app_global_get
+int 1000000
+*
+byte "TOKENS_BALANCE"
+app_global_get
+/
 /
 -
 int 10000
@@ -196,12 +173,42 @@ int 10000
 bnz l14
 err
 l14:
-l16:
+b l15
+l12:
+byte "ALGOS_BALANCE"
+app_global_get
+int 1000000
+*
+byte "TOKENS_BALANCE"
+app_global_get
+/
+gtxn 1 AssetAmount
+int 1000000
+*
+gtxn 2 Amount
+/
+int 1000000
+*
+byte "ALGOS_BALANCE"
+app_global_get
+int 1000000
+*
+byte "TOKENS_BALANCE"
+app_global_get
+/
+/
+-
+int 10000
+<
+bnz l13
+err
+l13:
+l15:
 byte "TOTAL_LIQUIDITY_TOKENS"
 app_global_get
 int 0
 ==
-bnz l17
+bnz l16
 int 0
 byte "USER_LIQUIDITY_TOKENS"
 int 0
@@ -228,8 +235,8 @@ app_global_get
 /
 +
 app_global_put
-b l18
-l17:
+b l17
+l16:
 int 0
 byte "USER_LIQUIDITY_TOKENS"
 gtxn 2 Amount
@@ -237,7 +244,7 @@ app_local_put
 byte "TOTAL_LIQUIDITY_TOKENS"
 gtxn 2 Amount
 app_global_put
-l18:
+l17:
 byte "TOKENS_BALANCE"
 byte "TOKENS_BALANCE"
 app_global_get
@@ -250,19 +257,10 @@ app_global_get
 gtxn 2 Amount
 +
 app_global_put
-byte "EXCHANGE_RATE"
-byte "ALGOS_BALANCE"
-app_global_get
-int 1000000
-*
-byte "TOKENS_BALANCE"
-app_global_get
-/
-app_global_put
 int 1
 return
-b l9
-l6:
+b l8
+l5:
 global GroupSize
 int 1
 ==
@@ -315,9 +313,9 @@ app_local_get
 int 0
 ==
 &&
-bnz l19
+bnz l18
 err
-l19:
+l18:
 int 0
 byte "ALGOS_TO_WITHDRAW"
 byte "ALGOS_BALANCE"
@@ -345,44 +343,23 @@ app_local_put
 byte "ALGOS_BALANCE"
 byte "ALGOS_BALANCE"
 app_global_get
-byte "ALGOS_BALANCE"
-app_global_get
 int 0
-byte "USER_LIQUIDITY_TOKENS"
+byte "ALGOS_TO_WITHDRAW"
 app_local_get
-*
-byte "TOTAL_LIQUIDITY_TOKENS"
-app_global_get
-/
 -
 app_global_put
 byte "TOKENS_BALANCE"
 byte "TOKENS_BALANCE"
 app_global_get
-byte "TOKENS_BALANCE"
-app_global_get
 int 0
-byte "USER_LIQUIDITY_TOKENS"
+byte "TOKENS_TO_WITHDRAW"
 app_local_get
-*
-byte "TOTAL_LIQUIDITY_TOKENS"
-app_global_get
-/
 -
-app_global_put
-byte "EXCHANGE_RATE"
-byte "ALGOS_BALANCE"
-app_global_get
-int 1000000
-*
-byte "TOKENS_BALANCE"
-app_global_get
-/
 app_global_put
 int 1
 return
-b l9
-l7:
+b l8
+l6:
 global GroupSize
 int 2
 ==
@@ -402,19 +379,19 @@ app_local_get
 int 0
 ==
 &&
-bnz l20
+bnz l19
 err
-l20:
+l19:
 gtxn 1 TypeEnum
 int axfer
 ==
-bnz l21
+bnz l20
 gtxn 1 TypeEnum
 int pay
 ==
-bnz l22
+bnz l21
 err
-l21:
+l20:
 gtxn 1 AssetReceiver
 byte "ESCROW_ADDR"
 app_global_get
@@ -424,9 +401,9 @@ byte "ASSET_IDX"
 app_global_get
 ==
 &&
-bnz l24
+bnz l23
 err
-l24:
+l23:
 byte "TOKENS_BALANCE"
 byte "TOKENS_BALANCE"
 app_global_get
@@ -435,8 +412,13 @@ gtxn 1 AssetAmount
 app_global_put
 int 0
 byte "ALGOS_TO_WITHDRAW"
-byte "EXCHANGE_RATE"
+byte "ALGOS_BALANCE"
 app_global_get
+int 1000000
+*
+byte "TOKENS_BALANCE"
+app_global_get
+/
 gtxn 1 AssetAmount
 *
 int 97
@@ -454,15 +436,15 @@ byte "ALGOS_TO_WITHDRAW"
 app_local_get
 -
 app_global_put
-b l23
-l22:
+b l22
+l21:
 gtxn 1 Receiver
 byte "ESCROW_ADDR"
 app_global_get
 ==
-bnz l25
+bnz l24
 err
-l25:
+l24:
 byte "ALGOS_BALANCE"
 byte "ALGOS_BALANCE"
 app_global_get
@@ -478,8 +460,13 @@ int 1000000
 *
 int 100
 /
-byte "EXCHANGE_RATE"
+byte "ALGOS_BALANCE"
 app_global_get
+int 1000000
+*
+byte "TOKENS_BALANCE"
+app_global_get
+/
 /
 app_local_put
 byte "TOKENS_BALANCE"
@@ -490,41 +477,24 @@ byte "TOKENS_TO_WITHDRAW"
 app_local_get
 -
 app_global_put
-l23:
-byte "EXCHANGE_RATE"
-byte "TOKENS_BALANCE"
-app_global_get
-int 1000000
-*
-byte "ALGOS_BALANCE"
-app_global_get
-/
-app_global_put
+l22:
 int 1
 return
-b l9
-l8:
+b l8
+l7:
 global GroupSize
-int 2
+int 3
 ==
-bnz l26
-err
-l26:
 gtxn 1 TypeEnum
 int axfer
 ==
-bnz l27
-gtxn 1 TypeEnum
-int pay
-==
-bnz l28
-err
-l27:
+&&
 gtxn 1 AssetAmount
 int 0
 byte "TOKENS_TO_WITHDRAW"
 app_local_get
 ==
+&&
 gtxn 1 AssetSender
 byte "ESCROW_ADDR"
 app_global_get
@@ -535,48 +505,38 @@ byte "ASSET_IDX"
 app_global_get
 ==
 &&
-bnz l30
-err
-l30:
-int 0
-byte "TOKENS_TO_WITHDRAW"
-int 0
-app_local_put
-b l29
-l28:
-gtxn 1 Amount
+gtxn 2 TypeEnum
+int pay
+==
+&&
+gtxn 2 Amount
 int 0
 byte "ALGOS_TO_WITHDRAW"
 app_local_get
 ==
-gtxn 1 Sender
+&&
+gtxn 2 Sender
 byte "ESCROW_ADDR"
 app_global_get
 ==
 &&
-bnz l31
+bnz l25
 err
-l31:
+l25:
+int 0
+byte "TOKENS_TO_WITHDRAW"
+int 0
+app_local_put
 int 0
 byte "ALGOS_TO_WITHDRAW"
 int 0
 app_local_put
-l29:
 byte "ALGOS_BALANCE"
 byte "ALGOS_BALANCE"
 app_global_get
 int 1000
 -
 app_global_put
-byte "EXCHANGE_RATE"
-byte "TOKENS_BALANCE"
-app_global_get
-int 1000000
-*
-byte "ALGOS_BALANCE"
-app_global_get
-/
-app_global_put
 int 1
 return
-l9:
+l8:
