@@ -1,18 +1,25 @@
 #pragma version 2
-int 0
-byte "TOKENS_TO_WITHDRAW"
-app_local_get
-int 0
-==
-int 0
-byte "ALGOS_TO_WITHDRAW"
-app_local_get
-int 0
-==
-&&
+byte "TOTAL_LIQUIDITY_TOKENS"
+byte "TOTAL_LIQUIDITY_TOKENS"
+app_global_get
 int 0
 byte "USER_LIQUIDITY_TOKENS"
 app_local_get
+-
+app_global_put
+byte "ALGOS_BALANCE"
+byte "ALGOS_BALANCE"
+app_global_get
 int 0
-==
-&&
+byte "ALGOS_TO_WITHDRAW"
+app_local_get
++
+app_global_put
+byte "TOKENS_BALANCE"
+byte "TOKENS_BALANCE"
+app_global_get
+int 0
+byte "TOKENS_TO_WITHDRAW"
+app_local_get
++
+app_global_put

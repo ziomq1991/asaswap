@@ -20,9 +20,16 @@ def state(ratio_decimal_points: int, fee_pct: int):
     ALGOS_CALC = ALGOS_BALANCE.get() * USER_LIQUIDITY_TOKENS.get() / TOTAL_LIQUIDITY_TOKENS.get()
     TOKEN_CALC = TOKENS_BALANCE.get() * USER_LIQUIDITY_TOKENS.get() / TOTAL_LIQUIDITY_TOKENS.get()
 
+    on_closeout = Assert(
+        And(
+            TOKENS_TO_WITHDRAW.get() == Int(0),
+            ALGOS_TO_WITHDRAW.get() == Int(0),
+            USER_LIQUIDITY_TOKENS.get() == Int(0),
+        )
+    )
+
     on_create = Seq([
-        Assert(Txn.application_args.length() == Int(1)),
-        ASSET_IDX.put(Txn.application_args[0]),
+        ASSET_IDX.put(Btoi(Txn.application_args[0])),
         TOKENS_BALANCE.put(Int(0)),
         ALGOS_BALANCE.put(Int(0)),
         TOTAL_LIQUIDITY_TOKENS.put(Int(0)),
@@ -32,11 +39,8 @@ def state(ratio_decimal_points: int, fee_pct: int):
 
     on_update = Seq([
         # Update escrow address after creating it
-        Assert(And(
-            Txn.sender() == CREATOR_ADDR.get(),
-            Txn.application_args.length() == Int(2),
-        )),
-        ESCROW_ADDR.put(Txn.application_args[1]),
+        Assert(Txn.sender() == CREATOR_ADDR.get()),
+        ESCROW_ADDR.put(Txn.accounts[1]),
         Return(Int(1))
     ])
 
@@ -53,20 +57,23 @@ def state(ratio_decimal_points: int, fee_pct: int):
     on_add_liquidity = Seq([
         Assert(And(
             Global.group_size() == Int(3),
-            Gtxn[0].type_enum() == TxnType.ApplicationCall,
             Gtxn[1].type_enum() == TxnType.AssetTransfer,
             Gtxn[2].type_enum() == TxnType.Payment,
-            Gtxn[1].asset_receiver() == ESCROW_ADDR.get(),
-            Gtxn[2].receiver() == ESCROW_ADDR.get(),
             Gtxn[1].xfer_asset() == ASSET_IDX.get(),
         )),
         If(
-            # Check if transactions exchange rate matches or is max 1% different from current
-            EXCHANGE_RATE > tx_ratio,
-            Assert(EXCHANGE_RATE - tx_ratio * Int(ratio_decimal_points) / EXCHANGE_RATE
-                   < Int(int(0.01 * ratio_decimal_points))),
-            Assert(tx_ratio - EXCHANGE_RATE * Int(ratio_decimal_points) / EXCHANGE_RATE
-                   < Int(int(0.01 * ratio_decimal_points)))
+            And(
+                TOKENS_BALANCE.get() != Int(0),
+                ALGOS_BALANCE.get() != Int(0),
+            ),
+            If(
+                # Check if transactions exchange rate matches or is max 1% different from current
+                Gt(EXCHANGE_RATE, tx_ratio),
+                Assert(EXCHANGE_RATE - tx_ratio * Int(ratio_decimal_points) / EXCHANGE_RATE
+                       < Int(int(0.01 * ratio_decimal_points))),
+                Assert(tx_ratio - EXCHANGE_RATE * Int(ratio_decimal_points) / EXCHANGE_RATE
+                       < Int(int(0.01 * ratio_decimal_points)))
+            ),
         ),
         If(
             # If its first transaction then add tokens directly from txn amount, else based on calculations
@@ -88,10 +95,7 @@ def state(ratio_decimal_points: int, fee_pct: int):
     on_remove_liquidity = Seq([
         Assert(And(
             Global.group_size() == Int(1),
-            Txn.application_args.length() == Int(2),
             USER_LIQUIDITY_TOKENS.get() >= Btoi(Txn.application_args[1]),
-            ALGOS_BALANCE.get() > ALGOS_CALC,
-            TOKENS_BALANCE.get() > TOKEN_CALC,
             ALGOS_TO_WITHDRAW.get() == Int(0),
             TOKENS_TO_WITHDRAW.get() == Int(0),
         )),
@@ -145,11 +149,9 @@ def state(ratio_decimal_points: int, fee_pct: int):
     on_withdraw = Seq([
         Assert(And(
             Global.group_size() == Int(3),
-            Gtxn[1].type_enum() == TxnType.AssetTransfer,
             Gtxn[1].asset_amount() == TOKENS_TO_WITHDRAW.get(),
             Gtxn[1].asset_sender() == ESCROW_ADDR.get(),
             Gtxn[1].xfer_asset() == ASSET_IDX.get(),
-            Gtxn[2].type_enum() == TxnType.Payment,
             Gtxn[2].amount() == ALGOS_TO_WITHDRAW.get(),
             Gtxn[2].sender() == ESCROW_ADDR.get(),
         )),
@@ -162,11 +164,12 @@ def state(ratio_decimal_points: int, fee_pct: int):
 
     return Cond(
         [Txn.application_id() == Int(0), on_create],
+        [Txn.on_completion() == OnComplete.OptIn, on_register],
         [Txn.on_completion() == Or(
             OnComplete.UpdateApplication,
             OnComplete.DeleteApplication
         ), Return(Int(0))],
-        [Txn.on_completion() == OnComplete.OptIn, on_register],
+        [Txn.on_completion() == OnComplete.CloseOut, on_closeout],
         [Txn.application_args[0] == Bytes('UPDATE'), on_update],
         [Txn.application_args[0] == Bytes('ADD_LIQUIDITY'), on_add_liquidity],
         [Txn.application_args[0] == Bytes('REMOVE_LIQUIDITY'), on_remove_liquidity],
@@ -176,37 +179,43 @@ def state(ratio_decimal_points: int, fee_pct: int):
 
 
 def clear():
+    TOTAL_LIQUIDITY_TOKENS = GlobalState('TOTAL_LIQUIDITY_TOKENS')
+    ALGOS_BALANCE = GlobalState('ALGOS_BALANCE')
+    TOKENS_BALANCE = GlobalState('TOKENS_BALANCE')
     ALGOS_TO_WITHDRAW = LocalState('ALGOS_TO_WITHDRAW')
     TOKENS_TO_WITHDRAW = LocalState('TOKENS_TO_WITHDRAW')
     USER_LIQUIDITY_TOKENS = LocalState('USER_LIQUIDITY_TOKENS')
-    # Refuse to clear users state if he still has money to withdraw or liquidity tokens
-    return And(
-        TOKENS_TO_WITHDRAW.get() == Int(0),
-        ALGOS_TO_WITHDRAW.get() == Int(0),
-        USER_LIQUIDITY_TOKENS.get() == Int(0),
-    )
+
+    return Seq([
+        TOTAL_LIQUIDITY_TOKENS.put(TOTAL_LIQUIDITY_TOKENS.get() - USER_LIQUIDITY_TOKENS.get()),
+        ALGOS_BALANCE.put(ALGOS_BALANCE.get() + ALGOS_TO_WITHDRAW.get()),
+        TOKENS_BALANCE.put(TOKENS_BALANCE.get() + TOKENS_TO_WITHDRAW.get())
+    ])
 
 
 def escrow(app_id):
-    on_asset_opt_in = And(
-        Global.group_size() == Int(1),
-        Txn.type_enum() == TxnType.AssetTransfer,
-        Txn.asset_amount() == Int(0)
-    )
+    on_asset_opt_in = Seq([
+        Assert(And(
+            Txn.type_enum() == TxnType.AssetTransfer,
+            Txn.asset_amount() == Int(0)
+        )),
+        Return(Int(1))
+    ])
 
-    on_withdraw = And(
-        Global.group_size() == Int(2),
-        Gtxn[0].application_id() == Int(app_id),
-        Gtxn[0].type_enum() == TxnType.ApplicationCall,
-        Or(
+    on_withdraw = Seq([
+        Assert(And(
+            Gtxn[0].application_id() == Int(app_id),
+            Gtxn[0].type_enum() == TxnType.ApplicationCall,
+            Gtxn[0].application_args[0] == Bytes('WITHDRAW'),
             Gtxn[1].type_enum() == TxnType.AssetTransfer,
-            Gtxn[1].type_enum() == TxnType.Payment,
-        )
-    )
+            Gtxn[2].type_enum() == TxnType.Payment,
+        )),
+        Return(Int(1))
+    ])
 
-    return Or(
-        on_asset_opt_in,
-        on_withdraw
+    return Cond(
+        [Global.group_size() == Int(1), on_asset_opt_in],
+        [Global.group_size() == Int(2), on_withdraw],
     )
 
 
