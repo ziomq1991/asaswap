@@ -17,8 +17,8 @@ def state(ratio_decimal_points: int, fee_pct: int):
 
     # exchange rate, always as ASA:ALGOS and in ratio_decimal_points precision
     EXCHANGE_RATE = ALGOS_BALANCE.get() * Int(ratio_decimal_points) / TOKENS_BALANCE.get()
-    ALGOS_CALC = ALGOS_BALANCE.get() * USER_LIQUIDITY_TOKENS.get() / TOTAL_LIQUIDITY_TOKENS.get()
-    TOKEN_CALC = TOKENS_BALANCE.get() * USER_LIQUIDITY_TOKENS.get() / TOTAL_LIQUIDITY_TOKENS.get()
+    ALGOS_CALC = ALGOS_BALANCE.get() * Btoi(Txn.application_args[1]) / TOTAL_LIQUIDITY_TOKENS.get()
+    TOKEN_CALC = TOKENS_BALANCE.get() * Btoi(Txn.application_args[1]) / TOTAL_LIQUIDITY_TOKENS.get()
 
     on_closeout = Assert(
         And(
@@ -52,7 +52,7 @@ def state(ratio_decimal_points: int, fee_pct: int):
         Return(Int(1))
     ])
 
-    tx_ratio = Gtxn[1].asset_amount() * Int(ratio_decimal_points) / Gtxn[2].amount()
+    tx_ratio = Gtxn[2].amount() * Int(ratio_decimal_points) / Gtxn[1].asset_amount()
     liquidity_calc = Gtxn[2].amount() * TOTAL_LIQUIDITY_TOKENS.get() / ALGOS_BALANCE.get()
     on_add_liquidity = Seq([
         Assert(And(
@@ -68,10 +68,10 @@ def state(ratio_decimal_points: int, fee_pct: int):
             ),
             If(
                 # Check if transactions exchange rate matches or is max 1% different from current
-                Gt(EXCHANGE_RATE, tx_ratio),
-                Assert(EXCHANGE_RATE - tx_ratio * Int(ratio_decimal_points) / EXCHANGE_RATE
+                Ge(EXCHANGE_RATE, tx_ratio),
+                Assert((EXCHANGE_RATE - tx_ratio) * Int(ratio_decimal_points) / EXCHANGE_RATE
                        < Int(int(0.01 * ratio_decimal_points))),
-                Assert(tx_ratio - EXCHANGE_RATE * Int(ratio_decimal_points) / EXCHANGE_RATE
+                Assert((tx_ratio - EXCHANGE_RATE) * Int(ratio_decimal_points) / EXCHANGE_RATE
                        < Int(int(0.01 * ratio_decimal_points)))
             ),
         ),
@@ -101,6 +101,8 @@ def state(ratio_decimal_points: int, fee_pct: int):
         )),
         ALGOS_TO_WITHDRAW.put(ALGOS_CALC),
         TOKENS_TO_WITHDRAW.put(TOKEN_CALC),
+        USER_LIQUIDITY_TOKENS.put(USER_LIQUIDITY_TOKENS.get() - Btoi(Txn.application_args[1])),
+        TOTAL_LIQUIDITY_TOKENS.put(TOTAL_LIQUIDITY_TOKENS.get() - Btoi(Txn.application_args[1])),
         ALGOS_BALANCE.put(ALGOS_BALANCE.get() - ALGOS_TO_WITHDRAW.get()),
         TOKENS_BALANCE.put(TOKENS_BALANCE.get() - TOKENS_TO_WITHDRAW.get()),
         Return(Int(1))
@@ -150,7 +152,7 @@ def state(ratio_decimal_points: int, fee_pct: int):
         Assert(And(
             Global.group_size() == Int(3),
             Gtxn[1].asset_amount() == TOKENS_TO_WITHDRAW.get(),
-            Gtxn[1].asset_sender() == ESCROW_ADDR.get(),
+            Gtxn[1].sender() == ESCROW_ADDR.get(),
             Gtxn[1].xfer_asset() == ASSET_IDX.get(),
             Gtxn[2].amount() == ALGOS_TO_WITHDRAW.get(),
             Gtxn[2].sender() == ESCROW_ADDR.get(),

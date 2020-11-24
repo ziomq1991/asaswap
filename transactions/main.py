@@ -42,18 +42,45 @@ def create_escrow(
     return escrow_addr
 
 
-def fund_escrow(
+def create_asset(
     client,
     sender,
     sender_priv_key,
     suggested_params,
-    escrow,
+    total,
+    decimals,
+):
+    txn = transaction.AssetConfigTxn(
+        sender,
+        sp=suggested_params,
+        total=total,
+        default_frozen=False,
+        unit_name='TESTASA',
+        asset_name='testasa',
+        manager=sender,
+        reserve=sender,
+        freeze=sender,
+        clawback=sender,
+        url='',
+        decimals=decimals,
+    )
+    signed_txn = txn.sign(sender_priv_key)
+    tx_id = client.send_transactions([signed_txn])
+    return tx_id
+
+
+def fund_account(
+    client,
+    sender,
+    sender_priv_key,
+    suggested_params,
+    account,
     amount
 ):
     txn = transaction.PaymentTxn(
         sender,
         suggested_params,
-        escrow,
+        account,
         amount,
     )
     signed_txn = txn.sign(sender_priv_key)
@@ -93,6 +120,23 @@ def delete_app(
         app_id
     )
     signed_txn = txn.sign(creator_priv_key)
+    tx_id = client.send_transactions([signed_txn])
+    return tx_id
+
+
+def close_out(
+    client,
+    user,
+    user_priv_key,
+    suggested_params,
+    app_id,
+):
+    txn = transaction.ApplicationCloseOutTxn(
+        user,
+        suggested_params,
+        app_id
+    )
+    signed_txn = txn.sign(user_priv_key)
     tx_id = client.send_transactions([signed_txn])
     return tx_id
 
@@ -221,7 +265,8 @@ def withdraw_call(
     signed_asset_withdraw_txn = transaction.LogicSigTransaction(asset_withdraw_txn, lsig)
     signed_algos_withdraw_txn = transaction.LogicSigTransaction(algos_withdraw_txn, lsig)
     signed_app_txn = app_txn.sign(user_priv_key)
-    client.send_transactions([signed_app_txn, signed_asset_withdraw_txn, signed_algos_withdraw_txn])
+    tx_id = client.send_transactions([signed_app_txn, signed_asset_withdraw_txn, signed_algos_withdraw_txn])
+    return tx_id
 
 
 def add_liquidity_call(

@@ -2,13 +2,13 @@
 global GroupSize
 int 1
 ==
-bnz l33
+bnz l28
 global GroupSize
 int 3
 ==
-bnz l34
+bnz l29
 err
-l33:
+l28:
 txn TypeEnum
 int axfer
 ==
@@ -16,15 +16,15 @@ txn AssetAmount
 int 0
 ==
 &&
-bnz l36
+bnz l31
 err
-l36:
+l31:
 int 1
 return
-b l35
-l34:
+b l30
+l29:
 gtxn 0 ApplicationID
-int 13200237
+int 123
 ==
 gtxn 0 TypeEnum
 int appl
@@ -42,9 +42,9 @@ gtxn 2 TypeEnum
 int pay
 ==
 &&
-bnz l37
+bnz l32
 err
-l37:
+l32:
 int 1
 return
-l35:
+l30:

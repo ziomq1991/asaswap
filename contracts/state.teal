@@ -151,17 +151,17 @@ int 1000000
 byte "TOKENS_BALANCE"
 app_global_get
 /
-gtxn 1 AssetAmount
+gtxn 2 Amount
 int 1000000
 *
-gtxn 2 Amount
+gtxn 1 AssetAmount
 /
->
+>=
 bnz l14
-gtxn 1 AssetAmount
-int 1000000
-*
 gtxn 2 Amount
+int 1000000
+*
+gtxn 1 AssetAmount
 /
 byte "ALGOS_BALANCE"
 app_global_get
@@ -169,18 +169,18 @@ int 1000000
 *
 byte "TOKENS_BALANCE"
 app_global_get
-/
-int 1000000
-*
-byte "ALGOS_BALANCE"
-app_global_get
-int 1000000
-*
-byte "TOKENS_BALANCE"
-app_global_get
-/
 /
 -
+int 1000000
+*
+byte "ALGOS_BALANCE"
+app_global_get
+int 1000000
+*
+byte "TOKENS_BALANCE"
+app_global_get
+/
+/
 int 10000
 <
 bnz l16
@@ -195,11 +195,12 @@ int 1000000
 byte "TOKENS_BALANCE"
 app_global_get
 /
-gtxn 1 AssetAmount
+gtxn 2 Amount
 int 1000000
 *
-gtxn 2 Amount
+gtxn 1 AssetAmount
 /
+-
 int 1000000
 *
 byte "ALGOS_BALANCE"
@@ -210,7 +211,6 @@ byte "TOKENS_BALANCE"
 app_global_get
 /
 /
--
 int 10000
 <
 bnz l15
@@ -304,9 +304,8 @@ int 0
 byte "ALGOS_TO_WITHDRAW"
 byte "ALGOS_BALANCE"
 app_global_get
-int 0
-byte "USER_LIQUIDITY_TOKENS"
-app_local_get
+txna ApplicationArgs 1
+btoi
 *
 byte "TOTAL_LIQUIDITY_TOKENS"
 app_global_get
@@ -316,14 +315,29 @@ int 0
 byte "TOKENS_TO_WITHDRAW"
 byte "TOKENS_BALANCE"
 app_global_get
-int 0
-byte "USER_LIQUIDITY_TOKENS"
-app_local_get
+txna ApplicationArgs 1
+btoi
 *
 byte "TOTAL_LIQUIDITY_TOKENS"
 app_global_get
 /
 app_local_put
+int 0
+byte "USER_LIQUIDITY_TOKENS"
+int 0
+byte "USER_LIQUIDITY_TOKENS"
+app_local_get
+txna ApplicationArgs 1
+btoi
+-
+app_local_put
+byte "TOTAL_LIQUIDITY_TOKENS"
+byte "TOTAL_LIQUIDITY_TOKENS"
+app_global_get
+txna ApplicationArgs 1
+btoi
+-
+app_global_put
 byte "ALGOS_BALANCE"
 byte "ALGOS_BALANCE"
 app_global_get
@@ -475,7 +489,7 @@ byte "TOKENS_TO_WITHDRAW"
 app_local_get
 ==
 &&
-gtxn 1 AssetSender
+gtxn 1 Sender
 byte "ESCROW_ADDR"
 app_global_get
 ==
