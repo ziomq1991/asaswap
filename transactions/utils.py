@@ -18,6 +18,23 @@ def wait_for_confirmation(client, txid):
     return tx_info
 
 
+def int_to_bytes(i):
+    lower8 = (1 << 8) - 1
+    char_list = [
+        (i >> (8*7)) & lower8,
+        (i >> (8*6)) & lower8,
+        (i >> (8*5)) & lower8,
+        (i >> (8*4)) & lower8,
+        (i >> (8*3)) & lower8,
+        (i >> (8*2)) & lower8,
+        (i >> (8*1)) & lower8,
+        i & lower8
+    ]
+    string = ''.join(chr(c) for c in char_list)
+    return string.encode('latin1')
+
+
 client = algod.AlgodClient('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'http://localhost:4001')
 
 suggested_params = client.suggested_params()
+

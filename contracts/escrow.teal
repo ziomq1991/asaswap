@@ -4,7 +4,7 @@ int 1
 ==
 bnz l33
 global GroupSize
-int 2
+int 3
 ==
 bnz l34
 err
@@ -24,7 +24,7 @@ return
 b l35
 l34:
 gtxn 0 ApplicationID
-int 13188853
+int 13200237
 ==
 gtxn 0 TypeEnum
 int appl

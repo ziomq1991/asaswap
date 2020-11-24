@@ -215,7 +215,7 @@ def escrow(app_id):
 
     return Cond(
         [Global.group_size() == Int(1), on_asset_opt_in],
-        [Global.group_size() == Int(2), on_withdraw],
+        [Global.group_size() == Int(3), on_withdraw],
     )
 
 

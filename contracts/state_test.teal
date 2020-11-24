@@ -1,0 +1,518 @@
+#pragma version 2
+txn ApplicationID
+int 0
+==
+bnz l0
+txn OnCompletion
+int OptIn
+==
+bnz l1
+txn OnCompletion
+int UpdateApplication
+int DeleteApplication
+||
+==
+bnz l2
+txn OnCompletion
+int CloseOut
+==
+bnz l3
+txna ApplicationArgs 0
+byte "UPDATE"
+==
+bnz l4
+txna ApplicationArgs 0
+byte "ADD_LIQUIDITY"
+==
+bnz l5
+txna ApplicationArgs 0
+byte "REMOVE_LIQUIDITY"
+==
+bnz l6
+txna ApplicationArgs 0
+byte "SWAP"
+==
+bnz l7
+txna ApplicationArgs 0
+byte "WITHDRAW"
+==
+bnz l8
+err
+l0:
+byte "ASSET_IDX"
+txna ApplicationArgs 0
+btoi
+app_global_put
+byte "TOKENS_BALANCE"
+int 0
+app_global_put
+byte "ALGOS_BALANCE"
+int 0
+app_global_put
+byte "TOTAL_LIQUIDITY_TOKENS"
+int 0
+app_global_put
+byte "CREATOR_ADDR"
+txn Sender
+app_global_put
+int 1
+return
+b l9
+l1:
+int 0
+byte "TOKENS_TO_WITHDRAW"
+int 0
+app_local_put
+int 0
+byte "ALGOS_TO_WITHDRAW"
+int 0
+app_local_put
+int 0
+byte "USER_LIQUIDITY_TOKENS"
+int 0
+app_local_put
+int 1
+return
+b l9
+l2:
+int 1
+return
+b l9
+l3:
+int 0
+byte "TOKENS_TO_WITHDRAW"
+app_local_get
+int 0
+==
+int 0
+byte "ALGOS_TO_WITHDRAW"
+app_local_get
+int 0
+==
+&&
+int 0
+byte "USER_LIQUIDITY_TOKENS"
+app_local_get
+int 0
+==
+&&
+bnz l10
+err
+l10:
+b l9
+l4:
+txn Sender
+byte "CREATOR_ADDR"
+app_global_get
+==
+bnz l11
+err
+l11:
+byte "ESCROW_ADDR"
+txna Accounts 1
+app_global_put
+int 1
+return
+b l9
+l5:
+global GroupSize
+int 3
+==
+gtxn 1 TypeEnum
+int axfer
+==
+&&
+gtxn 2 TypeEnum
+int pay
+==
+&&
+gtxn 1 XferAsset
+byte "ASSET_IDX"
+app_global_get
+==
+&&
+bnz l12
+err
+l12:
+byte "TOKENS_BALANCE"
+app_global_get
+int 0
+!=
+byte "ALGOS_BALANCE"
+app_global_get
+int 0
+!=
+&&
+bz l13
+byte "ALGOS_BALANCE"
+app_global_get
+int 1000000
+*
+byte "TOKENS_BALANCE"
+app_global_get
+/
+gtxn 1 AssetAmount
+int 1000000
+*
+gtxn 2 Amount
+/
+>
+bnz l14
+gtxn 1 AssetAmount
+int 1000000
+*
+gtxn 2 Amount
+/
+byte "ALGOS_BALANCE"
+app_global_get
+int 1000000
+*
+byte "TOKENS_BALANCE"
+app_global_get
+/
+int 1000000
+*
+byte "ALGOS_BALANCE"
+app_global_get
+int 1000000
+*
+byte "TOKENS_BALANCE"
+app_global_get
+/
+/
+-
+int 10000
+<
+bnz l16
+err
+l16:
+b l17
+l14:
+byte "ALGOS_BALANCE"
+app_global_get
+int 1000000
+*
+byte "TOKENS_BALANCE"
+app_global_get
+/
+gtxn 1 AssetAmount
+int 1000000
+*
+gtxn 2 Amount
+/
+int 1000000
+*
+byte "ALGOS_BALANCE"
+app_global_get
+int 1000000
+*
+byte "TOKENS_BALANCE"
+app_global_get
+/
+/
+-
+int 10000
+<
+bnz l15
+err
+l15:
+l17:
+l13:
+byte "TOTAL_LIQUIDITY_TOKENS"
+app_global_get
+int 0
+==
+bnz l18
+int 0
+byte "USER_LIQUIDITY_TOKENS"
+int 0
+byte "USER_LIQUIDITY_TOKENS"
+app_local_get
+gtxn 2 Amount
+byte "TOTAL_LIQUIDITY_TOKENS"
+app_global_get
+*
+byte "ALGOS_BALANCE"
+app_global_get
+/
++
+app_local_put
+byte "TOTAL_LIQUIDITY_TOKENS"
+byte "TOTAL_LIQUIDITY_TOKENS"
+app_global_get
+gtxn 2 Amount
+byte "TOTAL_LIQUIDITY_TOKENS"
+app_global_get
+*
+byte "ALGOS_BALANCE"
+app_global_get
+/
++
+app_global_put
+b l19
+l18:
+int 0
+byte "USER_LIQUIDITY_TOKENS"
+gtxn 2 Amount
+app_local_put
+byte "TOTAL_LIQUIDITY_TOKENS"
+gtxn 2 Amount
+app_global_put
+l19:
+byte "TOKENS_BALANCE"
+byte "TOKENS_BALANCE"
+app_global_get
+gtxn 1 AssetAmount
++
+app_global_put
+byte "ALGOS_BALANCE"
+byte "ALGOS_BALANCE"
+app_global_get
+gtxn 2 Amount
++
+app_global_put
+int 1
+return
+b l9
+l6:
+global GroupSize
+int 1
+==
+int 0
+byte "USER_LIQUIDITY_TOKENS"
+app_local_get
+txna ApplicationArgs 1
+btoi
+>=
+&&
+int 0
+byte "ALGOS_TO_WITHDRAW"
+app_local_get
+int 0
+==
+&&
+int 0
+byte "TOKENS_TO_WITHDRAW"
+app_local_get
+int 0
+==
+&&
+bnz l20
+err
+l20:
+int 0
+byte "ALGOS_TO_WITHDRAW"
+byte "ALGOS_BALANCE"
+app_global_get
+int 0
+byte "USER_LIQUIDITY_TOKENS"
+app_local_get
+*
+byte "TOTAL_LIQUIDITY_TOKENS"
+app_global_get
+/
+app_local_put
+int 0
+byte "TOKENS_TO_WITHDRAW"
+byte "TOKENS_BALANCE"
+app_global_get
+int 0
+byte "USER_LIQUIDITY_TOKENS"
+app_local_get
+*
+byte "TOTAL_LIQUIDITY_TOKENS"
+app_global_get
+/
+app_local_put
+byte "ALGOS_BALANCE"
+byte "ALGOS_BALANCE"
+app_global_get
+int 0
+byte "ALGOS_TO_WITHDRAW"
+app_local_get
+-
+app_global_put
+byte "TOKENS_BALANCE"
+byte "TOKENS_BALANCE"
+app_global_get
+int 0
+byte "TOKENS_TO_WITHDRAW"
+app_local_get
+-
+app_global_put
+int 1
+return
+b l9
+l7:
+global GroupSize
+int 2
+==
+gtxn 0 TypeEnum
+int appl
+==
+&&
+int 0
+byte "ALGOS_TO_WITHDRAW"
+app_local_get
+int 0
+==
+&&
+int 0
+byte "TOKENS_TO_WITHDRAW"
+app_local_get
+int 0
+==
+&&
+bnz l21
+err
+l21:
+gtxn 1 TypeEnum
+int axfer
+==
+bnz l22
+gtxn 1 TypeEnum
+int pay
+==
+bnz l23
+err
+l22:
+gtxn 1 AssetReceiver
+byte "ESCROW_ADDR"
+app_global_get
+==
+gtxn 1 XferAsset
+byte "ASSET_IDX"
+app_global_get
+==
+&&
+bnz l25
+err
+l25:
+byte "TOKENS_BALANCE"
+byte "TOKENS_BALANCE"
+app_global_get
+gtxn 1 AssetAmount
++
+app_global_put
+int 0
+byte "ALGOS_TO_WITHDRAW"
+byte "ALGOS_BALANCE"
+app_global_get
+int 1000000
+*
+byte "TOKENS_BALANCE"
+app_global_get
+/
+gtxn 1 AssetAmount
+*
+int 97
+*
+int 1000000
+/
+int 100
+*
+app_local_put
+byte "ALGOS_BALANCE"
+byte "ALGOS_BALANCE"
+app_global_get
+int 0
+byte "ALGOS_TO_WITHDRAW"
+app_local_get
+-
+app_global_put
+b l24
+l23:
+gtxn 1 Receiver
+byte "ESCROW_ADDR"
+app_global_get
+==
+bnz l26
+err
+l26:
+byte "ALGOS_BALANCE"
+byte "ALGOS_BALANCE"
+app_global_get
+gtxn 1 Amount
++
+app_global_put
+int 0
+byte "TOKENS_TO_WITHDRAW"
+gtxn 1 Amount
+int 97
+*
+int 1000000
+*
+int 100
+/
+byte "ALGOS_BALANCE"
+app_global_get
+int 1000000
+*
+byte "TOKENS_BALANCE"
+app_global_get
+/
+/
+app_local_put
+byte "TOKENS_BALANCE"
+byte "TOKENS_BALANCE"
+app_global_get
+int 0
+byte "TOKENS_TO_WITHDRAW"
+app_local_get
+-
+app_global_put
+l24:
+int 1
+return
+b l9
+l8:
+global GroupSize
+int 3
+==
+gtxn 1 AssetAmount
+int 0
+byte "TOKENS_TO_WITHDRAW"
+app_local_get
+==
+&&
+gtxn 1 AssetSender
+byte "ESCROW_ADDR"
+app_global_get
+==
+&&
+gtxn 1 XferAsset
+byte "ASSET_IDX"
+app_global_get
+==
+&&
+gtxn 2 Amount
+int 0
+byte "ALGOS_TO_WITHDRAW"
+app_local_get
+==
+&&
+gtxn 2 Sender
+byte "ESCROW_ADDR"
+app_global_get
+==
+&&
+bnz l27
+err
+l27:
+int 0
+byte "TOKENS_TO_WITHDRAW"
+int 0
+app_local_put
+int 0
+byte "ALGOS_TO_WITHDRAW"
+int 0
+app_local_put
+byte "ALGOS_BALANCE"
+byte "ALGOS_BALANCE"
+app_global_get
+int 1000
+-
+app_global_put
+int 1
+return
+l9:

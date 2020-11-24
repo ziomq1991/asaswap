@@ -1,162 +1,297 @@
 from pyteal import *
 from algosdk.future import transaction
-from algosdk.account import generate_account
 
 from contracts.asaswap import escrow
-from transactions.utils import client, compile_program, wait_for_confirmation, suggested_params
+from transactions.utils import compile_program, int_to_bytes
 
-creator_priv_key, creator = generate_account()
-user_priv_key, user = generate_account()
-asset_index = 10458941  # testnet usdc index
 
-# Create App
-create_app = transaction.ApplicationCreateTxn(
+def create_app(
+    client,
     creator,
+    creator_priv_key,
     suggested_params,
-    transaction.OnComplete.NoOpOC.real,
-    compile_program(client, open('../contracts/state.teal', 'rb').read()),
-    compile_program(client, open('../contracts/clear.teal', 'rb').read()),
-    transaction.StateSchema(num_byte_slices=2, num_uints=4),
-    transaction.StateSchema(num_byte_slices=0, num_uints=3),
-)
+    asset_index,
+):
+    txn = transaction.ApplicationCreateTxn(
+        creator,
+        suggested_params,
+        transaction.OnComplete.NoOpOC.real,
+        compile_program(client, open('./contracts/state_test.teal', 'rb').read()),
+        compile_program(client, open('./contracts/clear.teal', 'rb').read()),
+        transaction.StateSchema(num_byte_slices=2, num_uints=4),
+        transaction.StateSchema(num_byte_slices=0, num_uints=3),
+        app_args=[int_to_bytes(asset_index)]
+    )
 
-signed_txn = create_app.sign(creator_priv_key)
-tx_id = signed_txn.transaction.get_txid()
+    signed_txn = txn.sign(creator_priv_key)
+    tx_id = client.send_transactions([signed_txn])
 
-client.send_transactions([signed_txn])
+    return tx_id
 
-wait_for_confirmation(client, tx_id)
 
-transaction_response = client.pending_transaction_info(tx_id)
-app_id = transaction_response['application-index']
+def create_escrow(
+    client,
+    app_id,
+):
+    with open('./contracts/escrow.teal', 'w') as f:
+        escrow_teal = compileTeal(escrow(app_id), Mode.Signature)
+        f.write(escrow_teal)
 
-# Create Escrow
-with open('../contracts/escrow.teal', 'w') as f:
-    escrow_teal = compileTeal(escrow(app_id), Mode.Signature)
-    f.write(escrow_teal)
+    compile_response = client.compile(open('./contracts/escrow.teal', 'rb').read().decode('utf-8'))
+    escrow_addr = compile_response['hash']
+    return escrow_addr
 
-compile_response = client.compile(open('../contracts/escrow.teal', 'rb').read().decode('utf-8'))
-escrow_addr = compile_response['hash']
 
-# Opt In to asset using escrow
-lsig = transaction.LogicSig(compile_program(client, open('../contracts/escrow.teal', 'rb').read()))
-asset_opt_in = transaction.AssetTransferTxn(
-    escrow_addr,
+def fund_escrow(
+    client,
+    sender,
+    sender_priv_key,
     suggested_params,
-    escrow_addr,
-    0,
-    asset_index
-)
-signed_asset_opt_in = transaction.LogicSigTransaction(asset_opt_in, lsig)
-client.send_transactions([signed_asset_opt_in])
+    escrow,
+    amount
+):
+    txn = transaction.PaymentTxn(
+        sender,
+        suggested_params,
+        escrow,
+        amount,
+    )
+    signed_txn = txn.sign(sender_priv_key)
+    tx_id = client.send_transactions([signed_txn])
+    return tx_id
 
-# Update App with Escrow Adrress
-update_app = transaction.ApplicationUpdateTxn(
+
+def escrow_opt_in_to_asset(
+    client,
+    suggested_params,
+    address,
+    asset_index,
+):
+    lsig = transaction.LogicSig(compile_program(client, open('./contracts/escrow.teal', 'rb').read()))
+    asset_opt_in = transaction.AssetTransferTxn(
+        address,
+        suggested_params,
+        address,
+        0,
+        asset_index
+    )
+    signed_asset_opt_in = transaction.LogicSigTransaction(asset_opt_in, lsig)
+    tx_id = client.send_transactions([signed_asset_opt_in])
+    return tx_id
+
+
+def delete_app(
+    client,
     creator,
+    creator_priv_key,
     suggested_params,
     app_id,
-    compile_program(client, open('../contracts/state.teal', 'rb').read()),
-    compile_program(client, open('../contracts/clear.teal', 'rb').read()),
-    [escrow_addr.encode('utf-8')]
-)
-update_signed_txn = update_app.sign(creator_priv_key)
-client.send_transactions([update_signed_txn])
+):
+    txn = transaction.ApplicationDeleteTxn(
+        creator,
+        suggested_params,
+        app_id
+    )
+    signed_txn = txn.sign(creator_priv_key)
+    tx_id = client.send_transactions([signed_txn])
+    return tx_id
 
-# OptIn to use app
-opt_in_app = transaction.ApplicationOptInTxn(
-    user,  # different user that wants to use our swap
+
+def add_escrow(
+    client,
+    creator,
+    creator_priv_key,
     suggested_params,
     app_id,
-)
-opt_in_app_signed = opt_in_app.sign(user_priv_key)
-client.send_transactions([opt_in_app_signed])
+    escrow_addr,
+):
+    txn = transaction.ApplicationCallTxn(
+        creator,
+        suggested_params,
+        app_id,
+        transaction.OnComplete.NoOpOC.real,
+        app_args=['UPDATE'.encode('utf-8')],
+        accounts=[escrow_addr],
+    )
+    signed_txn = txn.sign(creator_priv_key)
+    tx_id = client.send_transactions([signed_txn])
+    return tx_id
 
-# Do a swap USDC to ALGOS
-amount = 100
 
-app_swap_call = transaction.ApplicationCallTxn(
-    user,  # different user that wants to do a swap
-    suggested_params,
-    app_id,
-    transaction.OnComplete.NoOpOC.real,
-    app_args=['SWAP'.encode('utf-8')]
-)
-
-asset_swap = transaction.AssetTransferTxn(
+def opt_in_to_app(
+    client,
     user,
+    user_priv_key,
     suggested_params,
-    escrow_addr,
+    app_id,
+):
+    txn = transaction.ApplicationOptInTxn(
+        user,
+        suggested_params,
+        app_id,
+    )
+    signed_txn = txn.sign(user_priv_key)
+    tx_id = client.send_transactions([signed_txn])
+    return tx_id
+
+
+def swap_call(
+    client,
+    user,
+    user_priv_key,
+    suggested_params,
+    app_id,
     amount,
-    asset_index,
-)
+    escrow_addr,
+    asset_index=None
+):
+    app_txn = transaction.ApplicationCallTxn(
+        user,
+        suggested_params,
+        app_id,
+        transaction.OnComplete.NoOpOC.real,
+        app_args=['SWAP'.encode('utf-8')]
+    )
 
-gid = transaction.calculate_group_id([app_swap_call, asset_swap])
-app_swap_call.group = gid
-asset_swap.group = gid
+    if asset_index:
+        swap_txn = transaction.AssetTransferTxn(
+            user,
+            suggested_params,
+            escrow_addr,
+            amount,
+            asset_index,
+        )
+    else:
+        swap_txn = transaction.PaymentTxn(
+            user,
+            suggested_params,
+            escrow_addr,
+            amount,
+        )
 
-signed_app_swap_call = app_swap_call.sign(user_priv_key)
-signed_asset_swap = asset_swap.sign(user_priv_key)
-swap_id = client.send_transactions([signed_app_swap_call, signed_asset_swap])
-wait_for_confirmation(client, swap_id)
+    gid = transaction.calculate_group_id([app_txn, swap_txn])
+    app_txn.group = gid
+    swap_txn.group = gid
 
-withdraw_call = transaction.ApplicationCallTxn(
-    creator,  # different user that wants to do a swap
+    signed_app_txn = app_txn.sign(user_priv_key)
+    signed_swap_txn = swap_txn.sign(user_priv_key)
+    tx_id = client.send_transactions([signed_app_txn, signed_swap_txn])
+    return tx_id
+
+
+def withdraw_call(
+    client,
+    user,
+    user_priv_key,
     suggested_params,
     app_id,
-    transaction.OnComplete.NoOpOC.real,
-    app_args=['WITHDRAW'.encode('utf-8')]
-)
+    escrow_addr,
+    asset_index,
+    algos_amount=0,
+    asset_amount=0,
+):
+    app_txn = transaction.ApplicationCallTxn(
+        user,
+        suggested_params,
+        app_id,
+        transaction.OnComplete.NoOpOC.real,
+        app_args=['WITHDRAW'.encode('utf-8')]
+    )
 
-withdraw_amount = 4000
-withdraw_algos = transaction.PaymentTxn(
-    escrow_addr,  # escrow address as creator because we are withdrawing
-    suggested_params,
+    asset_withdraw_txn = transaction.AssetTransferTxn(
+        escrow_addr,
+        suggested_params,
+        user,
+        asset_amount,
+        asset_index,
+    )
+    algos_withdraw_txn = transaction.PaymentTxn(
+        escrow_addr,
+        suggested_params,
+        user,
+        algos_amount,
+    )
+
+    gid = transaction.calculate_group_id([app_txn, asset_withdraw_txn, algos_withdraw_txn])
+    app_txn.group = gid
+    asset_withdraw_txn.group = gid
+    algos_withdraw_txn.group = gid
+
+    lsig = transaction.LogicSig(compile_program(client, open('./contracts/escrow.teal', 'rb').read()))
+    signed_asset_withdraw_txn = transaction.LogicSigTransaction(asset_withdraw_txn, lsig)
+    signed_algos_withdraw_txn = transaction.LogicSigTransaction(algos_withdraw_txn, lsig)
+    signed_app_txn = app_txn.sign(user_priv_key)
+    client.send_transactions([signed_app_txn, signed_asset_withdraw_txn, signed_algos_withdraw_txn])
+
+
+def add_liquidity_call(
+    client,
     user,
-    withdraw_amount,
-)
-
-gid = transaction.calculate_group_id([withdraw_call, withdraw_algos])
-withdraw_call.group = gid
-withdraw_algos.group = gid
-
-signed_withdraw_call = withdraw_call.sign(user_priv_key)
-client.send_transactions([signed_withdraw_call, withdraw_algos])
-
-# Add Liquidity
-liquidity_add_call = transaction.ApplicationCallTxn(
-    user,
+    user_priv_key,
     suggested_params,
     app_id,
-    transaction.OnComplete.NoOpOC.real,
-    app_args=['ADD_LIQUIDITY'.encode('utf-8')]
-)
-
-asset_add = transaction.AssetTransferTxn(
-    user,
-    suggested_params,
     escrow_addr,
-    1000,
+    asset_amount,
+    algos_amount,
     asset_index,
-)
+):
+    app_txn = transaction.ApplicationCallTxn(
+        user,
+        suggested_params,
+        app_id,
+        transaction.OnComplete.NoOpOC.real,
+        app_args=['ADD_LIQUIDITY'.encode('utf-8')]
+    )
 
-algos_add = transaction.PaymentTxn(
+    asset_add_txn = transaction.AssetTransferTxn(
+        user,
+        suggested_params,
+        escrow_addr,
+        asset_amount,
+        asset_index,
+    )
+
+    algos_add_txn = transaction.PaymentTxn(
+        user,
+        suggested_params,
+        escrow_addr,
+        algos_amount,
+    )
+
+    gid = transaction.calculate_group_id([app_txn, asset_add_txn, algos_add_txn])
+    app_txn.group = gid
+    asset_add_txn.group = gid
+    algos_add_txn.group = gid
+
+    signed_app_txn = app_txn.sign(user_priv_key)
+    signed_asset_add_txn = asset_add_txn.sign(user_priv_key)
+    signed_algos_add_txn = algos_add_txn.sign(user_priv_key)
+
+    tx_id = client.send_transactions([
+        signed_app_txn,
+        signed_asset_add_txn,
+        signed_algos_add_txn,
+    ])
+
+    return tx_id
+
+
+def remove_liquidity_call(
+    client,
     user,
+    user_priv_key,
     suggested_params,
-    escrow_addr,
-    4000,
-)
+    app_id,
+    amount
+):
+    txn = transaction.ApplicationCallTxn(
+        user,
+        suggested_params,
+        app_id,
+        transaction.OnComplete.NoOpOC.real,
+        app_args=['REMOVE_LIQUIDITY'.encode('utf-8'), int_to_bytes(amount)]
+    )
 
-gid = transaction.calculate_group_id([liquidity_add_call, asset_add, algos_add])
-liquidity_add_call.group = gid
-asset_add.group = gid
-algos_add.group = gid
-
-signed_liquidity_add_call = liquidity_add_call.sign(user_priv_key)
-signed_asset_add = asset_add.sign(user_priv_key)
-signed_algos_add = algos_add.sign(user_priv_key)
-
-client.send_transactions([
-    signed_liquidity_add_call,
-    signed_asset_add,
-    signed_algos_add,
-])
+    signed_txn = txn.sign(user_priv_key)
+    tx_id = client.send_transactions([signed_txn])
+    return tx_id
