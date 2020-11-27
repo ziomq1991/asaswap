@@ -4,7 +4,6 @@ from transactions.utils import wait_for_confirmation, suggested_params, client
 from transactions.main import (
     create_app,
     add_escrow,
-    delete_app,
     swap_call,
     withdraw_call,
     add_liquidity_call,
@@ -13,8 +12,9 @@ from transactions.main import (
     fund_account,
     escrow_opt_in_to_asset,
     opt_in_to_app,
-    close_out,
     create_asset,
+    read_global_state,
+    read_local_state
 )
 
 
@@ -100,25 +100,21 @@ def test_transactions(dispenser):
         suggested_params,
         app_id,
         escrow_addr,
-        400,
-        100,
+        4000000,
+        1000000,
         asset_index
     )
     wait_for_confirmation(client, tx_id)
 
-    # to have money for fee
-    tx_id = add_liquidity_call(
-        client,
-        user,
-        user_priv_key,
-        suggested_params,
-        app_id,
-        escrow_addr,
-        4000,
-        1000,
-        asset_index
-    )
-    wait_for_confirmation(client, tx_id)
+    global_state = read_global_state(client, user, app_id)
+    assert global_state['TOKENS_BALANCE'] == 4000000
+    assert global_state['ALGOS_BALANCE'] == 1000000
+    assert global_state['TOTAL_LIQUIDITY_TOKENS'] == 1000000
+
+    local_state = read_local_state(client, user, app_id)
+    assert local_state['USER_LIQUIDITY_TOKENS'] == 1000000
+    assert local_state['ALGOS_TO_WITHDRAW'] == 0
+    assert local_state['TOKENS_TO_WITHDRAW'] == 0
 
     tx_id = remove_liquidity_call(
         client,
@@ -126,9 +122,19 @@ def test_transactions(dispenser):
         user_priv_key,
         suggested_params,
         app_id,
-        10,
+        1000,
     )
     wait_for_confirmation(client, tx_id)
+
+    global_state = read_global_state(client, user, app_id)
+    assert global_state['TOKENS_BALANCE'] == 3996000
+    assert global_state['ALGOS_BALANCE'] == 999000
+    assert global_state['TOTAL_LIQUIDITY_TOKENS'] == 999000
+
+    local_state = read_local_state(client, user, app_id)
+    assert local_state['USER_LIQUIDITY_TOKENS'] == 999000
+    assert local_state['ALGOS_TO_WITHDRAW'] == 1000
+    assert local_state['TOKENS_TO_WITHDRAW'] == 4000
 
     tx_id = withdraw_call(
         client,
@@ -138,10 +144,20 @@ def test_transactions(dispenser):
         app_id,
         escrow_addr,
         asset_index,
-        algos_amount=10,
-        asset_amount=40,
+        algos_amount=1000,
+        asset_amount=4000,
     )
     wait_for_confirmation(client, tx_id)
+
+    global_state = read_global_state(client, user, app_id)
+    assert global_state['TOKENS_BALANCE'] == 3996000
+    assert global_state['ALGOS_BALANCE'] == 998000
+    assert global_state['TOTAL_LIQUIDITY_TOKENS'] == 999000
+
+    local_state = read_local_state(client, user, app_id)
+    assert local_state['USER_LIQUIDITY_TOKENS'] == 999000
+    assert local_state['ALGOS_TO_WITHDRAW'] == 0
+    assert local_state['TOKENS_TO_WITHDRAW'] == 0
 
     tx_id = swap_call(
         client,
@@ -149,7 +165,17 @@ def test_transactions(dispenser):
         user_priv_key,
         suggested_params,
         app_id,
-        100,
+        1000,
         escrow_addr,
     )
     wait_for_confirmation(client, tx_id)
+
+    global_state = read_global_state(client, user, app_id)
+    assert global_state['TOKENS_BALANCE'] == 3992120
+    assert global_state['ALGOS_BALANCE'] == 999000
+    assert global_state['TOTAL_LIQUIDITY_TOKENS'] == 999000
+
+    local_state = read_local_state(client, user, app_id)
+    assert local_state['USER_LIQUIDITY_TOKENS'] == 999000
+    assert local_state['ALGOS_TO_WITHDRAW'] == 0
+    assert local_state['TOKENS_TO_WITHDRAW'] == 3880

@@ -1,3 +1,5 @@
+import base64
+
 from pyteal import *
 from algosdk.future import transaction
 
@@ -16,7 +18,7 @@ def create_app(
         creator,
         suggested_params,
         transaction.OnComplete.NoOpOC.real,
-        compile_program(client, open('./contracts/state_test.teal', 'rb').read()),
+        compile_program(client, open('./contracts/state.teal', 'rb').read()),
         compile_program(client, open('./contracts/clear.teal', 'rb').read()),
         transaction.StateSchema(num_byte_slices=2, num_uints=4),
         transaction.StateSchema(num_byte_slices=0, num_uints=3),
@@ -340,3 +342,29 @@ def remove_liquidity_call(
     signed_txn = txn.sign(user_priv_key)
     tx_id = client.send_transactions([signed_txn])
     return tx_id
+
+
+def read_local_state(client, addr, app_id):
+    results = client.account_info(addr)
+    local_state = results['apps-local-state'][0]
+    for index in local_state:
+        if local_state[index] == app_id:
+            local_data = {
+                base64.b64decode(key['key']).decode('utf-8'): key['value']['bytes']
+                if key['value']['type'] == 1
+                else key['value']['uint'] for key in local_state['key-value']
+            }
+            return local_data
+
+
+def read_global_state(client, addr, app_id):
+    results = client.account_info(addr)
+    apps_created = results['created-apps']
+    for app in apps_created:
+        if app['id'] == app_id:
+            global_data = {
+                base64.b64decode(key['key']).decode('utf-8'): key['value']['bytes']
+                if key['value']['type'] == 1
+                else key['value']['uint'] for key in app['params']['global-state']
+            }
+            return global_data
