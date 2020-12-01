@@ -1,0 +1,16 @@
+version: "2.1"
+services:
+  testnet:
+    image: ulamlabs/algorand-sandbox:latest
+    container_name: algorandsandbox
+    ports:
+      - "4001:4001"
+      - "4002:4002"
+    environment:
+      - TOKEN=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      - ALGOD_PORT=4001
+      - KMD_PORT=4002
+
+networks:
+  default:
+    name: asaswap
