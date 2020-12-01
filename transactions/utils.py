@@ -1,6 +1,10 @@
+import os
 import base64
 
 from algosdk.v2client import algod
+
+network = os.environ.get('NETWORK', 'localhost')
+algod_port = os.environ.get('ALGOD_PORT', 4001)
 
 
 def compile_program(client, source_code):
@@ -34,7 +38,10 @@ def int_to_bytes(i):
     return string.encode('latin1')
 
 
-client = algod.AlgodClient('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'http://localhost:4001')
+client = algod.AlgodClient(
+    'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    f'http://{network}:{algod_port}'
+)
 
 suggested_params = client.suggested_params()
 
