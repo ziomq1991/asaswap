@@ -49,7 +49,7 @@ describe('Asaswap Tests', function () {
         fromAccount: creator.account,
         appId: applicationId,
         appArgs: appArgs,
-        accounts: [address],
+        accounts: [creator.address, address], // sender must be first
         payFlags: { totalFee: 1000 },
       }
     ];

@@ -44,9 +44,7 @@ def state(ratio_decimal_points: int, fee_pct: int):
     on_update = Seq([
         # Update escrow address after creating it
         Assert(Txn.sender() == CREATOR_ADDR.get()),
-        # Not sure if bug or a breaking change
-        # ESCROW_ADDR.put(Txn.accounts[1]),
-        ESCROW_ADDR.put(Txn.accounts[0]),
+        ESCROW_ADDR.put(Txn.accounts[1]),
         Return(Int(1))
     ])
 
