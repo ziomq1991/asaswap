@@ -1,37 +1,32 @@
-# ASASwap
+# ASAswap
 
-Smart Contract for creating decentralized exchange based on Constant Product Market Maker.
-It is Algorand's equivalent to Ethereum's Uniswap protocol.
+## Compiling and deploying
 
-## Main functionalities
+To compile and deploy the `asaswap`:
 
-### Adding liquidity
-When user wants to add liquidity he needs to perform 3 transactions group, including call to stateful
-contract, sending ASA tokens and sending Algos. To avoid transactions getting rejected constantly when they
-don't match current ratio, there is a 1% tolerance of ratio difference.
+* First you need to set the configuration in `algob.config.js` file:
 
-### Removing liquidity
-On removing liquidity, user sends a call to stateful contract declaring he wants to burn x liquidity tokens and
-gain calculated ASA tokens and Algos from them. The calculated amount of ASA tokens and Algos are saved in
-users local data and can be withdrawn.
+  - Specify accounts you want to use.
+  - If you are using TestNet, use https://bank.testnet.algorand.network/ to fund address.
+  - If you are using Private Network, use `goal clerk send`
+  (https://developer.algorand.org/docs/reference/cli/goal/clerk/send/) to fund address.
 
-### Swap
-Swapping is performed by calling stateful contract in group with payment transaction to escrow with
-desired amount of ASA tokens/Algos. The amount of ASA tokens/Algos to withdraw is then calculated based on
-simple calculation: `(amount sent - 3% fee) * current ratio`.
+* To compile and deploy your ASA and Smart Contracts:
+  -  `poetry shell`
+  -  `yarn run algob compile`
+  -  `yarn run algob deploy`
 
-### Withdrawal
-After swapping or removing liquidity in exchange for ASA tokens/Algos the money that user can withdraw is
-saved in users local data. He can then perform a `WITHDRAW` call to app along with transaction that
-sends the money from escrow to user.
+* All scripts run with deploy command will store a checkpoint in the artifacts directory. If a script has already a checkpoint it won’t be run again unless `--force | -f` flag is provided to deploy command.
 
+  - `yarn run algob deploy -f` 
 
-## Instalation
+## Dependencies
 
-Requires Python3 and Poetry.
+* You'll need to download to download the [algorand-builder](https://github.com/scale-it/algorand-builder) repository and link the `algob` and `runtime` packages.
+* To install the rest of the dependencies run:
+  -  `poetry install`
+  -  `yarn install`
 
-```bash
-poetry install
-poetry shell
-make contracts
-```
+## Testing
+
+* Command to run the tests: `yarn test` (inside the poetry shell)

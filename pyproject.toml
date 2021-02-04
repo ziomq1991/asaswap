@@ -2,14 +2,12 @@
 name = "asaswap"
 version = "0.1.0"
 description = ""
-authors = ["krystiansiwek <krystian.siwek@yahoo.com>"]
+authors = ["krystiansiwek <krystian.siwek@yahoo.com>", "sebastiangula <sebastian.gula@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
-py-algorand-sdk = "^1.4.1"
 pyteal = "^0.6.1"
-pytest = "^6.1.2"
-flake8 = "^3.8.4"
+PyYAML = "^5.4.1"
 
 [tool.poetry.dev-dependencies]
 

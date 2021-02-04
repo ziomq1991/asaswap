@@ -1,10 +1,9 @@
-.PHONY: contracts
 REPO = asaswap
 
 all: contracts
 
 contracts:
-	python -m contracts.asaswap
+	poetry run yarn algob compile
 
 clean:		## Remove python cache files
 	find . -name '__pycache__' | xargs rm -rf
@@ -16,18 +15,6 @@ image:		## Build the docker image
 	docker build \
 		-t $(REPO) .
 
-services-d:
-	docker-compose -f docker-compose-tests.yml up -d
-
-services-down:
-	docker-compose -f docker-compose-tests.yml down
-	rm -rf ./data-test
-
-services:
-	docker-compose -f docker-compose-tests.yml up
-
-test: 		## Run flake8, migrations & unit tests
-	docker run --rm \
-						--net asaswap \
-						--link algorandsandbox:algorandsandbox \
-						 $(REPO) pytest
+tests: 		## Run eslint and tests
+	docker run -it --rm \
+		$(REPO) yarn lint && poetry run yarn test

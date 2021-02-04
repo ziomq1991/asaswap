@@ -1,0 +1,1568 @@
+filename: state.py
+timestamp: 1612370682
+compiled: AiAMAAEEBQIDwIQ9kE4GYWToByYOBlVQREFURQ1BRERfTElRVUlESVRZEFJFTU9WRV9MSVFVSURJVFkEU1dBUAhXSVRIRFJBVwlBU1NFVF9JRFgOVE9LRU5TX0JBTEFOQ0UNQUxHT1NfQkFMQU5DRRZUT1RBTF9MSVFVSURJVFlfVE9LRU5TDENSRUFUT1JfQUREUhJUT0tFTlNfVE9fV0lUSERSQVcRQUxHT1NfVE9fV0lUSERSQVcVVVNFUl9MSVFVSURJVFlfVE9LRU5TC0VTQ1JPV19BRERSMRgiEkAAQjEZIxJAAFgxGSQlERJAAGMxGSEEEkAAYDYaACgSQABzNhoAKRJAAIA2GgAqEkABeTYaACsSQAHkNhoAJwQSQAKQACcFNhoAF2cnBiJnJwciZycIImcnCTEAZyNDQgK6IicKImYiJwsiZiInDCJmI0NCAqYiQ0ICoSInCmIiEiInC2IiEhAiJwxiIhIQQAABAEIChjEAJwlkEkAAAQAnDTYcAGcjQ0ICcTIEIQUSMwEQJBIQMwEUJw1kEhAzAREnBWQSEDMCECMSEDMCBycNZBIQQAABACcGZCITJwdkIhMQQQBvJwdkIQYLJwZkCjMCCCEGCzMBEgoPQAAtMwIIIQYLMwESCicHZCEGCycGZAoJIQYLJwdkIQYLJwZkCgohBwxAAAEAQgAqJwdkIQYLJwZkCjMCCCEGCzMBEgoJIQYLJwdkIQYLJwZkCgohBwxAAAEAJwhkIhJAACkiJwwiJwxiMwIIJwhkCycHZAoIZicIJwhkMwIIJwhkCycHZAoIZ0IADSInDDMCCGYnCDMCCGcnBicGZDMBEghnJwcnB2QzAggIZyNDQgFwMgQjEiInDGI2GgEXDxAiJwtiIhIQIicKYiISEEAAAQAiJwsnB2Q2GgEXCycIZApmIicKJwZkNhoBFwsnCGQKZiInDCInDGI2GgEXCWYnCCcIZDYaARcJZycHJwdkIicLYglnJwYnBmQiJwpiCWcjQ0IA/TIEIQQSMwAQIQgSECInC2IiEhAiJwpiIhIQQAABADMBECQSQAAJMwEQIxJAAEcAMwEUJw1kEjMBEScFZBIQQAABACcGJwZkMwESCGciJwsnB2QhBgsnBmQKMwESCyEJCyEGCiEKC2YnBycHZCInC2IJZ0IAOzMBBycNZBJAAAEAJwcnB2QzAQgIZyInCjMBCCEJCyEGCyEKCicHZCEGCycGZAoKZicGJwZkIicKYglnI0NCAEgyBCEFEjMBEiInCmISEDMBACcNZBIQMwERJwVkEhAzAggiJwtiEhAzAgAnDWQSEEAAAQAiJwoiZiInCyJmJwcnB2QhCwlnI0M=
+compiledHash: K6WRDY22I7FD2Z5IBCEZSG5RHFN7JL3F3UUTWZIUKZHFHXJ2HBPAAPBGEM
+srcHash: 79455275
+tealCode: |
+  #pragma version 2
+  txn ApplicationID
+  int 0
+  ==
+  bnz l0
+  txn OnCompletion
+  int OptIn
+  ==
+  bnz l1
+  txn OnCompletion
+  int UpdateApplication
+  int DeleteApplication
+  ||
+  ==
+  bnz l2
+  txn OnCompletion
+  int CloseOut
+  ==
+  bnz l3
+  txna ApplicationArgs 0
+  byte "UPDATE"
+  ==
+  bnz l4
+  txna ApplicationArgs 0
+  byte "ADD_LIQUIDITY"
+  ==
+  bnz l5
+  txna ApplicationArgs 0
+  byte "REMOVE_LIQUIDITY"
+  ==
+  bnz l6
+  txna ApplicationArgs 0
+  byte "SWAP"
+  ==
+  bnz l7
+  txna ApplicationArgs 0
+  byte "WITHDRAW"
+  ==
+  bnz l8
+  err
+  l0:
+  byte "ASSET_IDX"
+  txna ApplicationArgs 0
+  btoi
+  app_global_put
+  byte "TOKENS_BALANCE"
+  int 0
+  app_global_put
+  byte "ALGOS_BALANCE"
+  int 0
+  app_global_put
+  byte "TOTAL_LIQUIDITY_TOKENS"
+  int 0
+  app_global_put
+  byte "CREATOR_ADDR"
+  txn Sender
+  app_global_put
+  int 1
+  return
+  b l9
+  l1:
+  int 0
+  byte "TOKENS_TO_WITHDRAW"
+  int 0
+  app_local_put
+  int 0
+  byte "ALGOS_TO_WITHDRAW"
+  int 0
+  app_local_put
+  int 0
+  byte "USER_LIQUIDITY_TOKENS"
+  int 0
+  app_local_put
+  int 1
+  return
+  b l9
+  l2:
+  int 0
+  return
+  b l9
+  l3:
+  int 0
+  byte "TOKENS_TO_WITHDRAW"
+  app_local_get
+  int 0
+  ==
+  int 0
+  byte "ALGOS_TO_WITHDRAW"
+  app_local_get
+  int 0
+  ==
+  &&
+  int 0
+  byte "USER_LIQUIDITY_TOKENS"
+  app_local_get
+  int 0
+  ==
+  &&
+  bnz l10
+  err
+  l10:
+  b l9
+  l4:
+  txn Sender
+  byte "CREATOR_ADDR"
+  app_global_get
+  ==
+  bnz l11
+  err
+  l11:
+  byte "ESCROW_ADDR"
+  txna Accounts 0
+  app_global_put
+  int 1
+  return
+  b l9
+  l5:
+  global GroupSize
+  int 3
+  ==
+  gtxn 1 TypeEnum
+  int axfer
+  ==
+  &&
+  gtxn 1 AssetReceiver
+  byte "ESCROW_ADDR"
+  app_global_get
+  ==
+  &&
+  gtxn 1 XferAsset
+  byte "ASSET_IDX"
+  app_global_get
+  ==
+  &&
+  gtxn 2 TypeEnum
+  int pay
+  ==
+  &&
+  gtxn 2 Receiver
+  byte "ESCROW_ADDR"
+  app_global_get
+  ==
+  &&
+  bnz l12
+  err
+  l12:
+  byte "TOKENS_BALANCE"
+  app_global_get
+  int 0
+  !=
+  byte "ALGOS_BALANCE"
+  app_global_get
+  int 0
+  !=
+  &&
+  bz l13
+  byte "ALGOS_BALANCE"
+  app_global_get
+  int 1000000
+  *
+  byte "TOKENS_BALANCE"
+  app_global_get
+  /
+  gtxn 2 Amount
+  int 1000000
+  *
+  gtxn 1 AssetAmount
+  /
+  >=
+  bnz l14
+  gtxn 2 Amount
+  int 1000000
+  *
+  gtxn 1 AssetAmount
+  /
+  byte "ALGOS_BALANCE"
+  app_global_get
+  int 1000000
+  *
+  byte "TOKENS_BALANCE"
+  app_global_get
+  /
+  -
+  int 1000000
+  *
+  byte "ALGOS_BALANCE"
+  app_global_get
+  int 1000000
+  *
+  byte "TOKENS_BALANCE"
+  app_global_get
+  /
+  /
+  int 10000
+  <
+  bnz l16
+  err
+  l16:
+  b l17
+  l14:
+  byte "ALGOS_BALANCE"
+  app_global_get
+  int 1000000
+  *
+  byte "TOKENS_BALANCE"
+  app_global_get
+  /
+  gtxn 2 Amount
+  int 1000000
+  *
+  gtxn 1 AssetAmount
+  /
+  -
+  int 1000000
+  *
+  byte "ALGOS_BALANCE"
+  app_global_get
+  int 1000000
+  *
+  byte "TOKENS_BALANCE"
+  app_global_get
+  /
+  /
+  int 10000
+  <
+  bnz l15
+  err
+  l15:
+  l17:
+  l13:
+  byte "TOTAL_LIQUIDITY_TOKENS"
+  app_global_get
+  int 0
+  ==
+  bnz l18
+  int 0
+  byte "USER_LIQUIDITY_TOKENS"
+  int 0
+  byte "USER_LIQUIDITY_TOKENS"
+  app_local_get
+  gtxn 2 Amount
+  byte "TOTAL_LIQUIDITY_TOKENS"
+  app_global_get
+  *
+  byte "ALGOS_BALANCE"
+  app_global_get
+  /
+  +
+  app_local_put
+  byte "TOTAL_LIQUIDITY_TOKENS"
+  byte "TOTAL_LIQUIDITY_TOKENS"
+  app_global_get
+  gtxn 2 Amount
+  byte "TOTAL_LIQUIDITY_TOKENS"
+  app_global_get
+  *
+  byte "ALGOS_BALANCE"
+  app_global_get
+  /
+  +
+  app_global_put
+  b l19
+  l18:
+  int 0
+  byte "USER_LIQUIDITY_TOKENS"
+  gtxn 2 Amount
+  app_local_put
+  byte "TOTAL_LIQUIDITY_TOKENS"
+  gtxn 2 Amount
+  app_global_put
+  l19:
+  byte "TOKENS_BALANCE"
+  byte "TOKENS_BALANCE"
+  app_global_get
+  gtxn 1 AssetAmount
+  +
+  app_global_put
+  byte "ALGOS_BALANCE"
+  byte "ALGOS_BALANCE"
+  app_global_get
+  gtxn 2 Amount
+  +
+  app_global_put
+  int 1
+  return
+  b l9
+  l6:
+  global GroupSize
+  int 1
+  ==
+  int 0
+  byte "USER_LIQUIDITY_TOKENS"
+  app_local_get
+  txna ApplicationArgs 1
+  btoi
+  >=
+  &&
+  int 0
+  byte "ALGOS_TO_WITHDRAW"
+  app_local_get
+  int 0
+  ==
+  &&
+  int 0
+  byte "TOKENS_TO_WITHDRAW"
+  app_local_get
+  int 0
+  ==
+  &&
+  bnz l20
+  err
+  l20:
+  int 0
+  byte "ALGOS_TO_WITHDRAW"
+  byte "ALGOS_BALANCE"
+  app_global_get
+  txna ApplicationArgs 1
+  btoi
+  *
+  byte "TOTAL_LIQUIDITY_TOKENS"
+  app_global_get
+  /
+  app_local_put
+  int 0
+  byte "TOKENS_TO_WITHDRAW"
+  byte "TOKENS_BALANCE"
+  app_global_get
+  txna ApplicationArgs 1
+  btoi
+  *
+  byte "TOTAL_LIQUIDITY_TOKENS"
+  app_global_get
+  /
+  app_local_put
+  int 0
+  byte "USER_LIQUIDITY_TOKENS"
+  int 0
+  byte "USER_LIQUIDITY_TOKENS"
+  app_local_get
+  txna ApplicationArgs 1
+  btoi
+  -
+  app_local_put
+  byte "TOTAL_LIQUIDITY_TOKENS"
+  byte "TOTAL_LIQUIDITY_TOKENS"
+  app_global_get
+  txna ApplicationArgs 1
+  btoi
+  -
+  app_global_put
+  byte "ALGOS_BALANCE"
+  byte "ALGOS_BALANCE"
+  app_global_get
+  int 0
+  byte "ALGOS_TO_WITHDRAW"
+  app_local_get
+  -
+  app_global_put
+  byte "TOKENS_BALANCE"
+  byte "TOKENS_BALANCE"
+  app_global_get
+  int 0
+  byte "TOKENS_TO_WITHDRAW"
+  app_local_get
+  -
+  app_global_put
+  int 1
+  return
+  b l9
+  l7:
+  global GroupSize
+  int 2
+  ==
+  gtxn 0 TypeEnum
+  int appl
+  ==
+  &&
+  int 0
+  byte "ALGOS_TO_WITHDRAW"
+  app_local_get
+  int 0
+  ==
+  &&
+  int 0
+  byte "TOKENS_TO_WITHDRAW"
+  app_local_get
+  int 0
+  ==
+  &&
+  bnz l21
+  err
+  l21:
+  gtxn 1 TypeEnum
+  int axfer
+  ==
+  bnz l22
+  gtxn 1 TypeEnum
+  int pay
+  ==
+  bnz l23
+  err
+  l22:
+  gtxn 1 AssetReceiver
+  byte "ESCROW_ADDR"
+  app_global_get
+  ==
+  gtxn 1 XferAsset
+  byte "ASSET_IDX"
+  app_global_get
+  ==
+  &&
+  bnz l25
+  err
+  l25:
+  byte "TOKENS_BALANCE"
+  byte "TOKENS_BALANCE"
+  app_global_get
+  gtxn 1 AssetAmount
+  +
+  app_global_put
+  int 0
+  byte "ALGOS_TO_WITHDRAW"
+  byte "ALGOS_BALANCE"
+  app_global_get
+  int 1000000
+  *
+  byte "TOKENS_BALANCE"
+  app_global_get
+  /
+  gtxn 1 AssetAmount
+  *
+  int 97
+  *
+  int 1000000
+  /
+  int 100
+  *
+  app_local_put
+  byte "ALGOS_BALANCE"
+  byte "ALGOS_BALANCE"
+  app_global_get
+  int 0
+  byte "ALGOS_TO_WITHDRAW"
+  app_local_get
+  -
+  app_global_put
+  b l24
+  l23:
+  gtxn 1 Receiver
+  byte "ESCROW_ADDR"
+  app_global_get
+  ==
+  bnz l26
+  err
+  l26:
+  byte "ALGOS_BALANCE"
+  byte "ALGOS_BALANCE"
+  app_global_get
+  gtxn 1 Amount
+  +
+  app_global_put
+  int 0
+  byte "TOKENS_TO_WITHDRAW"
+  gtxn 1 Amount
+  int 97
+  *
+  int 1000000
+  *
+  int 100
+  /
+  byte "ALGOS_BALANCE"
+  app_global_get
+  int 1000000
+  *
+  byte "TOKENS_BALANCE"
+  app_global_get
+  /
+  /
+  app_local_put
+  byte "TOKENS_BALANCE"
+  byte "TOKENS_BALANCE"
+  app_global_get
+  int 0
+  byte "TOKENS_TO_WITHDRAW"
+  app_local_get
+  -
+  app_global_put
+  l24:
+  int 1
+  return
+  b l9
+  l8:
+  global GroupSize
+  int 3
+  ==
+  gtxn 1 AssetAmount
+  int 0
+  byte "TOKENS_TO_WITHDRAW"
+  app_local_get
+  ==
+  &&
+  gtxn 1 Sender
+  byte "ESCROW_ADDR"
+  app_global_get
+  ==
+  &&
+  gtxn 1 XferAsset
+  byte "ASSET_IDX"
+  app_global_get
+  ==
+  &&
+  gtxn 2 Amount
+  int 0
+  byte "ALGOS_TO_WITHDRAW"
+  app_local_get
+  ==
+  &&
+  gtxn 2 Sender
+  byte "ESCROW_ADDR"
+  app_global_get
+  ==
+  &&
+  bnz l27
+  err
+  l27:
+  int 0
+  byte "TOKENS_TO_WITHDRAW"
+  int 0
+  app_local_put
+  int 0
+  byte "ALGOS_TO_WITHDRAW"
+  int 0
+  app_local_put
+  byte "ALGOS_BALANCE"
+  byte "ALGOS_BALANCE"
+  app_global_get
+  int 1000
+  -
+  app_global_put
+  int 1
+  return
+  l9:
+base64ToBytes:
+  - 2
+  - 32
+  - 12
+  - 0
+  - 1
+  - 4
+  - 5
+  - 2
+  - 3
+  - 192
+  - 132
+  - 61
+  - 144
+  - 78
+  - 6
+  - 97
+  - 100
+  - 232
+  - 7
+  - 38
+  - 14
+  - 6
+  - 85
+  - 80
+  - 68
+  - 65
+  - 84
+  - 69
+  - 13
+  - 65
+  - 68
+  - 68
+  - 95
+  - 76
+  - 73
+  - 81
+  - 85
+  - 73
+  - 68
+  - 73
+  - 84
+  - 89
+  - 16
+  - 82
+  - 69
+  - 77
+  - 79
+  - 86
+  - 69
+  - 95
+  - 76
+  - 73
+  - 81
+  - 85
+  - 73
+  - 68
+  - 73
+  - 84
+  - 89
+  - 4
+  - 83
+  - 87
+  - 65
+  - 80
+  - 8
+  - 87
+  - 73
+  - 84
+  - 72
+  - 68
+  - 82
+  - 65
+  - 87
+  - 9
+  - 65
+  - 83
+  - 83
+  - 69
+  - 84
+  - 95
+  - 73
+  - 68
+  - 88
+  - 14
+  - 84
+  - 79
+  - 75
+  - 69
+  - 78
+  - 83
+  - 95
+  - 66
+  - 65
+  - 76
+  - 65
+  - 78
+  - 67
+  - 69
+  - 13
+  - 65
+  - 76
+  - 71
+  - 79
+  - 83
+  - 95
+  - 66
+  - 65
+  - 76
+  - 65
+  - 78
+  - 67
+  - 69
+  - 22
+  - 84
+  - 79
+  - 84
+  - 65
+  - 76
+  - 95
+  - 76
+  - 73
+  - 81
+  - 85
+  - 73
+  - 68
+  - 73
+  - 84
+  - 89
+  - 95
+  - 84
+  - 79
+  - 75
+  - 69
+  - 78
+  - 83
+  - 12
+  - 67
+  - 82
+  - 69
+  - 65
+  - 84
+  - 79
+  - 82
+  - 95
+  - 65
+  - 68
+  - 68
+  - 82
+  - 18
+  - 84
+  - 79
+  - 75
+  - 69
+  - 78
+  - 83
+  - 95
+  - 84
+  - 79
+  - 95
+  - 87
+  - 73
+  - 84
+  - 72
+  - 68
+  - 82
+  - 65
+  - 87
+  - 17
+  - 65
+  - 76
+  - 71
+  - 79
+  - 83
+  - 95
+  - 84
+  - 79
+  - 95
+  - 87
+  - 73
+  - 84
+  - 72
+  - 68
+  - 82
+  - 65
+  - 87
+  - 21
+  - 85
+  - 83
+  - 69
+  - 82
+  - 95
+  - 76
+  - 73
+  - 81
+  - 85
+  - 73
+  - 68
+  - 73
+  - 84
+  - 89
+  - 95
+  - 84
+  - 79
+  - 75
+  - 69
+  - 78
+  - 83
+  - 11
+  - 69
+  - 83
+  - 67
+  - 82
+  - 79
+  - 87
+  - 95
+  - 65
+  - 68
+  - 68
+  - 82
+  - 49
+  - 24
+  - 34
+  - 18
+  - 64
+  - 0
+  - 66
+  - 49
+  - 25
+  - 35
+  - 18
+  - 64
+  - 0
+  - 88
+  - 49
+  - 25
+  - 36
+  - 37
+  - 17
+  - 18
+  - 64
+  - 0
+  - 99
+  - 49
+  - 25
+  - 33
+  - 4
+  - 18
+  - 64
+  - 0
+  - 96
+  - 54
+  - 26
+  - 0
+  - 40
+  - 18
+  - 64
+  - 0
+  - 115
+  - 54
+  - 26
+  - 0
+  - 41
+  - 18
+  - 64
+  - 0
+  - 128
+  - 54
+  - 26
+  - 0
+  - 42
+  - 18
+  - 64
+  - 1
+  - 121
+  - 54
+  - 26
+  - 0
+  - 43
+  - 18
+  - 64
+  - 1
+  - 228
+  - 54
+  - 26
+  - 0
+  - 39
+  - 4
+  - 18
+  - 64
+  - 2
+  - 144
+  - 0
+  - 39
+  - 5
+  - 54
+  - 26
+  - 0
+  - 23
+  - 103
+  - 39
+  - 6
+  - 34
+  - 103
+  - 39
+  - 7
+  - 34
+  - 103
+  - 39
+  - 8
+  - 34
+  - 103
+  - 39
+  - 9
+  - 49
+  - 0
+  - 103
+  - 35
+  - 67
+  - 66
+  - 2
+  - 186
+  - 34
+  - 39
+  - 10
+  - 34
+  - 102
+  - 34
+  - 39
+  - 11
+  - 34
+  - 102
+  - 34
+  - 39
+  - 12
+  - 34
+  - 102
+  - 35
+  - 67
+  - 66
+  - 2
+  - 166
+  - 34
+  - 67
+  - 66
+  - 2
+  - 161
+  - 34
+  - 39
+  - 10
+  - 98
+  - 34
+  - 18
+  - 34
+  - 39
+  - 11
+  - 98
+  - 34
+  - 18
+  - 16
+  - 34
+  - 39
+  - 12
+  - 98
+  - 34
+  - 18
+  - 16
+  - 64
+  - 0
+  - 1
+  - 0
+  - 66
+  - 2
+  - 134
+  - 49
+  - 0
+  - 39
+  - 9
+  - 100
+  - 18
+  - 64
+  - 0
+  - 1
+  - 0
+  - 39
+  - 13
+  - 54
+  - 28
+  - 0
+  - 103
+  - 35
+  - 67
+  - 66
+  - 2
+  - 113
+  - 50
+  - 4
+  - 33
+  - 5
+  - 18
+  - 51
+  - 1
+  - 16
+  - 36
+  - 18
+  - 16
+  - 51
+  - 1
+  - 20
+  - 39
+  - 13
+  - 100
+  - 18
+  - 16
+  - 51
+  - 1
+  - 17
+  - 39
+  - 5
+  - 100
+  - 18
+  - 16
+  - 51
+  - 2
+  - 16
+  - 35
+  - 18
+  - 16
+  - 51
+  - 2
+  - 7
+  - 39
+  - 13
+  - 100
+  - 18
+  - 16
+  - 64
+  - 0
+  - 1
+  - 0
+  - 39
+  - 6
+  - 100
+  - 34
+  - 19
+  - 39
+  - 7
+  - 100
+  - 34
+  - 19
+  - 16
+  - 65
+  - 0
+  - 111
+  - 39
+  - 7
+  - 100
+  - 33
+  - 6
+  - 11
+  - 39
+  - 6
+  - 100
+  - 10
+  - 51
+  - 2
+  - 8
+  - 33
+  - 6
+  - 11
+  - 51
+  - 1
+  - 18
+  - 10
+  - 15
+  - 64
+  - 0
+  - 45
+  - 51
+  - 2
+  - 8
+  - 33
+  - 6
+  - 11
+  - 51
+  - 1
+  - 18
+  - 10
+  - 39
+  - 7
+  - 100
+  - 33
+  - 6
+  - 11
+  - 39
+  - 6
+  - 100
+  - 10
+  - 9
+  - 33
+  - 6
+  - 11
+  - 39
+  - 7
+  - 100
+  - 33
+  - 6
+  - 11
+  - 39
+  - 6
+  - 100
+  - 10
+  - 10
+  - 33
+  - 7
+  - 12
+  - 64
+  - 0
+  - 1
+  - 0
+  - 66
+  - 0
+  - 42
+  - 39
+  - 7
+  - 100
+  - 33
+  - 6
+  - 11
+  - 39
+  - 6
+  - 100
+  - 10
+  - 51
+  - 2
+  - 8
+  - 33
+  - 6
+  - 11
+  - 51
+  - 1
+  - 18
+  - 10
+  - 9
+  - 33
+  - 6
+  - 11
+  - 39
+  - 7
+  - 100
+  - 33
+  - 6
+  - 11
+  - 39
+  - 6
+  - 100
+  - 10
+  - 10
+  - 33
+  - 7
+  - 12
+  - 64
+  - 0
+  - 1
+  - 0
+  - 39
+  - 8
+  - 100
+  - 34
+  - 18
+  - 64
+  - 0
+  - 41
+  - 34
+  - 39
+  - 12
+  - 34
+  - 39
+  - 12
+  - 98
+  - 51
+  - 2
+  - 8
+  - 39
+  - 8
+  - 100
+  - 11
+  - 39
+  - 7
+  - 100
+  - 10
+  - 8
+  - 102
+  - 39
+  - 8
+  - 39
+  - 8
+  - 100
+  - 51
+  - 2
+  - 8
+  - 39
+  - 8
+  - 100
+  - 11
+  - 39
+  - 7
+  - 100
+  - 10
+  - 8
+  - 103
+  - 66
+  - 0
+  - 13
+  - 34
+  - 39
+  - 12
+  - 51
+  - 2
+  - 8
+  - 102
+  - 39
+  - 8
+  - 51
+  - 2
+  - 8
+  - 103
+  - 39
+  - 6
+  - 39
+  - 6
+  - 100
+  - 51
+  - 1
+  - 18
+  - 8
+  - 103
+  - 39
+  - 7
+  - 39
+  - 7
+  - 100
+  - 51
+  - 2
+  - 8
+  - 8
+  - 103
+  - 35
+  - 67
+  - 66
+  - 1
+  - 112
+  - 50
+  - 4
+  - 35
+  - 18
+  - 34
+  - 39
+  - 12
+  - 98
+  - 54
+  - 26
+  - 1
+  - 23
+  - 15
+  - 16
+  - 34
+  - 39
+  - 11
+  - 98
+  - 34
+  - 18
+  - 16
+  - 34
+  - 39
+  - 10
+  - 98
+  - 34
+  - 18
+  - 16
+  - 64
+  - 0
+  - 1
+  - 0
+  - 34
+  - 39
+  - 11
+  - 39
+  - 7
+  - 100
+  - 54
+  - 26
+  - 1
+  - 23
+  - 11
+  - 39
+  - 8
+  - 100
+  - 10
+  - 102
+  - 34
+  - 39
+  - 10
+  - 39
+  - 6
+  - 100
+  - 54
+  - 26
+  - 1
+  - 23
+  - 11
+  - 39
+  - 8
+  - 100
+  - 10
+  - 102
+  - 34
+  - 39
+  - 12
+  - 34
+  - 39
+  - 12
+  - 98
+  - 54
+  - 26
+  - 1
+  - 23
+  - 9
+  - 102
+  - 39
+  - 8
+  - 39
+  - 8
+  - 100
+  - 54
+  - 26
+  - 1
+  - 23
+  - 9
+  - 103
+  - 39
+  - 7
+  - 39
+  - 7
+  - 100
+  - 34
+  - 39
+  - 11
+  - 98
+  - 9
+  - 103
+  - 39
+  - 6
+  - 39
+  - 6
+  - 100
+  - 34
+  - 39
+  - 10
+  - 98
+  - 9
+  - 103
+  - 35
+  - 67
+  - 66
+  - 0
+  - 253
+  - 50
+  - 4
+  - 33
+  - 4
+  - 18
+  - 51
+  - 0
+  - 16
+  - 33
+  - 8
+  - 18
+  - 16
+  - 34
+  - 39
+  - 11
+  - 98
+  - 34
+  - 18
+  - 16
+  - 34
+  - 39
+  - 10
+  - 98
+  - 34
+  - 18
+  - 16
+  - 64
+  - 0
+  - 1
+  - 0
+  - 51
+  - 1
+  - 16
+  - 36
+  - 18
+  - 64
+  - 0
+  - 9
+  - 51
+  - 1
+  - 16
+  - 35
+  - 18
+  - 64
+  - 0
+  - 71
+  - 0
+  - 51
+  - 1
+  - 20
+  - 39
+  - 13
+  - 100
+  - 18
+  - 51
+  - 1
+  - 17
+  - 39
+  - 5
+  - 100
+  - 18
+  - 16
+  - 64
+  - 0
+  - 1
+  - 0
+  - 39
+  - 6
+  - 39
+  - 6
+  - 100
+  - 51
+  - 1
+  - 18
+  - 8
+  - 103
+  - 34
+  - 39
+  - 11
+  - 39
+  - 7
+  - 100
+  - 33
+  - 6
+  - 11
+  - 39
+  - 6
+  - 100
+  - 10
+  - 51
+  - 1
+  - 18
+  - 11
+  - 33
+  - 9
+  - 11
+  - 33
+  - 6
+  - 10
+  - 33
+  - 10
+  - 11
+  - 102
+  - 39
+  - 7
+  - 39
+  - 7
+  - 100
+  - 34
+  - 39
+  - 11
+  - 98
+  - 9
+  - 103
+  - 66
+  - 0
+  - 59
+  - 51
+  - 1
+  - 7
+  - 39
+  - 13
+  - 100
+  - 18
+  - 64
+  - 0
+  - 1
+  - 0
+  - 39
+  - 7
+  - 39
+  - 7
+  - 100
+  - 51
+  - 1
+  - 8
+  - 8
+  - 103
+  - 34
+  - 39
+  - 10
+  - 51
+  - 1
+  - 8
+  - 33
+  - 9
+  - 11
+  - 33
+  - 6
+  - 11
+  - 33
+  - 10
+  - 10
+  - 39
+  - 7
+  - 100
+  - 33
+  - 6
+  - 11
+  - 39
+  - 6
+  - 100
+  - 10
+  - 10
+  - 102
+  - 39
+  - 6
+  - 39
+  - 6
+  - 100
+  - 34
+  - 39
+  - 10
+  - 98
+  - 9
+  - 103
+  - 35
+  - 67
+  - 66
+  - 0
+  - 72
+  - 50
+  - 4
+  - 33
+  - 5
+  - 18
+  - 51
+  - 1
+  - 18
+  - 34
+  - 39
+  - 10
+  - 98
+  - 18
+  - 16
+  - 51
+  - 1
+  - 0
+  - 39
+  - 13
+  - 100
+  - 18
+  - 16
+  - 51
+  - 1
+  - 17
+  - 39
+  - 5
+  - 100
+  - 18
+  - 16
+  - 51
+  - 2
+  - 8
+  - 34
+  - 39
+  - 11
+  - 98
+  - 18
+  - 16
+  - 51
+  - 2
+  - 0
+  - 39
+  - 13
+  - 100
+  - 18
+  - 16
+  - 64
+  - 0
+  - 1
+  - 0
+  - 34
+  - 39
+  - 10
+  - 34
+  - 102
+  - 34
+  - 39
+  - 11
+  - 34
+  - 102
+  - 39
+  - 7
+  - 39
+  - 7
+  - 100
+  - 33
+  - 11
+  - 9
+  - 103
+  - 35
+  - 67
