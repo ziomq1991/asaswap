@@ -1,5 +1,9 @@
+import sys
+
 from pyteal import *
-from .state import GlobalState, LocalState
+
+from helpers.state import GlobalState, LocalState
+from helpers.parse import parse_args
 
 
 def state(ratio_decimal_points: int, fee_pct: int):
@@ -40,7 +44,9 @@ def state(ratio_decimal_points: int, fee_pct: int):
     on_update = Seq([
         # Update escrow address after creating it
         Assert(Txn.sender() == CREATOR_ADDR.get()),
-        ESCROW_ADDR.put(Txn.accounts[1]),
+        # Not sure if bug or a breaking change
+        # ESCROW_ADDR.put(Txn.accounts[1]),
+        ESCROW_ADDR.put(Txn.accounts[0]),
         Return(Int(1))
     ])
 
@@ -58,8 +64,10 @@ def state(ratio_decimal_points: int, fee_pct: int):
         Assert(And(
             Global.group_size() == Int(3),
             Gtxn[1].type_enum() == TxnType.AssetTransfer,
-            Gtxn[2].type_enum() == TxnType.Payment,
+            Gtxn[1].asset_receiver() == ESCROW_ADDR.get(),
             Gtxn[1].xfer_asset() == ASSET_IDX.get(),
+            Gtxn[2].type_enum() == TxnType.Payment,
+            Gtxn[2].receiver() == ESCROW_ADDR.get()
         )),
         If(
             And(
@@ -180,55 +188,22 @@ def state(ratio_decimal_points: int, fee_pct: int):
     )
 
 
-def clear():
-    TOTAL_LIQUIDITY_TOKENS = GlobalState('TOTAL_LIQUIDITY_TOKENS')
-    ALGOS_BALANCE = GlobalState('ALGOS_BALANCE')
-    TOKENS_BALANCE = GlobalState('TOKENS_BALANCE')
-    ALGOS_TO_WITHDRAW = LocalState('ALGOS_TO_WITHDRAW')
-    TOKENS_TO_WITHDRAW = LocalState('TOKENS_TO_WITHDRAW')
-    USER_LIQUIDITY_TOKENS = LocalState('USER_LIQUIDITY_TOKENS')
+if __name__ == '__main__':
+    params = {
+        'ratio_decimal_points': 1000000,
+        'fee_pct': 3,
+    }
 
-    return Seq([
-        TOTAL_LIQUIDITY_TOKENS.put(TOTAL_LIQUIDITY_TOKENS.get() - USER_LIQUIDITY_TOKENS.get()),
-        ALGOS_BALANCE.put(ALGOS_BALANCE.get() + ALGOS_TO_WITHDRAW.get()),
-        TOKENS_BALANCE.put(TOKENS_BALANCE.get() + TOKENS_TO_WITHDRAW.get())
-    ])
+    # Overwrite params if sys.argv[1] is passed
+    if(len(sys.argv) > 1):
+        params = parse_args(sys.argv[1], params)
 
-
-def escrow(app_id):
-    on_asset_opt_in = Seq([
-        Assert(And(
-            Txn.type_enum() == TxnType.AssetTransfer,
-            Txn.asset_amount() == Int(0)
-        )),
-        Return(Int(1))
-    ])
-
-    on_withdraw = Seq([
-        Assert(And(
-            Gtxn[0].application_id() == Int(app_id),
-            Gtxn[0].type_enum() == TxnType.ApplicationCall,
-            Gtxn[0].application_args[0] == Bytes('WITHDRAW'),
-            Gtxn[1].type_enum() == TxnType.AssetTransfer,
-            Gtxn[2].type_enum() == TxnType.Payment,
-        )),
-        Return(Int(1))
-    ])
-
-    return Cond(
-        [Global.group_size() == Int(1), on_asset_opt_in],
-        [Global.group_size() == Int(3), on_withdraw],
+    print(
+        compileTeal(
+            state(
+                int(params['ratio_decimal_points']),
+                int(params['fee_pct']),
+            ),
+            Mode.Application,
+        )
     )
-
-
-with open('./contracts/state.teal', 'w') as f:
-    state_teal = compileTeal(state(1000000, 3), Mode.Application)
-    f.write(state_teal)
-
-with open('./contracts/clear.teal', 'w') as f:
-    clear_teal = compileTeal(clear(), Mode.Application)
-    f.write(clear_teal)
-
-with open('./contracts/escrow.teal', 'w') as f:
-    escrow_teal = compileTeal(escrow(123), Mode.Signature)
-    f.write(escrow_teal)

@@ -1,0 +1,148 @@
+filename: escrow.py
+timestamp: 1612183340
+compiled: AiAGAQMEAHsGJgEIV0lUSERSQVcyBCISQAAIMgQjEkAAEwAxECQSMRIlEhBAAAEAIkNCACYzABghBBIzABAhBRIQNwAaACgSEDMBECQSEDMCECISEEAAAQAiQw==
+compiledHash: EMYI3YOZXEXWB4MFRK2YQJD3DJM62EKS6JE4LFB35PMXYBHONCAEUZQW5Y
+srcHash: 2564858562
+tealCode: |
+  #pragma version 2
+  global GroupSize
+  int 1
+  ==
+  bnz l0
+  global GroupSize
+  int 3
+  ==
+  bnz l1
+  err
+  l0:
+  txn TypeEnum
+  int axfer
+  ==
+  txn AssetAmount
+  int 0
+  ==
+  &&
+  bnz l3
+  err
+  l3:
+  int 1
+  return
+  b l2
+  l1:
+  gtxn 0 ApplicationID
+  int 123
+  ==
+  gtxn 0 TypeEnum
+  int appl
+  ==
+  &&
+  gtxna 0 ApplicationArgs 0
+  byte "WITHDRAW"
+  ==
+  &&
+  gtxn 1 TypeEnum
+  int axfer
+  ==
+  &&
+  gtxn 2 TypeEnum
+  int pay
+  ==
+  &&
+  bnz l4
+  err
+  l4:
+  int 1
+  return
+  l2:
+base64ToBytes:
+  - 2
+  - 32
+  - 6
+  - 1
+  - 3
+  - 4
+  - 0
+  - 123
+  - 6
+  - 38
+  - 1
+  - 8
+  - 87
+  - 73
+  - 84
+  - 72
+  - 68
+  - 82
+  - 65
+  - 87
+  - 50
+  - 4
+  - 34
+  - 18
+  - 64
+  - 0
+  - 8
+  - 50
+  - 4
+  - 35
+  - 18
+  - 64
+  - 0
+  - 19
+  - 0
+  - 49
+  - 16
+  - 36
+  - 18
+  - 49
+  - 18
+  - 37
+  - 18
+  - 16
+  - 64
+  - 0
+  - 1
+  - 0
+  - 34
+  - 67
+  - 66
+  - 0
+  - 38
+  - 51
+  - 0
+  - 24
+  - 33
+  - 4
+  - 18
+  - 51
+  - 0
+  - 16
+  - 33
+  - 5
+  - 18
+  - 16
+  - 55
+  - 0
+  - 26
+  - 0
+  - 40
+  - 18
+  - 16
+  - 51
+  - 1
+  - 16
+  - 36
+  - 18
+  - 16
+  - 51
+  - 2
+  - 16
+  - 34
+  - 18
+  - 16
+  - 64
+  - 0
+  - 1
+  - 0
+  - 34
+  - 67

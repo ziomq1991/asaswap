@@ -138,3 +138,6 @@ dmypy.json
 cython_debug/
 
 .idea/
+
+node_modules/
+artifacts/scripts

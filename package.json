@@ -1,0 +1,20 @@
+{
+  "name": "asaswap",
+  "version": "0.0.1",
+  "main": "index.js",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^8.2.1"
+  },
+  "scripts": {
+    "algob": "algob",
+    "lint": "eslint --ext .js,.ts,.mjs scripts test",
+    "lint:fix": "eslint --fix --ext .js,.ts,.mjs scripts test",
+    "test": "mocha",
+    "build": "echo ok"
+  },
+  "devDependencies": {
+    "eslint": "^7.19.0"
+  }
+}
