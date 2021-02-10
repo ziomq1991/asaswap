@@ -4,13 +4,14 @@ const { stringToBytes, update } = require('@algorand-builder/algob');
 const { executeTransaction } = require('@algorand-builder/algob');
 const { TransactionType, SignType } = require('@algorand-builder/runtime/build/types.js');
 
+const ASSET_INDEX = 123;
 
 async function run (runtimeEnv, deployer) {
   const masterAccount = deployer.accountsByName.get('master');
 
   // initialize app arguments
   let appArgs = [
-    'int:123', // asset index
+    `int:${ASSET_INDEX}`
   ];
 
   // Create Application
@@ -28,11 +29,10 @@ async function run (runtimeEnv, deployer) {
     }, 
     {}
   );
-
-  console.log(res);
+  const applicationID = res.appID;
 
   // Get Escrow Account Address
-  const escrowAccount = await deployer.loadLogic('escrow.py', [], { app_id: res.appID });
+  const escrowAccount = await deployer.loadLogic('escrow.py', [], { app_id: applicationID });
   console.log('Escrow Account Address:', escrowAccount.address());
 
   // Send Funds For Minimum Escrow Balance
@@ -46,13 +46,34 @@ async function run (runtimeEnv, deployer) {
   };
   await executeTransaction(deployer, algoTxnParams);
 
+  console.log('Opting-In For Escrow');
+  const txnParams = [
+    {
+      type: TransactionType.CallNoOpSSC,
+      sign: SignType.SecretKey,
+      fromAccount: masterAccount,
+      appId: applicationID,
+      appArgs: [stringToBytes('SETUP_ESCROW')],
+      payFlags: { totalFee: 1000 }
+    },
+    {
+      type: TransactionType.TransferAsset,
+      sign: SignType.LogicSignature,
+      fromAccount: { addr: escrowAccount.address() },
+      toAccountAddr: escrowAccount.address(),
+      lsig: escrowAccount,
+      assetAmount: 0,
+      assetID: ASSET_INDEX,
+      payFlags: { totalFee: 1000 }
+    }
+  ];
+  await executeTransaction(deployer, txnParams);
+
   // Update application with escrow account
   // Note: that the code for the contract will not change.
   // The update operation links the two contracts.
-  const applicationID = res.appID;
-
   appArgs = [stringToBytes('UPDATE')];
-  const updatedRes = await update(
+  let updatedRes = await update(
     deployer,
     masterAccount,
     {}, // pay flags
@@ -66,26 +87,8 @@ async function run (runtimeEnv, deployer) {
   );
 
   console.log('Application Updated: ', updatedRes);
-  console.log('Opting-In for Creator and Escrow');
-  try {
-    const lsig = await deployer.loadLogic('escrow.py', [], { app_id: res.appID });
-    await deployer.optInToSSC(masterAccount, applicationID, {}, {});
-    const txnParam = {
-      type: TransactionType.TransferAsset,
-      sign: SignType.LogicSignature,
-      fromAccount: { addr: escrowAccount.address() },
-      toAccountAddr: escrowAccount.address(),
-      lsig: escrowAccount,
-      assetAmount: 0,
-      assetID: 14001707,
-      payFlags: { totalFee: 1000 }
-    };
-    await executeTransaction(deployer, txnParam);  
-  } catch (e) {
-    console.log(e);
-    throw new Error(e);
-  }
-  console.log('Opt-In successful.');
+  console.log('Opting-In for Creator');
+  await deployer.optInToSSC(masterAccount, applicationID, {}, {});
 }
 
 module.exports = { default: run };

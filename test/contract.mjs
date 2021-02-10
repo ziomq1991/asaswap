@@ -35,10 +35,55 @@ describe('Asaswap Tests', function () {
     runtime.store.assetDefs.set(123, master.address);
   };
   const setupEscrow = () => {
+    deployEscrow();
+    addFundsToEscrow();
+    escrowOptInToAsset();
+  };
+  const deployEscrow = () => {
     const escrowProg = getProgram('escrow.py', { app_id: applicationId });
     lsig = runtime.getLogicSig(escrowProg, []);
     const escrowAddress = lsig.address();
     escrow = runtime.getAccount(escrowAddress);
+  };
+  const addFundsToEscrow = () => {
+    let txGroup = [
+      {
+        type: TransactionType.TransferAlgo,
+        sign: SignType.SecretKey,
+        fromAccount: master.account,
+        toAccountAddr: escrow.address,
+        amountMicroAlgos: escrow.minBalance + 101000,
+        payFlags: { 
+          totalFee: 1000,
+        }
+      }
+    ];
+    runtime.executeTx(txGroup, {}, []);
+  };
+  const escrowOptInToAsset = (assetID=123) => {
+    let txGroup = [
+      {
+        type: TransactionType.CallNoOpSSC,
+        sign: SignType.SecretKey,
+        fromAccount: creator.account,
+        appId: applicationId,
+        appArgs: [stringToBytes('SETUP_ESCROW')],
+        payFlags: { totalFee: 1000 }
+      },
+      {
+        type: TransactionType.TransferAsset,
+        assetID: assetID,
+        sign: SignType.LogicSignature,
+        lsig: lsig,
+        fromAccount: escrow.account,
+        toAccountAddr: escrow.address,
+        amount: 0,
+        payFlags: { 
+          totalFee: 1000,
+        },
+      },
+    ];
+    runtime.executeTx(txGroup, program, []);
   };
   const setEscrow = (address) => {
     let appArgs = [stringToBytes('UPDATE')];
@@ -109,6 +154,7 @@ describe('Asaswap Tests', function () {
   };
   const setupApplicationWithEscrow = () => {
     setupApplication();
+    setupEscrow();
     setEscrow(escrow.address);
   };
   const assetSwap = (fromAccount, escrowAddress, assetAmount, assetId=123) => {
@@ -160,7 +206,7 @@ describe('Asaswap Tests', function () {
     ];
     runtime.executeTx(txGroup, program, []);
   };
-  const withdraw = (sender, assetAmount, microAlgosAmount) => {
+  const withdraw = (sender, assetAmount, microAlgosAmount, assetFee=1000, algoFee=1000) => {
     let appArgs = [stringToBytes('WITHDRAW')];
     let txGroup = [
       {
@@ -180,7 +226,7 @@ describe('Asaswap Tests', function () {
         toAccountAddr: sender.address,
         amount: assetAmount,
         payFlags: { 
-          totalFee: 1000,
+          totalFee: assetFee,
         },
       },
       {
@@ -191,7 +237,7 @@ describe('Asaswap Tests', function () {
         toAccountAddr: sender.address,
         amountMicroAlgos: microAlgosAmount,
         payFlags: { 
-          totalFee: 1000,
+          totalFee: algoFee,
         },
       },
     ];
@@ -232,6 +278,18 @@ describe('Asaswap Tests', function () {
     'int:123',
   ];
 
+  it('throws errors after trying to opt-in escrow after finishing setup', () => {
+    setupApplication();
+    deployEscrow();
+    addFundsToEscrow();
+    setEscrow(escrow.address);
+
+    expectTealError(
+      () => escrowOptInToAsset(),
+      ERRORS.TEAL.INVALID_TYPE
+    );
+  });
+
   it('throws errors after trying to remove liquidity bigger than the balance', () => {
     setupApplicationWithEscrow();
     optIn(master.address);
@@ -243,6 +301,16 @@ describe('Asaswap Tests', function () {
     addLiquidity(master.account, escrow.address, 10, 7000000);
     expectTealError(
       () => removeLiquidity(master.account, 8000000),
+      ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
+    );
+  });
+
+  it('throws errors after trying to make empty withdrawal', () => {
+    setupApplicationWithEscrow();
+    optIn(master.address);
+
+    expectTealError(
+      () => withdraw(master, 0, 0),
       ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
     );
   });
@@ -272,9 +340,9 @@ describe('Asaswap Tests', function () {
     addLiquidity(master.account, escrow.address, 6000000, 7000000);
     removeLiquidity(master.account, 7000000);
 
-    assert.equal(getLocal(master.address, 'ALGOS_TO_WITHDRAW'), 7000000);
-    assert.equal(getLocal(master.address, 'TOKENS_TO_WITHDRAW'), 6000000);
-    assert.equal(getLocal(master.address, 'USER_LIQUIDITY_TOKENS'), 0);
+    assert.equal(getLocal(master.address, 'USR_ALGOS'), 6998000);
+    assert.equal(getLocal(master.address, 'USR_ASA'), 6000000);
+    assert.equal(getLocal(master.address, 'USR_LIQ'), 0);
 
     expectTealError(
       () => withdraw(master, 121, 121),
@@ -285,7 +353,32 @@ describe('Asaswap Tests', function () {
       ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
     );
     expectTealError(
-      () => withdraw(master, 0, 7000000),
+      () => withdraw(master, 0, 6998000),
+      ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
+    );
+  });
+
+  it('throws errors after altering the transaction fee', () => {
+    setupApplicationWithEscrow();
+    optIn(master.address);
+
+    addLiquidity(master.account, escrow.address, 6000000, 7000000);
+    removeLiquidity(master.account, 6000000);
+
+    assert.equal(getLocal(master.address, 'USR_ALGOS'), 5998000);
+    assert.equal(getLocal(master.address, 'USR_ASA'), 5142857);
+    assert.equal(getLocal(master.address, 'USR_LIQ'), 1000000);
+
+    expectTealError(
+      () => withdraw(master, 5142857, 5998000, 10000, 1000),
+      ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
+    );
+    expectTealError(
+      () => withdraw(master, 5142857, 5998000, 10000, 10000),
+      ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
+    );
+    expectTealError(
+      () => withdraw(master, 5142857, 5998000, 1000, 10000),
       ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
     );
   });
@@ -338,9 +431,9 @@ describe('Asaswap Tests', function () {
 
     assert.isDefined(applicationId);
     assert.equal(getGlobal('ASSET_IDX'), 123);
-    assert.equal(getGlobal('TOTAL_LIQUIDITY_TOKENS'), 0);
-    assert.equal(getGlobal('ALGOS_BALANCE'), 0);
-    assert.equal(getGlobal('TOKENS_BALANCE'), 0);
+    assert.equal(getGlobal('LIQ_TOKENS'), 0);
+    assert.equal(getGlobal('ALGOS_BAL'), 0);
+    assert.equal(getGlobal('ASA_BAL'), 0);
     assert.equal(getGlobal('ESCROW_ADDR'), undefined);
     assert.deepEqual(getGlobal('CREATOR_ADDR'), creatorPk);
 
@@ -358,50 +451,50 @@ describe('Asaswap Tests', function () {
     optIn(master.address);
     addLiquidity(master.account, escrow.address, 6000000, 7000000);
 
-    assert.equal(getGlobal('TOTAL_LIQUIDITY_TOKENS'), 7000000);
-    assert.equal(getGlobal('ALGOS_BALANCE'), 7000000);
-    assert.equal(getGlobal('TOKENS_BALANCE'), 6000000);
-    assert.equal(getLocal(master.address, 'ALGOS_TO_WITHDRAW'), 0);
-    assert.equal(getLocal(master.address, 'TOKENS_TO_WITHDRAW'), 0);
-    assert.equal(getLocal(master.address, 'USER_LIQUIDITY_TOKENS'), 7000000);
+    assert.equal(getGlobal('LIQ_TOKENS'), 7000000);
+    assert.equal(getGlobal('ALGOS_BAL'), 7000000);
+    assert.equal(getGlobal('ASA_BAL'), 6000000);
+    assert.equal(getLocal(master.address, 'USR_ALGOS'), 0);
+    assert.equal(getLocal(master.address, 'USR_ASA'), 0);
+    assert.equal(getLocal(master.address, 'USR_LIQ'), 7000000);
 
     // make an algo swap
     optIn(swapper.address);
     algoSwap(swapper.account, escrow.address, 1000000);
 
-    assert.equal(getGlobal('TOTAL_LIQUIDITY_TOKENS'), 7000000);
-    assert.equal(getGlobal('ALGOS_BALANCE'), 8000000);
-    assert.equal(getGlobal('TOKENS_BALANCE'), 5272500);
-    assert.equal(getLocal(master.address, 'ALGOS_TO_WITHDRAW'), 0);
-    assert.equal(getLocal(master.address, 'TOKENS_TO_WITHDRAW'), 0);
-    assert.equal(getLocal(master.address, 'USER_LIQUIDITY_TOKENS'), 7000000);
-    assert.equal(getLocal(swapper.address, 'ALGOS_TO_WITHDRAW'), 0);
-    assert.equal(getLocal(swapper.address, 'TOKENS_TO_WITHDRAW'), 727500);
-    assert.equal(getLocal(swapper.address, 'USER_LIQUIDITY_TOKENS'), 0);
+    assert.equal(getGlobal('LIQ_TOKENS'), 7000000);
+    assert.equal(getGlobal('ALGOS_BAL'), 8000000);
+    assert.equal(getGlobal('ASA_BAL'), 5272500);
+    assert.equal(getLocal(master.address, 'USR_ALGOS'), 0);
+    assert.equal(getLocal(master.address, 'USR_ASA'), 0);
+    assert.equal(getLocal(master.address, 'USR_LIQ'), 7000000);
+    assert.equal(getLocal(swapper.address, 'USR_ALGOS'), 0);
+    assert.equal(getLocal(swapper.address, 'USR_ASA'), 727500);
+    assert.equal(getLocal(swapper.address, 'USR_LIQ'), 0);
 
     // withdraw tokens
     withdraw(swapper, 727500, 0);
-    assert.equal(getGlobal('TOTAL_LIQUIDITY_TOKENS'), 7000000);
-    assert.equal(getGlobal('ALGOS_BALANCE'), 7999000);
-    assert.equal(getGlobal('TOKENS_BALANCE'), 5272500);
-    assert.equal(getLocal(swapper.address, 'ALGOS_TO_WITHDRAW'), 0);
-    assert.equal(getLocal(swapper.address, 'TOKENS_TO_WITHDRAW'), 0);
-    assert.equal(getLocal(swapper.address, 'USER_LIQUIDITY_TOKENS'), 0);
+    assert.equal(getGlobal('LIQ_TOKENS'), 7000000);
+    assert.equal(getGlobal('ALGOS_BAL'), 8000000);
+    assert.equal(getGlobal('ASA_BAL'), 5272500);
+    assert.equal(getLocal(swapper.address, 'USR_ALGOS'), 0);
+    assert.equal(getLocal(swapper.address, 'USR_ASA'), 0);
+    assert.equal(getLocal(swapper.address, 'USR_LIQ'), 0);
 
     // make an asset swap
-    assetSwap(master.account, escrow.address, 100);
+    assetSwap(master.account, escrow.address, 1000000);
 
-    assert.equal(getGlobal('TOTAL_LIQUIDITY_TOKENS'), 7000000);
-    assert.equal(getGlobal('ALGOS_BALANCE'), 6527500);
-    assert.equal(getGlobal('TOKENS_BALANCE'), 5272600);
-    assert.equal(getLocal(master.address, 'ALGOS_TO_WITHDRAW'), 1471500);
-    assert.equal(getLocal(master.address, 'TOKENS_TO_WITHDRAW'), 0);
-    assert.equal(getLocal(master.address, 'USER_LIQUIDITY_TOKENS'), 7000000);
-    assert.equal(getLocal(swapper.address, 'ALGOS_TO_WITHDRAW'), 0);
-    assert.equal(getLocal(swapper.address, 'TOKENS_TO_WITHDRAW'), 0);
-    assert.equal(getLocal(swapper.address, 'USER_LIQUIDITY_TOKENS'), 0);
+    assert.equal(getGlobal('LIQ_TOKENS'), 7000000);
+    assert.equal(getGlobal('ALGOS_BAL'), 6762855);
+    assert.equal(getGlobal('ASA_BAL'), 6272500);
+    assert.equal(getLocal(master.address, 'USR_ALGOS'), 1237145);
+    assert.equal(getLocal(master.address, 'USR_ASA'), 0);
+    assert.equal(getLocal(master.address, 'USR_LIQ'), 7000000);
+    assert.equal(getLocal(swapper.address, 'USR_ALGOS'), 0);
+    assert.equal(getLocal(swapper.address, 'USR_ASA'), 0);
+    assert.equal(getLocal(swapper.address, 'USR_LIQ'), 0);
   
     // withdraw algos
-    withdraw(master, 0, 1471500);
+    withdraw(master, 0, 1237145);
   });
 });
