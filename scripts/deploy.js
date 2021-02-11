@@ -1,5 +1,6 @@
 // Original file: https://github.com/scale-it/algorand-builder/blob/master/examples/crowdfunding/scripts/createApp.js
 /* globals module, require */
+
 const { stringToBytes, update } = require('@algorand-builder/algob');
 const { executeTransaction } = require('@algorand-builder/algob');
 const { TransactionType, SignType } = require('@algorand-builder/runtime/build/types.js');
@@ -9,7 +10,7 @@ const ASSET_INDEX = 123;
 async function run (runtimeEnv, deployer) {
   const masterAccount = deployer.accountsByName.get('master');
 
-  // initialize app arguments
+  // Initialize app arguments
   let appArgs = [
     `int:${ASSET_INDEX}`
   ];
@@ -31,11 +32,11 @@ async function run (runtimeEnv, deployer) {
   );
   const applicationID = res.appID;
 
-  // Get Escrow Account Address
+  // Get escrow account address
   const escrowAccount = await deployer.loadLogic('escrow.py', [], { app_id: applicationID });
   console.log('Escrow Account Address:', escrowAccount.address());
 
-  // Send Funds For Minimum Escrow Balance
+  // Send funds for minimum escrow balance
   const algoTxnParams = {
     type: TransactionType.TransferAlgo,
     sign: SignType.SecretKey,
