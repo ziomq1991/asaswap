@@ -1,5 +1,16 @@
 # ASAswap
 
+Constant Product Market Maker DEX for Algorand blockchain. 
+Works between Algorand and specified during deployment ASA coin. 
+
+The interface for end user has just 4 operations:
+1. add liquidity to the pool
+1. remove liquidity from the pool
+1. do swap between two assets 
+1. withdraw funds (after swap or removing liquidity)
+
+Liquidity providers gets 0.3% on any swap and they could collect that automatically when removing liquidity.
+
 ## Compiling and deploying
 
 To compile and deploy the `asaswap`:
