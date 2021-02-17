@@ -34,6 +34,7 @@ function makeOptInTx(accountAddress, suggestedParams) {
     lastRound: suggestedParams['last-round'] + 1000,
     genesisID: suggestedParams['genesis-id'],
     genesisHash: suggestedParams['genesis-hash'],
+    flatFee: true,
     appIndex: APPLICATION_ID,
     appOnComplete: 1 // OptInOC
   };
@@ -48,6 +49,7 @@ function makeCallTx(accountAddress, appArgs, suggestedParams) {
     lastRound: suggestedParams['last-round'] + 1000,
     genesisID: suggestedParams['genesis-id'],
     genesisHash: suggestedParams['genesis-hash'],
+    flatFee: true,
     appIndex: APPLICATION_ID,
     appArgs: encodeArrayForSigner(appArgs)
   };
@@ -63,6 +65,7 @@ function makeAlgoPaymentTx(accountAddress, toAddress, amount, suggestedParams) {
     lastRound: suggestedParams['last-round'] + 1000,
     genesisID: suggestedParams['genesis-id'],
     genesisHash: suggestedParams['genesis-hash'],
+    flatFee: true,
     amount: Number(amount)
   };
 }
@@ -81,6 +84,7 @@ function makeAssetPaymentTx(accountAddress, toAddress, amount, suggestedParams) 
     lastRound: suggestedParams['last-round'] + 1000,
     genesisID: suggestedParams['genesis-id'],
     genesisHash: suggestedParams['genesis-hash'],
+    flatFee: true,
     amount: Number(amount),
     assetIndex: ASSET_INDEX
   };
@@ -94,6 +98,7 @@ function convertParamsToSDKFormat(suggestedParams) {
     genesisID: suggestedParams['genesis-id'],
     firstRound: suggestedParams['last-round'],
     lastRound: suggestedParams['last-round'] + 1000,
+    flatFee: true,
     minFee: suggestedParams['min-fee']
   };
 }
