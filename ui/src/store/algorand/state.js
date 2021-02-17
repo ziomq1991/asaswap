@@ -9,6 +9,6 @@ export default function() {
     applicationData: null,
     pendingUpdate: false,
     pendingAction: null,
-    pendingActionMessage: null,
+    pendingActionMessage: null
   };
 }

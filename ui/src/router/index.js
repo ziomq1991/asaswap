@@ -1,9 +1,9 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
-import Swap from '../views/Swap.vue';
-import AddLiquidity from '../views/AddLiquidity.vue';
-import Withdraw from '../views/Withdraw.vue';
-import RemoveLiquidity from '../views/RemoveLiquidity.vue';
+import Swap from '@/views/Swap.vue';
+import AddLiquidity from '@/views/AddLiquidity.vue';
+import Withdraw from '@/views/Withdraw.vue';
+import RemoveLiquidity from '@/views/RemoveLiquidity.vue';
 
 Vue.use(VueRouter);
 

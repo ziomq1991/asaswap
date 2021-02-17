@@ -1,234 +1,23 @@
 import algosdk from 'algosdk';
-import { Buffer } from 'buffer';
-import eventBus from '@/events/eventBus';
-import { APPLICATION_ID, ASSET_INDEX, COMPILED_ESCROW, ESCROW_ADDRESS } from '@/config/config';
+import eventBus from '@/utils/eventBus';
+import { APPLICATION_ID, ESCROW_ADDRESS, ASSET_INDEX } from '@/config';
 import { validateIfAccountCanAffordTxs } from '@/utils/validation';
-
-function encodeArrayForSDK(decodedArray) {
-  const encoder = new TextEncoder('ascii');
-  return decodedArray.map((value) => {
-    return encoder.encode(value);
-  });
-}
-
-export function uint64ToBigEndian(x) {
-  const buff = Buffer.alloc(8);
-  buff.writeUIntBE(x, 0, 8);
-  return buff;
-}
-
-function encodeArrayForSigner(decodedArray) {
-  return decodedArray.map((value) => {
-    if (typeof value === 'number') {
-      return btoa(String.fromCharCode.apply(null, uint64ToBigEndian(value)));
-    }
-    return btoa(value);
-  });
-}
-
-function makeOptInTx(accountAddress, suggestedParams) {
-  return {
-    from: accountAddress,
-    type: 'appl',
-    fee: suggestedParams['min-fee'],
-    firstRound: suggestedParams['last-round'],
-    lastRound: suggestedParams['last-round'] + 1000,
-    genesisID: suggestedParams['genesis-id'],
-    genesisHash: suggestedParams['genesis-hash'],
-    flatFee: true,
-    appIndex: APPLICATION_ID,
-    appOnComplete: 1 // OptInOC
-  };
-}
-
-function makeCallTx(accountAddress, appArgs, suggestedParams) {
-  return {
-    from: accountAddress,
-    type: 'appl',
-    fee: suggestedParams['min-fee'],
-    firstRound: suggestedParams['last-round'],
-    lastRound: suggestedParams['last-round'] + 1000,
-    genesisID: suggestedParams['genesis-id'],
-    genesisHash: suggestedParams['genesis-hash'],
-    flatFee: true,
-    appIndex: APPLICATION_ID,
-    appArgs: encodeArrayForSigner(appArgs)
-  };
-}
-
-function makeAlgoPaymentTx(accountAddress, toAddress, amount, suggestedParams) {
-  return {
-    type: 'pay',
-    from: accountAddress,
-    to: toAddress,
-    fee: suggestedParams['min-fee'],
-    firstRound: suggestedParams['last-round'],
-    lastRound: suggestedParams['last-round'] + 1000,
-    genesisID: suggestedParams['genesis-id'],
-    genesisHash: suggestedParams['genesis-hash'],
-    flatFee: true,
-    amount: Number(amount)
-  };
-}
-
-function makeAssetOptInTx(accountAddress, suggestedParams) {
-  return makeAssetPaymentTx(accountAddress, accountAddress, 0, suggestedParams);
-}
-
-function makeAssetPaymentTx(accountAddress, toAddress, amount, suggestedParams) {
-  return {
-    type: 'axfer',
-    from: accountAddress,
-    to: toAddress,
-    fee: suggestedParams['min-fee'],
-    firstRound: suggestedParams['last-round'],
-    lastRound: suggestedParams['last-round'] + 1000,
-    genesisID: suggestedParams['genesis-id'],
-    genesisHash: suggestedParams['genesis-hash'],
-    flatFee: true,
-    amount: Number(amount),
-    assetIndex: ASSET_INDEX
-  };
-}
-
-function convertParamsToSDKFormat(suggestedParams) {
-  return {
-    consensusVersion: suggestedParams['consensus-version'],
-    fee: suggestedParams['fee'],
-    genesisHash: suggestedParams['genesis-hash'],
-    genesisID: suggestedParams['genesis-id'],
-    firstRound: suggestedParams['last-round'],
-    lastRound: suggestedParams['last-round'] + 1000,
-    flatFee: true,
-    minFee: suggestedParams['min-fee']
-  };
-}
-
-function logicSign(tx) {
-  const program = new Uint8Array(Buffer.from(COMPILED_ESCROW, 'base64'));
-  const lSig = algosdk.makeLogicSig(program);
-  return algosdk.signLogicSigTransactionObject(tx, lSig);
-}
-
-function emitError(message) {
-  eventBus.$emit('open-alert', {
-    type: 'error',
-    message: message
-  });
-}
-
-class SignerWrapper {
-  constructor(signer) {
-    this.signer = signer;
-  }
-
-  async blockingCall(func, retry=true) {
-    // Ugly but works
-    while (this.promise) {
-      await this.promise;
-    }
-    try {
-      this.promise = func();
-      try {
-        return await this.promise;
-      } catch (e) {
-        if (e.message === 'Another query processing' && retry) {
-          return new Promise(resolve => {
-            window.setTimeout(
-              async () => {
-                resolve(await this.blockingCall(func, false));
-              }, 500
-            );
-          });
-        } else {
-          throw e;
-        }
-      }
-    } finally {
-      this.promise = null;
-    }
-  }
-
-  async connect() {
-    try {
-      return await this.signer.connect();
-    } catch (e) {
-      emitError('Could not connect to AlgoSigner');
-      throw e;
-    }
-  }
-
-  async sign(tx) {
-    try {
-      return await this.blockingCall(() => this.signer.sign(tx));
-    } catch (e) {
-      emitError('Transaction could not be signed');
-      throw e;
-    }
-  }
-
-  async accounts(params) {
-    try {
-      return await this.blockingCall(() => this.signer.accounts(params));
-    } catch (e) {
-      emitError('Could not fetch information about accounts');
-      throw e;
-    }
-  }
-
-  async algod(params) {
-    try {
-      return await this.blockingCall(() => this.signer.algod(params));
-    } catch (e) {
-      emitError('Could not fetch information from the Algorand blockchain');
-      throw e;
-    }
-  }
-
-  async send(params, showSucess=true) {
-    try {
-      eventBus.$emit('set-action-message', 'Sending...');
-      const tx = await this.blockingCall(() => this.signer.send(params));
-      if (showSucess) {
-        eventBus.$emit('transaction-success', tx.txId);
-      }
-      return tx;
-    } catch (e) {
-      const insufficientFundsError = /TransactionPool\.Remember: transaction [A-Z0-9]+: underflow on subtracting \d+ from sender amount \d+/g;
-      if (e.message.match(insufficientFundsError)) {
-        emitError('Insufficient funds');
-        throw e;
-      }
-      emitError('Unexpected error occured while sending transaction');
-      throw e;
-    }
-  }
-}
-
-class AlgoExplorerAPI {
-  constructor(ledger) {
-    if (ledger.toUpperCase() === 'TESTNET') {
-      this.url = 'https://api.testnet.algoexplorer.io';
-    } else {
-      this.url = 'https://api.algoexplorer.io';
-    }
-  }
-
-  async fetch(path) {
-    try {
-      const response = await fetch(`${this.url}${path}`);
-      const data = await response.json();
-      return data;
-    } catch (e) {
-      emitError('Could not fetch information from the Algorand blockchain');
-      throw e;
-    }
-  }
-}
+import {
+  convertParamsToSDKFormat,
+  encodeArrayForSDK,
+  logicSign,
+  makeAlgoPaymentTx,
+  makeAssetOptInTx,
+  makeAssetPaymentTx,
+  makeCallTx,
+  makeOptInTx
+} from '@/utils/transactions';
+import { AlgoExplorer } from '@/services/algoExplorer';
+import { AlgoSigner } from '@/services/algoSigner';
 
 export default class AlgorandService {
   constructor(signer, ledger) {
-    this.signer = new SignerWrapper(signer);
+    this.signer = new AlgoSigner(signer);
     this.ledger = ledger;
   }
 
@@ -250,7 +39,7 @@ export default class AlgorandService {
   }
 
   static async getApplicationData(ledger) {
-    const explorer = new AlgoExplorerAPI(ledger);
+    const explorer = new AlgoExplorer(ledger);
     return explorer.fetch(`/v2/applications/${APPLICATION_ID}`);
   }
 

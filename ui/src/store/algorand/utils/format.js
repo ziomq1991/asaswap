@@ -1,4 +1,4 @@
-import { APPLICATION_ID } from '@/config/config';
+import { APPLICATION_ID } from '@/config';
 
 export function getMappedUserAssets(accountData) {
   const assets = accountData['assets'];

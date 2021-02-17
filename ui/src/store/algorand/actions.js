@@ -1,7 +1,7 @@
 /* global AlgoSigner:readonly */
 
 import AlgorandService from '@/services/algorandService';
-import { ALGORAND_LEDGER } from '@/config/config';
+import { ALGORAND_LEDGER } from '@/config';
 import { isEqual } from 'lodash';
 
 export async function GET_SERVICE_INSTANCE({ commit, state, dispatch }) {

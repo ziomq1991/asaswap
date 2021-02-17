@@ -1,5 +1,5 @@
 import { getMappedUserState, getMappedGlobalState, getMappedUserAssets } from './utils/format';
-import { APPLICATION_ID, ASSET_INDEX } from '@/config/config';
+import { APPLICATION_ID, ASSET_INDEX } from '@/config';
 
 export function algorand(state) {
   return {

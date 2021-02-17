@@ -23,14 +23,14 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import { ALGORAND_LEDGER } from './config/config';
+import { ALGORAND_LEDGER } from './config';
 import Navbar from './components/Navbar';
 import Alert from './components/Alert';
 import UpdateScheduler from './components/UpdateScheduler';
-import SelectAccountModal from './components/SelectAccountModal';
-import AccountModal from './components/AccountModal';
-import ActionModal from './components/ActionModal';
-import eventBus from './events/eventBus';
+import SelectAccountModal from './components/modals/SelectAccountModal';
+import AccountModal from './components/modals/AccountModal';
+import ActionModal from './components/modals/ActionModal';
+import eventBus from './utils/eventBus';
 import WithdrawalAlert from './components/WithdrawalAlert.vue';
 
 export default {

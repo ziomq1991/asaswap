@@ -4,7 +4,7 @@ import {
   ASSET_DECIMAL_POINTS,
   ASSET_RATIO,
   RATIO_DECIMAL_POINTS
-} from '@/config/config';
+} from '@/config';
 
 function toFixed(num, fixed) {
   return Number((Math.floor(num * Math.pow(10, fixed)) / Math.pow(10, fixed)).toFixed(fixed));

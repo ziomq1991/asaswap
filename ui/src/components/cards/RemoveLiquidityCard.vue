@@ -1,89 +1,87 @@
 <template>
   <div>
-    <div class="w-full flex flex-col justify-center items-center">
-      <div
-        class="max-w-lg bg-white shadow-md rounded-lg overflow-hidden mx-auto mt-32 max-w-md mb-4"
-      >
-        <div class="py-4 px-8 mt-3">
-          <div class="flex flex-col mb-8">
-            <h2 class="text-gray-700 font-semibold text-2xl tracking-wide mb-2">
-              Remove Liquidity
-            </h2>
-            <p class="text-base text-gray-500">
-              Enter the amount of liquidity that you would like to remove.
-            </p>
-            <p
-              v-if="maximumValueDisplay"
-              class="text-base text-gray-500"
-            >
-              You have <b>{{ maximumValueDisplay }}</b> liquidity tokens that
-              you can remove.
-            </p>
-            <p
-              v-else
-              class="text-base text-gray-500"
-            >
-              You have not provided liquidity to the pool yet.
-            </p>
-          </div>
-
-          <div>
-            <NumberInput
-              v-model="liquidityTokens"
-              label="Liquidity Tokens"
-              :max="userState.USR_LIQ"
-              placeholder="0"
-              :allow-decimals="false"
-              @change="validate"
-            />
-          </div>
-          <div class="py-4">
-            <ActionButton
-              label="Remove Liquidity"
-              :execute="onAddLiquidity"
-              :validate="validate"
-              :error="error"
-            />
-          </div>
+    <Card>
+      <div class="py-4 px-8 mt-3">
+        <div class="flex flex-col mb-8">
+          <h2 class="text-gray-700 font-semibold text-2xl tracking-wide mb-2">
+            Remove Liquidity
+          </h2>
+          <p class="text-base text-gray-500">
+            Enter the amount of liquidity that you would like to remove.
+          </p>
+          <p
+            v-if="maximumValueDisplay"
+            class="text-base text-gray-500"
+          >
+            You have <b>{{ maximumValueDisplay }}</b> liquidity tokens that
+            you can remove.
+          </p>
+          <p
+            v-else
+            class="text-base text-gray-500"
+          >
+            You have not provided liquidity to the pool yet.
+          </p>
         </div>
-        <div
-          v-if="isReady"
-          class="bg-gray-100 rounded-lg"
-        >
-          <div class="py-4 px-4">
-            Corresponding amounts to remove from the pool:
-            <div class="flex flex-col">
-              <div class="flex flex-row">
-                <div>Algos:</div>
-                <div class="text-right flex-grow font-bold">
-                  {{ amountOfAlgosDisplay }}
-                </div>
+
+        <div>
+          <NumberInput
+            v-model="liquidityTokens"
+            label="Liquidity Tokens"
+            :max="userState.USR_LIQ"
+            placeholder="0"
+            :allow-decimals="false"
+            @change="validate"
+          />
+        </div>
+        <div class="py-4">
+          <ActionButton
+            label="Remove Liquidity"
+            :execute="onAddLiquidity"
+            :validate="validate"
+            :error="error"
+          />
+        </div>
+      </div>
+      <div
+        v-if="isReady"
+        class="bg-gray-100 rounded-lg"
+      >
+        <div class="py-4 px-4">
+          Corresponding amounts to remove from the pool:
+          <div class="flex flex-col">
+            <div class="flex flex-row">
+              <div>Algos:</div>
+              <div class="text-right flex-grow font-bold">
+                {{ amountOfAlgosDisplay }}
               </div>
-              <div class="flex flex-row">
-                <div>{{ assetName }}:</div>
-                <div class="text-right flex-grow font-bold">
-                  {{ amountOfAssetDisplay }}
-                </div>
+            </div>
+            <div class="flex flex-row">
+              <div>{{ assetName }}:</div>
+              <div class="text-right flex-grow font-bold">
+                {{ amountOfAssetDisplay }}
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   </div>
 </template>
 <script>
 import { mapGetters } from 'vuex';
 import { getAlgos, getAssetDisplayAmount } from '@/utils/conversion';
-import { ASSET_NAME } from '@/config/config';
-import NumberInput from './NumberInput';
-import ActionButton from './ActionButton';
+import { ASSET_NAME } from '@/config';
+import NumberInput from '../NumberInput';
+import ActionButton from '../ActionButton';
+import Card from './Card';
 
 export default {
   name: 'RemoveLiquidityCard',
   components: {
     NumberInput,
     ActionButton,
+    Card
   },
   data() {
     return {

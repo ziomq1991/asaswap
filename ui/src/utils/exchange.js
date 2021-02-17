@@ -1,4 +1,4 @@
-import { FEE_PERCENTAGE, RATIO } from '@/config/config';
+import { FEE_PERCENTAGE, RATIO } from '@/config';
 
 export class ExchangeCalculator {
   constructor(globalAlgosAmount, globalAssetAmount) {

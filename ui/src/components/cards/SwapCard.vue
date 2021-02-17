@@ -1,120 +1,116 @@
 <template>
   <div>
-    <div class="w-full flex flex-col items-center">
-      <div
-        class="max-w-lg bg-white shadow-md rounded-lg overflow-hidden mx-auto mt-32 max-w-md mb-4"
-      >
-        <div class="py-4 px-8 mt-3">
-          <div class="flex flex-col mb-8">
-            <h2 class="text-gray-700 font-semibold text-2xl tracking-wide mb-2">
-              Swap
-            </h2>
-            <p class="text-gray-500 text-base">
-              Enter the amount of currency that you would like to swap.
-            </p>
-          </div>
-          <div class="bg-gray-100 rounded-lg mb-4">
-            <div class="py-4 px-4">
-              <div class="flex flex-row flex-wrap">
-                <div class="flex flex-col flex-grow mr-4">
-                  <NumberInput
-                    v-model="firstAmount"
-                    :disabled="!algorand.applicationData"
-                    @change="onFirstInputChange"
-                    @input.native="onFirstInputChange"
-                  />
-                </div>
-                <div class="flex flex-col">
-                  <t-select
-                    v-model="firstCurrency"
-                    class="h-full"
-                    :options="currencies"
-                    :disabled="!algorand.applicationData"
-                  />
-                </div>
+    <Card>
+      <div class="py-4 px-8 mt-3">
+        <div class="flex flex-col mb-8">
+          <h2 class="text-gray-700 font-semibold text-2xl tracking-wide mb-2">
+            Swap
+          </h2>
+          <p class="text-gray-500 text-base">
+            Enter the amount of currency that you would like to swap.
+          </p>
+        </div>
+        <div class="bg-gray-100 rounded-lg mb-4">
+          <div class="py-4 px-4">
+            <div class="flex flex-row flex-wrap">
+              <div class="flex flex-col flex-grow mr-4">
+                <NumberInput
+                  v-model="firstAmount"
+                  :disabled="!algorand.applicationData"
+                  @change="onFirstInputChange"
+                  @input.native="onFirstInputChange"
+                />
+              </div>
+              <div class="flex flex-col">
+                <t-select
+                  v-model="firstCurrency"
+                  class="h-full"
+                  :options="currencies"
+                  :disabled="!algorand.applicationData"
+                />
               </div>
             </div>
-          </div>
-          <div class="flex flex-col justify-center items-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              class="h-4"
-            >
-              <path
-                fillRule="evenodd"
-                d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </div>
-          <div class="bg-gray-100 rounded-lg mt-4">
-            <div class="py-4 px-4">
-              <div class="flex flex-row flex-wrap">
-                <div class="flex flex-col flex-grow mr-4">
-                  <NumberInput
-                    v-model="secondAmount"
-                    :disabled="!algorand.applicationData"
-                    @change="onSecondInputChange(true)"
-                    @input.native="onSecondInputChange(false)"
-                  />
-                </div>
-                <div class="flex flex-col">
-                  <t-select
-                    v-model="secondCurrency"
-                    class="h-full"
-                    :options="currencies"
-                    :disabled="!algorand.applicationData"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="py-4">
-            <ActionButton
-              label="Swap"
-              :execute="onSwap"
-              :validate="validate"
-              :error="error"
-            />
           </div>
         </div>
-        <div
-          v-if="globalState !== {}"
-          class="bg-gray-100 rounded-lg"
-        >
+        <div class="flex flex-col justify-center items-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            class="h-4"
+          >
+            <path
+              fillRule="evenodd"
+              d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </div>
+        <div class="bg-gray-100 rounded-lg mt-4">
           <div class="py-4 px-4">
-            <div class="flex flex-col">
-              <div class="flex flex-row">
-                <div>Exchange rate:</div>
-                <div class="text-right flex-grow font-bold">
-                  {{ exchangeRateDisplay }}
-                </div>
+            <div class="flex flex-row flex-wrap">
+              <div class="flex flex-col flex-grow mr-4">
+                <NumberInput
+                  v-model="secondAmount"
+                  :disabled="!algorand.applicationData"
+                  @change="onSecondInputChange(true)"
+                  @input.native="onSecondInputChange(false)"
+                />
               </div>
-              <div class="flex flex-row">
-                <div />
-                <div class="text-right flex-grow font-bold">
-                  {{ reverseExchangeRateDisplay }}
-                </div>
+              <div class="flex flex-col">
+                <t-select
+                  v-model="secondCurrency"
+                  class="h-full"
+                  :options="currencies"
+                  :disabled="!algorand.applicationData"
+                />
               </div>
-              <div class="flex flex-row">
-                <div>Price impact:</div>
-                <div class="text-right flex-grow font-bold">
-                  {{ priceImpactDisplay }}
-                </div>
+            </div>
+          </div>
+        </div>
+        <div class="py-4">
+          <ActionButton
+            label="Swap"
+            :execute="onSwap"
+            :validate="validate"
+            :error="error"
+          />
+        </div>
+      </div>
+      <div
+        v-if="globalState !== {}"
+        class="bg-gray-100 rounded-lg"
+      >
+        <div class="py-4 px-4">
+          <div class="flex flex-col">
+            <div class="flex flex-row">
+              <div>Exchange rate:</div>
+              <div class="text-right flex-grow font-bold">
+                {{ exchangeRateDisplay }}
               </div>
-              <div class="flex flex-row">
-                <div>Liquidity fee:</div>
-                <div class="text-right flex-grow font-bold">
-                  {{ feeDisplay }}
-                </div>
+            </div>
+            <div class="flex flex-row">
+              <div />
+              <div class="text-right flex-grow font-bold">
+                {{ reverseExchangeRateDisplay }}
+              </div>
+            </div>
+            <div class="flex flex-row">
+              <div>Price impact:</div>
+              <div class="text-right flex-grow font-bold">
+                {{ priceImpactDisplay }}
+              </div>
+            </div>
+            <div class="flex flex-row">
+              <div>Liquidity fee:</div>
+              <div class="text-right flex-grow font-bold">
+                {{ feeDisplay }}
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   </div>
 </template>
 <script>
@@ -127,21 +123,23 @@ import {
 
 } from '@/utils/conversion';
 import { getInputError } from '@/utils/validation';
-import NumberInput from './NumberInput.vue';
-import ActionButton from './ActionButton';
+import NumberInput from '../NumberInput.vue';
+import ActionButton from '../ActionButton';
 import {
   ALGOS_DECIMAL_POINTS,
   ASSET_DECIMAL_POINTS,
   ASSET_NAME,
   RATIO,
-} from '@/config/config';
+} from '@/config';
 import { ExchangeCalculator } from '@/utils/exchange';
+import Card from '@/components/cards/Card';
 
 export default {
   name: 'SwapCard',
   components: {
     NumberInput,
     ActionButton,
+    Card
   },
   data() {
     return {

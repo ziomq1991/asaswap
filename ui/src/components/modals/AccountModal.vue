@@ -91,9 +91,9 @@
   </div>
 </template>
 <script>
-import eventBus from '@/events/eventBus';
+import eventBus from '@/utils/eventBus';
 import { getAlgos, getAssetDisplayAmount } from '@/utils/conversion';
-import { ASSET_NAME } from '@/config/config';
+import { ASSET_NAME } from '@/config';
 import { mapGetters } from 'vuex';
 
 export default {

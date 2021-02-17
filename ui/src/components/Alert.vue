@@ -22,7 +22,7 @@
   </div>
 </template>
 <script>
-import eventBus from '@/events/eventBus';
+import eventBus from '@/utils/eventBus';
 
 export default {
   name: 'Alert',
@@ -66,6 +66,4 @@ export default {
 .wrapper-bg {
   background-color: #0065EE;
 }
-
-
 </style>

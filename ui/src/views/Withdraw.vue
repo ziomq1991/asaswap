@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import WithdrawCard from '../components/WithdrawCard.vue';
+import WithdrawCard from '@/components/cards/WithdrawCard.vue';
 
 export default {
   name: 'Withdraw',

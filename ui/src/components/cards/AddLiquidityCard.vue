@@ -1,89 +1,85 @@
 <template>
   <div>
-    <div class="w-full flex flex-col items-center">
-      <div
-        class="bg-white shadow-md rounded-lg overflow-hidden mx-auto flex flex-col mt-32 max-w-md mb-4"
-      >
-        <div class="py-4 px-8 mt-3">
-          <div class="flex flex-col mb-8">
-            <h2 class="text-gray-700 font-semibold text-2xl tracking-wide mb-2">
-              Add Liquidity
-            </h2>
-            <p class="text-gray-500 text-base">
-              Enter the amount of liquidity that you would like to add.
-            </p>
-          </div>
-          <div class="mt-4">
-            <NumberInput
-              v-model="assetAmount"
-              :label="assetName"
-              @change="onAssetInputChange(true)"
-              @input.native="onAssetInputChange(false)"
-            />
-          </div>
-          <div class="mt-4">
-            <NumberInput
-              v-model="algosAmount"
-              label="Algos"
-              @change="onAlgosInputChange(true)"
-              @input.native="onAlgosInputChange(false)"
-            />
-          </div>
-          <div class="py-4">
-            <ActionButton
-              label="Add Liquidity"
-              :execute="onAddLiquidity"
-              :validate="validate"
-              :error="error"
-            />
-          </div>
+    <Card>
+      <div class="py-4 px-8 mt-3">
+        <div class="flex flex-col mb-8">
+          <h2 class="text-gray-700 font-semibold text-2xl tracking-wide mb-2">
+            Add Liquidity
+          </h2>
+          <p class="text-gray-500 text-base">
+            Enter the amount of liquidity that you would like to add.
+          </p>
         </div>
-        <div
-          v-if="globalState !== {}"
-          class="bg-gray-100 rounded-lg"
-        >
-          <div class="py-4 px-4">
-            <div class="flex flex-col">
-              <div class="flex flex-row">
-                <div>Exchange rate:</div>
-                <div class="text-right flex-grow font-bold">
-                  {{ algosPerAsset }}
-                </div>
+        <div class="mt-4">
+          <NumberInput
+            v-model="assetAmount"
+            :label="assetName"
+            @change="onAssetInputChange(true)"
+            @input.native="onAssetInputChange(false)"
+          />
+        </div>
+        <div class="mt-4">
+          <NumberInput
+            v-model="algosAmount"
+            label="Algos"
+            @change="onAlgosInputChange(true)"
+            @input.native="onAlgosInputChange(false)"
+          />
+        </div>
+        <div class="py-4">
+          <ActionButton
+            label="Add Liquidity"
+            :execute="onAddLiquidity"
+            :validate="validate"
+            :error="error"
+          />
+        </div>
+      </div>
+      <div
+        v-if="globalState !== {}"
+        class="bg-gray-100 rounded-lg"
+      >
+        <div class="py-4 px-4">
+          <div class="flex flex-col">
+            <div class="flex flex-row">
+              <div>Exchange rate:</div>
+              <div class="text-right flex-grow font-bold">
+                {{ algosPerAsset }}
               </div>
-              <div class="flex flex-row">
-                <div />
-                <div class="text-right flex-grow font-bold">
-                  {{ assetPerAlgos }}
-                </div>
+            </div>
+            <div class="flex flex-row">
+              <div />
+              <div class="text-right flex-grow font-bold">
+                {{ assetPerAlgos }}
               </div>
-              <div class="flex flex-row">
-                <div>Liquidity Tokens:</div>
-                <div class="text-right flex-grow font-bold">
-                  {{ liquidityTokensDisplay }}
-                </div>
+            </div>
+            <div class="flex flex-row">
+              <div>Liquidity Tokens:</div>
+              <div class="text-right flex-grow font-bold">
+                {{ liquidityTokensDisplay }}
               </div>
-              <div class="flex flex-row">
-                <div>Pool Share:</div>
-                <div class="text-right flex-grow font-bold">
-                  {{ poolShareDisplay }}
-                </div>
+            </div>
+            <div class="flex flex-row">
+              <div>Pool Share:</div>
+              <div class="text-right flex-grow font-bold">
+                {{ poolShareDisplay }}
               </div>
             </div>
           </div>
-          <p class="px-4 py-4">
-            By adding liquidity you'll earn 0.3% of all trades on this pair
-            proportional to your share of the pool. Fees are added to the pool,
-            accrued in real-time, and can be claimed by withdrawing your
-            liquidity.
-          </p>
         </div>
+        <p class="px-4 py-4">
+          By adding liquidity you'll earn 0.3% of all trades on this pair
+          proportional to your share of the pool. Fees are added to the pool,
+          accrued in real-time, and can be claimed by withdrawing your
+          liquidity.
+        </p>
       </div>
-    </div>
+    </Card>
   </div>
 </template>
 <script>
 import { mapGetters } from 'vuex';
-import NumberInput from './NumberInput';
+import NumberInput from '../NumberInput';
 import {
   getAlgos,
   getMicroAlgos,
@@ -91,20 +87,22 @@ import {
   getRawAssetAmount,
 } from '@/utils/conversion';
 import { getInputError } from '@/utils/validation';
-import ActionButton from './ActionButton';
+import ActionButton from '../ActionButton';
 import {
   ALGOS_DECIMAL_POINTS,
   ASSET_DECIMAL_POINTS,
   RATIO,
   ASSET_NAME,
-} from '@/config/config';
+} from '@/config';
 import { ExchangeCalculator } from '@/utils/exchange';
+import Card from '@/components/cards/Card';
 
 export default {
   name: 'AddLiquidityCard',
   components: {
     NumberInput,
     ActionButton,
+    Card
   },
   data() {
     return {

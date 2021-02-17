@@ -84,7 +84,7 @@ export default {
       this.$emit('input', value);
     },
     onKeyPress(e) {
-      var allowedKeys = /[0-9]|\./;
+      let allowedKeys = /[0-9]|\./;
       if (!this.allowDecimals) {
         allowedKeys = /[0-9]/;
       }

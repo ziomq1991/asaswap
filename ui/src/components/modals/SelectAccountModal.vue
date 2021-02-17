@@ -52,8 +52,8 @@
                 <p class="text-sm text-gray-500">
                   Select an account that you would like to use from the list below:
                 </p>
-                <t-select 
-                  v-model="selectedAccount" 
+                <t-select
+                  v-model="selectedAccount"
                   class="mt-2"
                   :options="accounts"
                   fixed-classes="overflow-ellipsis break-all"
@@ -83,9 +83,8 @@
   </div>
 </template>
 <script>
-import eventBus from '../events/eventBus';
+import eventBus from '@/utils/eventBus';
 import { mapGetters } from 'vuex';
-
 
 export default {
   name: 'SelectAccountModal',

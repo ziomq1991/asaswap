@@ -59,7 +59,7 @@
 </template>
 <script>
 import { mapGetters } from 'vuex';
-import eventBus from '@/events/eventBus';
+import eventBus from '@/utils/eventBus';
 
 export default {
   name: 'AlgoSignerButton',

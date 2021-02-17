@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import SwapCard from '../components/SwapCard.vue';
+import SwapCard from '@/components/cards/SwapCard.vue';
 
 export default {
   name: 'Swap',

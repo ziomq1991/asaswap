@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import AddLiquidityCard from '../components/AddLiquidityCard.vue';
+import AddLiquidityCard from '@/components/cards/AddLiquidityCard.vue';
 
 export default {
   name: 'AddLiquidity',

@@ -1,5 +1,5 @@
 import store from '@/store';
-import eventBus from '@/events/eventBus';
+import eventBus from '@/utils/eventBus';
 
 function InsufficientFunds() {
   return new Error('Insufficient Funds');
