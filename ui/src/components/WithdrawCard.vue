@@ -80,9 +80,9 @@ export default {
     async onWithdraw() {
       const accountAddress = this.algorand.account;
       if (this.userAssets.indexOf(ASSET_INDEX) === -1) {
-        await this.waitForChanges(() => this.algorand.serviceInstance.optInAsset(accountAddress), 'Opting-In to Asset...');
+        await this.waitForAction(() => this.algorand.serviceInstance.optInAsset(accountAddress), 'Opting-In to Asset...');
       }
-      await this.waitForChanges(() => this.algorand.serviceInstance.withdraw(accountAddress, this.userState.USR_ASA, this.userState.USR_ALGOS));
+      await this.waitForAction(() => this.algorand.serviceInstance.withdraw(accountAddress, this.userState.USR_ASA, this.userState.USR_ALGOS));
     }
   }
 };

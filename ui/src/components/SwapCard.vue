@@ -375,14 +375,14 @@ export default {
     async onSwap() {
       const accountAddress = this.algorand.account;
       if (this.firstCurrency === ASSET_NAME.toUpperCase()) {
-        await this.waitForChanges(() =>
+        await this.waitForAction(() =>
           this.algorand.serviceInstance.swapAsset(
             accountAddress,
             getRawAssetAmount(this.firstAmount)
           )
         );
       } else if (this.firstCurrency === 'ALGOS') {
-        await this.waitForChanges(() =>
+        await this.waitForAction(() =>
           this.algorand.serviceInstance.swapAlgos(
             accountAddress,
             getMicroAlgos(this.firstAmount)

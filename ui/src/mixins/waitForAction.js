@@ -1,6 +1,6 @@
 export default {
   methods: {
-    waitForChanges: async function (func, actionMessage=null) {
+    waitForAction: async function (func, actionMessage=null) {
       try {
         await this.$store.commit('algorand/SET_PENDING_ACTION', true);
         await this.$store.commit('algorand/SET_PENDING_ACTION_MESSAGE', actionMessage);

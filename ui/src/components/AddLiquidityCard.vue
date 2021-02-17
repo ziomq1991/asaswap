@@ -262,7 +262,7 @@ export default {
     },
     async onAddLiquidity() {
       const accountAddress = this.algorand.account;
-      await this.waitForChanges(() =>
+      await this.waitForAction(() =>
         this.algorand.serviceInstance.addLiquidity(
           accountAddress,
           getRawAssetAmount(this.assetAmount),

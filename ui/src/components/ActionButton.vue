@@ -115,7 +115,7 @@ export default {
       return await this.execute();
     },
     async optIn() {
-      await this.waitForChanges(() => this.$store.dispatch('algorand/OPT_IN'), 'Opting-In to Application...');
+      await this.waitForAction(() => this.$store.dispatch('algorand/OPT_IN'), 'Opting-In to Application...');
     }
   },
 };
