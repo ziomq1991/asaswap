@@ -44,8 +44,12 @@ export async function FETCH_ACCOUNTS({ commit, state, dispatch }) {
   }
   const accounts = await state.serviceInstance.getAccounts();
   await commit('SET_ACCOUNTS', accounts);
+
+  const accountIds = state.accounts.map(value => value.address);
   if (!state.account && accounts.length > 0) {
-    dispatch('SELECT_ACCOUNT', { accountAddress: accounts[0].address });
+    await dispatch('SELECT_ACCOUNT', { accountAddress: accounts[0].address });
+  } else if (state.account && accountIds.indexOf(state.account) === -1) {
+    await commit('SET_ACCOUNT', null);
   }
 }
 
