@@ -31,9 +31,7 @@ export default {
         this.$store.dispatch('algorand/FETCH_ACCOUNT_DATA');
       }
       this.$store.dispatch('algorand/FETCH_APPLICATION_DATA');
-      if (!this.algorand.accounts.length === 0) {
-        this.$store.dispatch('algorand/FETCH_ACCOUNTS');
-      }
+      this.$store.dispatch('algorand/FETCH_ACCOUNTS');
     }
   }
 };
