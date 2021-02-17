@@ -55,6 +55,7 @@ export async function FETCH_ACCOUNT_DATA({ commit, state, getters, dispatch }) {
     return;
   }
   const prevState = Object.assign({}, getters.userState);
+  const prevAssets = Object.assign({}, getters.userAssets);
   let accountData;
   try {
     accountData = await state.serviceInstance.getAccountData(accountAddress);
@@ -63,10 +64,15 @@ export async function FETCH_ACCOUNT_DATA({ commit, state, getters, dispatch }) {
     dispatch('FETCH_ACCOUNTS');
     return;
   }
-  commit('SET_ACCOUNT_DATA', accountData);
-  if (!isEqual(prevState, getters.userState) && state.pendingUpdate) {
-    commit('SET_PENDING_UPDATE', false);
+  await commit('SET_ACCOUNT_DATA', accountData);
+  if (state.pendingUpdate) {
+    if (!isEqual(prevState, getters.userState)) {
+      await commit('SET_PENDING_UPDATE', false);
+    } else if (!isEqual(prevAssets, getters.userAssets))  {
+      await commit('SET_PENDING_UPDATE', false);
+    }
   }
+
 }
 
 export async function FETCH_APPLICATION_DATA({ commit }) {

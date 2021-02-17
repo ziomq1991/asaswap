@@ -2,6 +2,7 @@ import algosdk from 'algosdk';
 import { Buffer } from 'buffer';
 import eventBus from '@/events/eventBus';
 import { APPLICATION_ID, ASSET_INDEX, COMPILED_ESCROW, ESCROW_ADDRESS } from '@/config/config';
+import { validateIfAccountCanAffordTxs } from '@/utils/validation';
 
 function encodeArrayForSDK(decodedArray) {
   const encoder = new TextEncoder('ascii');
@@ -206,7 +207,7 @@ class SignerWrapper {
 
 class AlgoExplorerAPI {
   constructor(ledger) {
-    if (ledger.toUpperCase() == 'TESTNET') {
+    if (ledger.toUpperCase() === 'TESTNET') {
       this.url = 'https://api.testnet.algoexplorer.io';
     } else {
       this.url = 'https://api.algoexplorer.io';
@@ -263,6 +264,7 @@ export default class AlgorandService {
   async optInApp(accountAddress) {
     const suggestedParams = await this.getSuggestedParams();
     const optInTxn = makeOptInTx(accountAddress, suggestedParams);
+    await validateIfAccountCanAffordTxs([optInTxn]);
     eventBus.$emit('set-action-message', 'Signing...');
     const signedTx = await this.signer.sign(optInTxn);
     return await this.signer.send({
@@ -274,6 +276,7 @@ export default class AlgorandService {
   async optInAsset(accountAddress) {
     const suggestedParams = await this.getSuggestedParams();
     const optInTxn = makeAssetOptInTx(accountAddress, suggestedParams);
+    await validateIfAccountCanAffordTxs([optInTxn]);
     eventBus.$emit('set-action-message', 'Signing...');
     const signedTx = await this.signer.sign(optInTxn);
     return await this.signer.send({
@@ -287,6 +290,7 @@ export default class AlgorandService {
     const tx1 = makeCallTx(accountAddress, ['ADD_LIQUIDITY'], suggestedParams);
     const tx2 = makeAssetPaymentTx(accountAddress, ESCROW_ADDRESS, assetAmount, suggestedParams);
     const tx3 = makeAlgoPaymentTx(accountAddress, ESCROW_ADDRESS, algosAmount, suggestedParams);
+    await validateIfAccountCanAffordTxs([tx1, tx2, tx3]);
     const txnGroup = await algosdk.assignGroupID([
       {
         ...tx1,
@@ -322,6 +326,7 @@ export default class AlgorandService {
   async removeLiquidity(accountAddress, liquidityTokens) {
     const suggestedParams = await this.getSuggestedParams();
     const tx = makeCallTx(accountAddress, ['REMOVE_LIQUIDITY', Number(liquidityTokens)], suggestedParams);
+    await validateIfAccountCanAffordTxs([tx]);
     eventBus.$emit('set-action-message', 'Signing...');
     const signedTx = await this.signer.sign(tx);
     return await this.signer.send({
@@ -334,6 +339,7 @@ export default class AlgorandService {
     const suggestedParams = await this.getSuggestedParams();
     const tx1 = makeCallTx(accountAddress, ['SWAP'], suggestedParams);
     const tx2 = makeAssetPaymentTx(accountAddress, ESCROW_ADDRESS, assetAmount, suggestedParams);
+    await validateIfAccountCanAffordTxs([tx1, tx2]);
     const txnGroup = await algosdk.assignGroupID([
       {
         ...tx1,
@@ -363,6 +369,7 @@ export default class AlgorandService {
     const suggestedParams = await this.getSuggestedParams();
     const tx1 = makeCallTx(accountAddress, ['SWAP'], suggestedParams);
     const tx2 = makeAlgoPaymentTx(accountAddress, ESCROW_ADDRESS, algosAmount, suggestedParams);
+    await validateIfAccountCanAffordTxs([tx1, tx2]);
     const txnGroup = await algosdk.assignGroupID([
       {
         ...tx1,
@@ -394,6 +401,7 @@ export default class AlgorandService {
     const tx1 = makeCallTx(accountAddress, ['WITHDRAW'], suggestedParams);
     const tx2 = algosdk.makeAssetTransferTxnWithSuggestedParams(ESCROW_ADDRESS, accountAddress, undefined, undefined, assetAmount, undefined, ASSET_INDEX, suggestedParamsForSDK);
     const tx3 = algosdk.makePaymentTxnWithSuggestedParams(ESCROW_ADDRESS, accountAddress, algosAmount, undefined, undefined, suggestedParamsForSDK);
+    await validateIfAccountCanAffordTxs([tx1, tx2, tx3]);
     const txnGroup = await algosdk.assignGroupID([
       {
         ...tx1,

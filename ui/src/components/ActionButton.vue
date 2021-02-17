@@ -79,6 +79,11 @@ export default {
       required: false,
     },
   },
+  data() {
+    return {
+      executeAfterOptingIn: false
+    };
+  },
   computed: {
     ...mapGetters({
       algorand: 'algorand/algorand',
@@ -89,6 +94,14 @@ export default {
     }),
     currentRouteName() {
       return this.$route.name;
+    }
+  },
+  watch: {
+    isOptedIn(value) {
+      if (value && this.executeAfterOptingIn) {
+        this.executeAfterOptingIn = false;
+        this.execute();
+      }
     }
   },
   mounted() {
@@ -110,12 +123,14 @@ export default {
         }
       }
       if (!this.isOptedIn) {
+        this.executeAfterOptingIn = true;
         await this.optIn();
+      } else {
+        await this.execute();
       }
-      return await this.execute();
     },
     async optIn() {
-      await this.waitForAction(() => this.$store.dispatch('algorand/OPT_IN'), 'Opting-In to Application...');
+      await this.waitForAction(async () => await this.$store.dispatch('algorand/OPT_IN'), 'Opting-In to Application...');
     }
   },
 };

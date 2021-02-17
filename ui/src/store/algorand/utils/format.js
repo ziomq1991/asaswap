@@ -2,9 +2,11 @@ import { APPLICATION_ID } from '@/config/config';
 
 export function getMappedUserAssets(accountData) {
   const assets = accountData['assets'];
-  return assets.map((value) => {
-    return value['asset-id'];
-  });
+  return Object.assign({}, ...assets.map((value) => {
+    return {
+      [value['asset-id']]: value
+    };
+  }));
 }
 
 export function getMappedUserState(accountData) {
@@ -19,34 +21,32 @@ export function getMappedUserState(accountData) {
     return {};
   }
   const keyValues = ourAppState['key-value'];
-  const valuesPerKey = Object.assign({}, ...keyValues.map(rawValue => {
+  return Object.assign({}, ...keyValues.map(rawValue => {
     const key = atob(rawValue.key);
     let value;
-    if (rawValue.value.type == 1) {
+    if (rawValue.value.type === 1) {
       value = rawValue.value.bytes;
-    } else if (rawValue.value.type == 2) {
+    } else if (rawValue.value.type === 2) {
       value = Number(rawValue.value.uint);
     }
     return {
       [key]: value
     };
   }));
-  return valuesPerKey;
 }
 
 export function getMappedGlobalState(applicationData) {
   const keyValues = applicationData['params']['global-state'];
-  const valuesPerKey = Object.assign({}, ...keyValues.map(rawValue => {
+  return Object.assign({}, ...keyValues.map(rawValue => {
     const key = atob(rawValue.key);
     let value;
-    if (rawValue.value.type == 1) {
+    if (rawValue.value.type === 1) {
       value = rawValue.value.bytes;
-    } else if (rawValue.value.type == 2) {
+    } else if (rawValue.value.type === 2) {
       value = Number(rawValue.value.uint);
     }
     return {
       [key]: value
     };
   }));
-  return valuesPerKey;
 }

@@ -1,5 +1,5 @@
 import { getMappedUserState, getMappedGlobalState, getMappedUserAssets } from './utils/format';
-import { APPLICATION_ID } from '@/config/config';
+import { APPLICATION_ID, ASSET_INDEX } from '@/config/config';
 
 export function algorand(state) {
   return {
@@ -25,7 +25,7 @@ export function userState(state) {
 
 export function userAssets(state) {
   if (!state.accountData) {
-    return [];
+    return {};
   }
   return getMappedUserAssets(state.accountData);
 }
@@ -61,8 +61,27 @@ export function isOptedIn(state) {
   const accountData = state.accountData;
   const appStates = accountData['apps-local-state'];
   const appIds = appStates.map(value => value.id);
-  if (appIds.indexOf(APPLICATION_ID) !== -1) {
-    return true;
+  return appIds.indexOf(APPLICATION_ID) !== -1;
+}
+
+export function algoBalance(state) {
+  if (!state.accountData) {
+    return 0;
   }
-  return false;
+  const amount = state.accountData['amount-without-pending-rewards'];
+  if (!amount) {
+    return 0;
+  }
+  return amount;
+}
+
+export function assetBalance(state, getters) {
+  if (!state.accountData) {
+    return 0;
+  }
+  const amount = getters.userAssets[ASSET_INDEX] && getters.userAssets[ASSET_INDEX].amount;
+  if (!amount) {
+    return 0;
+  }
+  return amount;
 }

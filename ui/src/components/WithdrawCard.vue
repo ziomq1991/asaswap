@@ -60,6 +60,11 @@ export default {
     NumberInput,
     ActionButton
   },
+  data() {
+    return {
+      executeAfterOptingIn: false
+    };
+  },
   computed: {
     ...mapGetters({
       algorand: 'algorand/algorand',
@@ -74,15 +79,29 @@ export default {
     },
     assetLabel() {
       return ASSET_NAME;
+    },
+    isOptedInToAsset() {
+      return this.userAssets[ASSET_INDEX];
+    }
+  },
+  watch: {
+    isOptedInToAsset(value) {
+      if (value && this.executeAfterOptingIn) {
+        this.executeAfterOptingIn = false;
+        const accountAddress = this.algorand.account;
+        this.waitForAction(() => this.algorand.serviceInstance.withdraw(accountAddress, this.userState.USR_ASA, this.userState.USR_ALGOS));
+      }
     }
   },
   methods: {
     async onWithdraw() {
       const accountAddress = this.algorand.account;
-      if (this.userAssets.indexOf(ASSET_INDEX) === -1) {
+      if (!this.isOptedInToAsset) {
         await this.waitForAction(() => this.algorand.serviceInstance.optInAsset(accountAddress), 'Opting-In to Asset...');
+        this.executeAfterOptingIn = true;
+      } else {
+        await this.waitForAction(() => this.algorand.serviceInstance.withdraw(accountAddress, this.userState.USR_ASA, this.userState.USR_ALGOS));
       }
-      await this.waitForAction(() => this.algorand.serviceInstance.withdraw(accountAddress, this.userState.USR_ASA, this.userState.USR_ALGOS));
     }
   }
 };
