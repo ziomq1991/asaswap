@@ -1,10 +1,12 @@
 // Original file: https://github.com/scale-it/algorand-builder/blob/master/packages/runtime/test/helpers/errors.ts
-import chai from 'chai';
-const { assert, AssertionError } = chai;
-import { TealError } from '@algorand-builder/runtime/build/errors/errors.js';
 
-// takes string array and executes opcode to expect teal error
-export function execExpectError (stack, strs, op, err) {
+import { TealError } from '@algorand-builder/runtime/build/errors/errors.js';
+import chai from 'chai';
+
+const {assert, AssertionError} = chai;
+
+// Takes string array and executes opcode to expect teal error
+export function execExpectError(stack, strs, op, err) {
   return () => {
     for (const s of strs) {
       stack.push(s);
@@ -13,7 +15,7 @@ export function execExpectError (stack, strs, op, err) {
   };
 }
 
-export function expectTealError (f, errorDescriptor, matchMessage = undefined, errorMessage = undefined) {
+export function expectTealError(f, errorDescriptor, matchMessage = undefined, errorMessage = undefined) {
   try {
     f();
   } catch (error) {
@@ -38,7 +40,7 @@ export function expectTealError (f, errorDescriptor, matchMessage = undefined, e
   );
 }
 
-export async function expectTealErrorAsync (f, errorDescriptor, matchMessage = undefined) {
+export async function expectTealErrorAsync(f, errorDescriptor, matchMessage = undefined) {
   // We create the error here to capture the stack trace before the await.
   // This makes things easier, at least as long as we don't have async stack
   // traces. This may change in the near-ish future.
