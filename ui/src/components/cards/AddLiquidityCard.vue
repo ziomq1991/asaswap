@@ -275,8 +275,8 @@ export default {
           getMicroAlgos(this.algosAmount)
         )
       );
-      this.algosAmount = 0;
-      this.assetAmount = 0;
+      this.algosAmount = null;
+      this.assetAmount = null;
     },
   },
 };

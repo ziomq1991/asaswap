@@ -269,6 +269,8 @@ export default {
         const otherCurrencies = currencies.splice(indexOfCurrency - 1, 1);
         this.secondCurrency = otherCurrencies[0];
       }
+      this.firstAmount = null;
+      this.secondAmount = null;
       this.onFirstInputChange();
     },
     secondCurrency(value) {
@@ -278,6 +280,8 @@ export default {
         const otherCurrencies = currencies.splice(indexOfCurrency - 1, 1);
         this.firstCurrency = otherCurrencies[0];
       }
+      this.firstAmount = null;
+      this.secondAmount = null;
       this.onFirstInputChange();
     },
   },
@@ -393,8 +397,8 @@ export default {
           )
         );
       }
-      this.firstAmount = 0.0;
-      this.secondAmount = 0.0;
+      this.firstAmount = null;
+      this.secondAmount = null;
     },
   },
 };
