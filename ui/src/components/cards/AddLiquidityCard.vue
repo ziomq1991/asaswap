@@ -210,6 +210,10 @@ export default {
   },
   methods: {
     onAlgosInputChange(recalculate) {
+      if (this.algosAmount === null || this.algosAmount === '') {
+        this.assetAmount = null;
+        return;
+      }
       this.assetAmount = getAssetDisplayAmount(
         Math.trunc(
           (getMicroAlgos(this.algosAmount) / this.globalExchangeRate) * RATIO
@@ -226,6 +230,10 @@ export default {
       this.validate();
     },
     onAssetInputChange(recalculate) {
+      if (this.assetAmount === null || this.assetAmount === '') {
+        this.algosAmount = null;
+        return;
+      }
       this.algosAmount = getAlgos(
         Math.trunc(
           (this.globalExchangeRate * getRawAssetAmount(this.assetAmount)) /

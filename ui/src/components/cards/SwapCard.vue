@@ -301,6 +301,9 @@ export default {
       this.validate();
       if (!this.globalState) {
         return null;
+      } else if (this.firstAmount === null || this.firstAmount === '') {
+        this.secondAmount = null;
+        return;
       }
       let calculator = new ExchangeCalculator(
         this.globalState['ALGOS_BAL'],
@@ -320,6 +323,9 @@ export default {
       this.validate();
       if (!this.globalState) {
         return null;
+      } else if (this.secondAmount === null || this.secondAmount === '') {
+        this.firstAmount = null;
+        return;
       }
       let calculator = new ExchangeCalculator(
         this.globalState['ALGOS_BAL'],
