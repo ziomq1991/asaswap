@@ -54,7 +54,7 @@ export default class AlgorandService {
     const suggestedParams = await this.getSuggestedParams();
     const optInTxn = makeOptInTx(accountAddress, suggestedParams);
     await validateIfAccountCanAffordTxs([optInTxn]);
-    eventBus.$emit('set-action-message', 'Signing...');
+    eventBus.$emit('set-action-message', 'Signing application opt-in...');
     const signedTx = await this.signer.sign(optInTxn);
     return await this.signer.send({
       ledger: this.ledger,
@@ -66,7 +66,7 @@ export default class AlgorandService {
     const suggestedParams = await this.getSuggestedParams();
     const optInTxn = makeAssetOptInTx(accountAddress, suggestedParams);
     await validateIfAccountCanAffordTxs([optInTxn]);
-    eventBus.$emit('set-action-message', 'Signing...');
+    eventBus.$emit('set-action-message', 'Signing asset opt-in...');
     const signedTx = await this.signer.sign(optInTxn);
     return await this.signer.send({
       ledger: this.ledger,
@@ -116,7 +116,7 @@ export default class AlgorandService {
     const suggestedParams = await this.getSuggestedParams();
     const tx = makeCallTx(accountAddress, ['REMOVE_LIQUIDITY', Number(liquidityTokens)], suggestedParams);
     await validateIfAccountCanAffordTxs([tx]);
-    eventBus.$emit('set-action-message', 'Signing...');
+    eventBus.$emit('set-action-message', 'Signing transaction...');
     const signedTx = await this.signer.sign(tx);
     return await this.signer.send({
       ledger: this.ledger,
@@ -200,7 +200,7 @@ export default class AlgorandService {
       tx3
     ]);
     tx1.group = txnGroup[0].group.toString('base64');
-    eventBus.$emit('set-action-message', 'Signing...');
+    eventBus.$emit('set-action-message', 'Signing transaction...');
     const signedTx1 = await this.signer.sign(tx1);
     const signedTx2 = logicSign(txnGroup[1]);
     const signedTx3 = logicSign(txnGroup[2]);
