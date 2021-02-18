@@ -83,6 +83,11 @@ export default {
     ActionButton,
     Card
   },
+  watch: {
+    userState() {
+      this.validate();
+    }
+  },
   data() {
     return {
       liquidityTokens: null,
@@ -145,9 +150,10 @@ export default {
   },
   methods: {
     validate() {
+      const userLiquidity = this.userState.USR_LIQ ? Number(this.userState.USR_LIQ) : 0;
       if (Number(this.liquidityTokens) <= 0) {
         this.error = 'Enter a valid amount';
-      } else if (Number(this.liquidityTokens) > this.userState.USR_LIQ) {
+      } else if (Number(this.liquidityTokens) > userLiquidity) {
         this.error = 'Enter a valid amount';
       } else if (!Number.isInteger(Number(this.liquidityTokens))) {
         this.error = 'Must be an integer';
