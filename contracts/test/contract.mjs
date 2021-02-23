@@ -125,15 +125,24 @@ const { assert } = chai;
       assert.equal(getLocal(master.address, 'USR_LIQ'), 1000000);
 
       expectTealError(
-        () => asaswap.withdraw(master, 6000000, 5142857, 10000, 1000),
+        () => asaswap.withdraw(master, 6000000, 5142857, {
+          primaryAssetFee: 10000,
+          secondaryAssetFee: 1000,
+        }),
         RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
       );
       expectTealError(
-        () => asaswap.withdraw(master, 6000000, 5142857, 10000, 10000),
+        () => asaswap.withdraw(master, 6000000, 5142857, {
+          primaryAssetFee: 10000,
+          secondaryAssetFee: 10000,
+        }),
         RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
       );
       expectTealError(
-        () => asaswap.withdraw(master, 6000000, 5142857, 1000, 10000),
+        () => asaswap.withdraw(master, 6000000, 5142857, {
+          primaryAssetFee: 1000,
+          secondaryAssetFee: 10000,
+        }),
         RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
       );
     });
@@ -156,6 +165,14 @@ const { assert } = chai;
         }),
         RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
       );
+      if (contractType == ASA_TO_ASA) {
+        expectTealError(
+          () => asaswap.addLiquidity(master.account, asaswap.getEscrowAddress(), 7000000, 6000000, {
+            primaryAssetId: 100
+          }),
+          RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
+        );
+      }
     });
 
     it('throws error when swap is made with invalid asset', () => {
@@ -166,6 +183,41 @@ const { assert } = chai;
       expectTealError(
         () => asaswap.secondaryAssetSwap(swapper.account, asaswap.getEscrowAddress(), 100, {
           secondaryAssetId: 100
+        }),
+        RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
+      );
+      if (contractType == ASA_TO_ASA) {
+        expectTealError(
+          () => asaswap.primaryAssetSwap(swapper.account, asaswap.getEscrowAddress(), 100, {
+            primaryAssetId: 100
+          }),
+          RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
+        );
+      }
+    });
+
+    it('throws error when fee is paid to wrong account', () => {
+      asaswap.setupApplicationWithEscrow(master);
+      asaswap.optIn(master.address);
+
+      asaswap.addLiquidity(master.account, asaswap.getEscrowAddress(), 7000000, 6000000);
+      asaswap.removeLiquidity(master.account, 7000000);
+
+      assert.equal(getLocal(master.address, 'USR_A'), 7000000);
+      assert.equal(getLocal(master.address, 'USR_B'), 6000000);
+      assert.equal(getLocal(master.address, 'USR_LIQ'), 0);
+
+      expectTealError(
+        () => asaswap.withdraw(master, 121, 121),
+        RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
+      );
+      expectTealError(
+        () => asaswap.withdraw(master, 0, 6000000),
+        RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
+      );
+      expectTealError(
+        () => asaswap.withdraw(master, 7000000, 6000000, {
+          'feeTo': swapper.address
         }),
         RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
       );

@@ -10,6 +10,8 @@ def escrow(app_id: int):
         [
             Assert(
                 And(
+                    Gtxn[1].close_remainder_to() == Global.zero_address(),
+                    Gtxn[1].rekey_to() == Global.zero_address(),
                     Gtxn[0].application_id() == Int(app_id),
                     Gtxn[0].type_enum() == TxnType.ApplicationCall,
                     Gtxn[0].application_args[0] == Bytes("SETUP_ESCROW"),
@@ -25,6 +27,10 @@ def escrow(app_id: int):
         [
             Assert(
                 And(
+                    Gtxn[1].close_remainder_to() == Global.zero_address(),
+                    Gtxn[1].rekey_to() == Global.zero_address(),
+                    Gtxn[2].close_remainder_to() == Global.zero_address(),
+                    Gtxn[2].rekey_to() == Global.zero_address(),
                     Gtxn[0].application_id() == Int(app_id),
                     Gtxn[0].type_enum() == TxnType.ApplicationCall,
                     Gtxn[0].application_args[0] == Bytes("WITHDRAW"),
@@ -33,13 +39,14 @@ def escrow(app_id: int):
                         Gtxn[2].type_enum() == TxnType.Payment,
                         Gtxn[2].type_enum() == TxnType.AssetTransfer,
                     ),
-                    Gtxn[1].fee() == Global.min_txn_fee(),
-                    Gtxn[2].fee() == Global.min_txn_fee(),
                     Or(
                         Gtxn[1].asset_amount() > Int(0),
                         Gtxn[2].amount() > Int(0),
                         Gtxn[2].asset_amount() > Int(0),
                     ),
+                    Gtxn[3].sender() == Gtxn[0].sender(),
+                    Gtxn[3].type_enum() == TxnType.Payment,
+                    Gtxn[3].amount() >= (Gtxn[1].fee() + Gtxn[2].fee()),
                 )
             ),
             Return(Int(1)),

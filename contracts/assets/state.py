@@ -318,10 +318,7 @@ class AlgosToAsaContract:
                         self.verify_outgoing_tx_for_primary_asset(Gtxn[2]),
                         self.get_outgoing_amount_for_primary_asset(Gtxn[2])
                         == self.a_to_withdraw.get(),
-                        Gtxn[3].sender() == Gtxn[0].sender(),
-                        Gtxn[3].type_enum() == TxnType.Payment,
-                        Gtxn[3].amount()
-                        >= (Global.min_txn_fee() + Global.min_txn_fee()),
+                        Gtxn[3].receiver() == self.escrow_addr.get(),
                     )
                 ),
                 self.b_to_withdraw.put(Int(0)),
