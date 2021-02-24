@@ -1,3 +1,9 @@
 body {
-  min-width: 320px;
+  min-width: 475px;
+}
+
+@media screen and (max-width: 475px) {
+  @-o-viewport {
+    width: 475px;
+  }
 }
