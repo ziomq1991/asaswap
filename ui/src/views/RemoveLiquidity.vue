@@ -3,7 +3,6 @@
     <RemoveLiqudidityCard />
   </div>
 </template>
-
 <script>
 import RemoveLiqudidityCard from '@/components/cards/RemoveLiquidityCard.vue';
 

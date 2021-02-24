@@ -1,3 +1,5 @@
+import Vue from 'vue';
+
 export function SET_SERVICE_INSTANCE(state, instance) {
   state.serviceInstance = instance;
 }
@@ -28,12 +30,20 @@ export function SET_APPLICATION_DATA(state, applicationData) {
   state.applicationData = applicationData;
 }
 
+export function CACHE_APPLICATION_DATA(state, { applicationIndex, applicationData }) {
+  Vue.set(state.applicationDataCache, applicationIndex, applicationData);
+}
+
 export function SET_PENDING_UPDATE(state, pendingUpdate) {
   state.pendingUpdate = pendingUpdate;
 }
 
 export function SET_PENDING_ACTION(state, pendingAction) {
   state.pendingAction = pendingAction;
+}
+
+export function SET_PENDING_VERIFICATION_FUNC(state, verificationFunc) {
+  state.pendingVerificationFunc = verificationFunc;
 }
 
 export function SET_PENDING_ACTION_MESSAGE(state, pendingActionMessage) {
@@ -49,4 +59,8 @@ export function SET_CURRENT_PAIR(state, pairKey) {
 
 export function SET_CHANGING_PAIR(state, changingPair) {
   state.changingPair = changingPair;
+}
+
+export function SET_ACTION_QUEUE(state, queue) {
+  state.actionQueue = queue;
 }

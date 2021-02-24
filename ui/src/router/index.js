@@ -2,8 +2,9 @@ import Vue from 'vue';
 import VueRouter from 'vue-router';
 import Swap from '@/views/Swap.vue';
 import AddLiquidity from '@/views/AddLiquidity.vue';
-import Withdraw from '@/views/Withdraw.vue';
 import RemoveLiquidity from '@/views/RemoveLiquidity.vue';
+import Liquidity from '@/views/Liquidity.vue';
+
 
 Vue.use(VueRouter);
 
@@ -14,19 +15,19 @@ const routes = [
     component: Swap
   },
   {
-    path: '/add-liquidity',
+    path: '/add-liquidity/:pair',
     name: 'Add Liquidity',
     component: AddLiquidity
   },
   {
-    path: '/withdraw',
-    name: 'Withdraw',
-    component: Withdraw
-  },
-  {
-    path: '/remove-liquidity',
+    path: '/remove-liquidity/:pair',
     name: 'Remove Liquidity',
     component: RemoveLiquidity
+  },
+  {
+    path: '/pool',
+    name: 'Pool',
+    component: Liquidity
   }
 ];
 

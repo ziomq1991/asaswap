@@ -11,7 +11,7 @@ function toFixed(num, fixed) {
   return Number((Math.floor(num * Math.pow(10, fixed)) / Math.pow(10, fixed)).toFixed(fixed));
 }
 
-class Asset {
+export class Asset {
   constructor(params) {
     this.assetName = params['assetName'];
     this.assetIndex = params['assetIndex'];
@@ -32,10 +32,11 @@ class Asset {
   }
 }
 
-class AssetPair {
+export class AssetPair {
   constructor(params, reversedKey) {
     this.primaryAsset = new Asset(params['primaryAsset']);
     this.secondaryAsset = new Asset(params['secondaryAsset']);
+    this.liquidityAsset = new Asset(params['liquidityAsset']);
     if (reversedKey) {
       this.key = `${this.secondaryAsset.assetName}/${this.primaryAsset.assetName}`.toUpperCase();
     } else {
@@ -69,6 +70,7 @@ function fromConfig(assetPairs) {
     pairClasses[assetPair.key] = assetPair;
     registerAsset(assets, assetPair.secondaryAsset);
   });
+  const singlePairs = Object.assign({}, pairClasses);
   Object.keys(assetPairs).forEach((key) => {
     const assetPair = new AssetPair(CONFIG_ASSET_PAIRS[key], true);
     pairClasses[assetPair.key] = assetPair;
@@ -77,7 +79,8 @@ function fromConfig(assetPairs) {
   return {
     ASSETS: assets,
     ASSET_PAIRS: pairClasses,
+    SINGLE_PAIRS: singlePairs
   };
 }
 
-export const { ASSETS, ASSET_PAIRS } = fromConfig(CONFIG_ASSET_PAIRS);
+export const { ASSETS, ASSET_PAIRS, SINGLE_PAIRS } = fromConfig(CONFIG_ASSET_PAIRS);

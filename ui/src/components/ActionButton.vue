@@ -27,14 +27,6 @@
         <span>Waiting for AlgoSigner...</span>
       </t-button>
     </div>
-    <div v-else-if="disabled">
-      <t-button
-        disabled
-        classes="block tracking-widest w-full uppercase text-center shadow bg-indigo-600 hover:bg-indigo-700 focus:shadow-outline focus:outline-none text-white text-xs py-3 px-10 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {{ error || label }}
-      </t-button>
-    </div>
     <div v-else>
       <t-button
         :disabled="!isReadyToTransact || !enable || !!error"
@@ -49,7 +41,6 @@
 <script>
 import { mapGetters } from 'vuex';
 import Spinner from 'vue-simple-spinner';
-import { USR_A_BAL, USR_B_BAL } from '@/utils/constants';
 
 export default {
   name: 'ActionButton',
@@ -80,11 +71,6 @@ export default {
       required: false,
     },
   },
-  data() {
-    return {
-      executeAfterOptingIn: false
-    };
-  },
   computed: {
     ...mapGetters({
       rawStore: 'algorand/rawStore',
@@ -92,26 +78,11 @@ export default {
       isReady: 'algorand/isReadyToTransact',
       isReadyToTransact: 'algorand/isReadyToTransact',
       isOptedIn: 'algorand/isOptedIn',
-      account: 'algorand/account'
+      account: 'algorand/account',
+      currentPair: 'algorand/currentPair'
     }),
     currentRouteName() {
       return this.$route.name;
-    },
-    disabled() {
-      return this.currentRouteName !== 'Withdraw' && (this.userState[USR_B_BAL] || this.userState[USR_A_BAL]);
-    }
-  },
-  watch: {
-    account(newValue, oldValue) {
-      if (newValue !== oldValue) {
-        this.executeAfterOptingIn = false;
-      }
-    },
-    isOptedIn(value) {
-      if (value && this.executeAfterOptingIn) {
-        this.executeAfterOptingIn = false;
-        this.execute();
-      }
     }
   },
   mounted() {
@@ -133,14 +104,18 @@ export default {
         }
       }
       if (!this.isOptedIn) {
-        this.executeAfterOptingIn = true;
         await this.optIn();
-      } else {
-        await this.execute();
       }
+      await this.execute();
     },
     async optIn() {
-      await this.waitForAction(async () => await this.$store.dispatch('algorand/OPT_IN'), 'Opting-In to Application...');
+      await this.$store.dispatch('algorand/QUEUE_ACTION', {
+        actionMethod: async () => await this.$store.dispatch('algorand/OPT_IN'),
+        actionMessage: 'Opting-In to Application...',
+        actionVerificationMethod: ({ getters }) => {
+          return getters.isOptedIn;
+        }
+      });
     }
   },
 };

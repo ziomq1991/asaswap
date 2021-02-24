@@ -55,23 +55,26 @@
     },
     "rules": {
       "quotes": [
-        "error",
+        "warn",
         "single",
         {
           "avoidEscape": true
         }
       ],
       "object-curly-spacing": [
-        "error",
+        "warn",
         "always"
       ],
       "indent": [
-        "error",
+        "warn",
         2
       ],
       "semi": [
         "error",
         "always"
+      ],
+      "no-multiple-empty-lines": [
+        "warn"
       ]
     }
   },

@@ -1,6 +1,6 @@
 <template>
   <div class="w-full flex flex-col items-center">
-    <div class="max-w-lg bg-white shadow-md rounded-lg overflow-hidden mx-auto mt-32 max-w-md mb-4 w-full">
+    <div class="max-w-lg bg-white shadow-md rounded-lg overflow-hidden mx-auto mt-32 mb-4 w-full">
       <slot />
     </div>
   </div>

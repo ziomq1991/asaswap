@@ -1,27 +1,28 @@
 <template>
   <div>
+    <WithdrawalModal v-if="hasToWithdrawAssets && !rawStore.pendingAction && !rawStore.pendingUpdate" />
     <Card>
       <div class="py-4 px-8 mt-3">
         <div class="flex flex-col mb-8">
-          <h2 class="text-gray-700 font-semibold text-2xl tracking-wide mb-2">
+          <h1 class="text-gray-700 font-semibold tracking-wide mb-2">
             Swap
-          </h2>
+          </h1>
           <p class="text-gray-500 text-base">
             Enter the amount of currency that you would like to swap.
           </p>
         </div>
         <div class="bg-gray-100 rounded-lg mb-4">
           <div class="py-4 px-4">
-            <div class="flex flex-row flex-wrap">
-              <div class="flex flex-col flex-grow mr-4">
+            <div class="sm:flex sm:flex-row sm:flex-wrap">
+              <div class="sm:flex sm:flex-col sm:flex-grow sm:mr-4">
                 <NumberInput
                   v-model="firstAmount"
-                  :disabled="!rawStore.applicationData"
+                  :disabled="!exchangeRate || !isFinite(exchangeRate)"
                   @change="onFirstInputChange"
                   @input.native="onFirstInputChange"
                 />
               </div>
-              <div class="flex flex-col">
+              <div class="sm:flex sm:flex-col mt-2 sm:mt-0">
                 <t-select
                   :value="firstAsset.assetName.toUpperCase()"
                   class="h-full"
@@ -48,16 +49,16 @@
         </div>
         <div class="bg-gray-100 rounded-lg mt-4">
           <div class="py-4 px-4">
-            <div class="flex flex-row flex-wrap">
-              <div class="flex flex-col flex-grow mr-4">
+            <div class="sm:flex sm:flex-row sm:flex-wrap">
+              <div class="sm:flex sm:flex-col sm:flex-grow sm:mr-4">
                 <NumberInput
                   v-model="secondAmount"
-                  :disabled="!rawStore.applicationData"
+                  :disabled="!exchangeRate || !isFinite(exchangeRate)"
                   @change="onSecondInputChange(true)"
                   @input.native="onSecondInputChange(false)"
                 />
               </div>
-              <div class="flex flex-col">
+              <div class="sm:flex sm:flex-col mt-2 sm:mt-0">
                 <t-select
                   :value="secondAsset.assetName.toUpperCase()"
                   class="h-full"
@@ -83,27 +84,27 @@
       >
         <div class="py-4 px-4">
           <div class="flex flex-col">
-            <div class="flex flex-row">
+            <div class="flex sm:flex-row flex-col mt-2 sm:mt-0">
               <div>Exchange rate:</div>
-              <div class="text-right flex-grow font-bold">
+              <div class="sm:text-right flex-grow font-bold">
                 {{ exchangeRateDisplay }}
               </div>
             </div>
-            <div class="flex flex-row">
+            <div class="flex sm:flex-row flex-col">
               <div />
-              <div class="text-right flex-grow font-bold">
+              <div class="sm:text-right flex-grow font-bold">
                 {{ reverseExchangeRateDisplay }}
               </div>
             </div>
-            <div class="flex flex-row">
+            <div class="flex sm:flex-row flex-col mt-2 sm:mt-0">
               <div>Price impact:</div>
-              <div class="text-right flex-grow font-bold">
+              <div class="sm:text-right flex-grow font-bold">
                 {{ priceImpactDisplay }}
               </div>
             </div>
-            <div class="flex flex-row">
+            <div class="flex sm:flex-row flex-col mt-2 sm:mt-0">
               <div>Liquidity fee:</div>
-              <div class="text-right flex-grow font-bold">
+              <div class="sm:text-right flex-grow font-bold">
                 {{ feeDisplay }}
               </div>
             </div>
@@ -114,12 +115,16 @@
   </div>
 </template>
 <script>
+import { uniq } from 'lodash';
 import { mapGetters } from 'vuex';
 import { getInputError } from '@/utils/validation';
 import ActionButton from '../ActionButton';
-import { ASSET_PAIRS, ASSETS } from '@/utils/assetPairs';
+import { ASSET_PAIRS } from '@/utils/assetPairs';
 import Card from '@/components/cards/Card';
 import NumberInput from '@/components/NumberInput';
+import { GLOBAL_LIQ_TOKENS, USR_A_BAL, USR_B_BAL } from '@/utils/constants';
+import WithdrawalModal from '@/components/modals/WithdrawalModal';
+import { getMappedGlobalState } from '@/store/algorand/utils/format';
 
 export default {
   name: 'SwapCard',
@@ -127,6 +132,7 @@ export default {
     NumberInput,
     ActionButton,
     Card,
+    WithdrawalModal
   },
   data() {
     return {
@@ -142,6 +148,8 @@ export default {
       globalState: 'algorand/globalState',
       exchangeCalculator: 'algorand/exchangeCalculator',
       currentPair: 'algorand/currentPair',
+      hasToWithdrawAssets: 'algorand/hasToWithdrawAssets',
+      account: 'algorand/account',
     }),
     primaryAsset() {
       return this.currentPair.primaryAsset;
@@ -155,18 +163,33 @@ export default {
     secondAsset() {
       return this.currentPair.reversedKey ? this.primaryAsset : this.secondaryAsset;
     },
-    firstCurrencyOptions() {
-      return Object.keys(ASSETS).map((key) => {
-        return key.toUpperCase();
+    filteredPairs() {
+      const pairs = Object.keys(ASSET_PAIRS).filter((key) => {
+        let pair = ASSET_PAIRS[key];
+        let applicationData = this.rawStore.applicationDataCache[pair.applicationId];
+        if (!applicationData) {
+          return true;
+        }
+        const globalState = getMappedGlobalState(applicationData);
+        return globalState[GLOBAL_LIQ_TOKENS] > 0;
       });
+      if (pairs.length === 0) {
+        return [this.currentPair.key];
+      } else {
+        return pairs;
+      }
+    },
+    firstCurrencyOptions() {
+      return uniq(this.filteredPairs.map((key) => {
+        return key.split('/')[0].toUpperCase();
+      }));
     },
     secondCurrencyOptions() {
-      let pairs = Object.keys(ASSET_PAIRS).map((pair) => pair.split('/'));
+      let pairs = this.filteredPairs.map((pair) => pair.split('/'));
       pairs = pairs.filter((pair) => {
-        return pair[0] === this.firstAsset.assetName.toUpperCase();
+        return pair[0] === this.firstAsset.assetName.toUpperCase() || pair[1] === this.firstAsset.assetName.toUpperCase();
       });
-      pairs.push([null, this.firstAsset.assetName.toUpperCase()]);
-      return pairs.map((pair) => pair[1]);
+      return uniq(pairs.map((pair) => pair[1]));
     },
     globalExchangeRate() {
       return this.exchangeCalculator.getGlobalExchangeRate();
@@ -204,13 +227,11 @@ export default {
       return `${value} ${this.secondaryAsset.assetName.toUpperCase()} PER ${this.primaryAsset.assetName.toUpperCase()}`;
     },
     priceImpact() {
-      const difference =
-        Math.trunc(
-          (Math.abs(this.exchangeRate - this.globalExchangeRate) *
-            this.currentPair.ratio) /
-          this.globalExchangeRate
-        ) / this.currentPair.ratio;
-      return difference;
+      return Math.trunc(
+        (Math.abs(this.exchangeRate - this.globalExchangeRate) *
+          this.currentPair.ratio) /
+        this.globalExchangeRate
+      ) / this.currentPair.ratio;
     },
     priceImpactDisplay() {
       if (!isFinite(this.priceImpact) || !this.firstAmount || !this.secondAmount) {
@@ -234,13 +255,23 @@ export default {
       const value = this.secondAsset.getAssetDisplayAmount(this.fee, this.currentPair.ratioDecimalPoints);
       return `${value} ${this.secondAsset.assetName.toUpperCase()}`;
     },
-  },
 
+  },
   watch: {
     currentPair() {
       this.firstAmount = null;
       this.secondAmount = null;
       this.onFirstInputChange();
+    },
+    filteredPairs() {
+      if (this.filteredPairs.indexOf(this.currentPair.key) === -1 && this.filteredPairs.length > 0) {
+        this.$store.dispatch('algorand/SET_CURRENT_PAIR', { pairKey: this.filteredPairs[0] });
+      }
+    }
+  },
+  mounted() {
+    if (this.filteredPairs.indexOf(this.currentPair.key) === -1 && this.filteredPairs.length > 0) {
+      this.$store.dispatch('algorand/SET_CURRENT_PAIR', { pairKey: this.filteredPairs[0] });
     }
   },
   methods: {
@@ -264,6 +295,7 @@ export default {
       this.firstAmount = null;
       this.secondAmount = null;
       this.onFirstInputChange();
+      this.$forceUpdate();
     },
     onSecondCurrencyChange(value) {
       const potentialPair = `${this.firstAsset.assetName.toUpperCase()}/${value}`;
@@ -285,6 +317,7 @@ export default {
       this.firstAmount = null;
       this.secondAmount = null;
       this.onFirstInputChange();
+      this.$forceUpdate();
     },
     onFirstInputChange() {
       this.validate();
@@ -348,21 +381,50 @@ export default {
       return !error;
     },
     async onSwap() {
-      const accountAddress = this.rawStore.account;
       if (this.currentPair.reversed) {
-        await this.waitForAction(() =>
-          this.rawStore.serviceInstance.swapSecondary(
-            accountAddress,
-            this.secondaryAsset.getRawAssetAmount(this.firstAmount)
-          )
-        );
+        await this.$store.dispatch('algorand/QUEUE_ASSET_OPT_IN', {
+          assetIds: [this.primaryAsset.assetIndex]
+        });
+        const amount = this.secondaryAsset.getRawAssetAmount(this.firstAmount);
+        await this.$store.dispatch('algorand/QUEUE_ACTION', {
+          actionMethod: async () =>
+            await this.rawStore.serviceInstance.swapSecondary(
+              this.account,
+              amount
+            ),
+          actionMessage: 'Swapping...',
+          actionVerificationMethod: ({ prevState, newState }) => {
+            return Number(prevState[USR_A_BAL]) !== (newState[USR_A_BAL]) || Number(prevState[USR_B_BAL]) !== (newState[USR_B_BAL]);
+          }
+        });
+        await this.$store.dispatch('algorand/QUEUE_ACTION', {
+          actionMethod: async () => {
+            await this.$store.dispatch('algorand/WITHDRAW');
+          },
+          actionMessage: 'Withdrawing...'
+        });
       } else {
-        await this.waitForAction(() =>
-          this.rawStore.serviceInstance.swapPrimary(
-            accountAddress,
-            this.primaryAsset.getRawAssetAmount(this.firstAmount)
-          )
-        );
+        await this.$store.dispatch('algorand/QUEUE_ASSET_OPT_IN', {
+          assetIds: [this.secondaryAsset.assetIndex]
+        });
+        const amount = this.primaryAsset.getRawAssetAmount(this.firstAmount);
+        await this.$store.dispatch('algorand/QUEUE_ACTION', {
+          actionMethod: async () =>
+            await this.rawStore.serviceInstance.swapPrimary(
+              this.account,
+              amount
+            ),
+          actionMessage: 'Swapping...',
+          actionVerificationMethod: ({ prevState, newState }) => {
+            return Number(prevState[USR_A_BAL]) !== (newState[USR_A_BAL]) || Number(prevState[USR_B_BAL]) !== (newState[USR_B_BAL]);
+          }
+        });
+        await this.$store.dispatch('algorand/QUEUE_ACTION', {
+          actionMethod: async () => {
+            await this.$store.dispatch('algorand/WITHDRAW');
+          },
+          actionMessage: 'Withdrawing...'
+        });
       }
       this.firstAmount = null;
       this.secondAmount = null;

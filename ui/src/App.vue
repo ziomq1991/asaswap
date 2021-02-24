@@ -2,9 +2,8 @@
   <div id="app">
     <Navbar />
     <div class="absolute w-full">
-      <WithdrawalAlert v-if="showAlert" />
       <Alert
-        v-if="alert.type"
+        v-if="alert.type && !rawStore.pendingAction && !rawStore.pendingUpdate"
         :header="alert.header"
         :message="alert.message"
         :alert-type="alert.type"
@@ -12,7 +11,6 @@
     </div>
     <UpdateScheduler />
     <SelectAccountModal v-if="showSelectAccount" />
-    <AccountModal v-if="showAccount" />
     <ActionModal
       v-if="rawStore.pendingUpdate || !!rawStore.pendingAction"
       :message="actionMessage"
@@ -28,11 +26,9 @@ import Navbar from './components/Navbar';
 import Alert from './components/Alert';
 import UpdateScheduler from './components/UpdateScheduler';
 import SelectAccountModal from './components/modals/SelectAccountModal';
-import AccountModal from './components/modals/AccountModal';
 import ActionModal from './components/modals/ActionModal';
 import eventBus from './utils/eventBus';
-import WithdrawalAlert from './components/WithdrawalAlert.vue';
-import { USR_A_BAL, USR_B_BAL } from '@/utils/constants';
+import { SINGLE_PAIRS } from '@/utils/assetPairs';
 
 export default {
   name: 'App',
@@ -40,22 +36,20 @@ export default {
     Navbar,
     UpdateScheduler,
     SelectAccountModal,
-    AccountModal,
     Alert,
     ActionModal,
-    WithdrawalAlert
   },
   data() {
     return {
       showSelectAccount: false,
-      showAccount: false,
       alert: {}
     };
   },
   computed: {
     ...mapGetters({
       rawStore: 'algorand/rawStore',
-      userState: 'algorand/userState'
+      userState: 'algorand/userState',
+      hasToWithdraw: 'algorand/hasToWithdraw'
     }),
     actionMessage() {
       if (this.rawStore.pendingAction) {
@@ -68,32 +62,31 @@ export default {
         return 'Waiting for update...';
       }
       return '';
-    },
-    showAlert() {
-      return !!(this.userState[USR_A_BAL] || this.userState[USR_B_BAL]);
     }
   },
   mounted() {
     eventBus.$on('open-select-account', this.openSelectAccount);
-    eventBus.$on('open-account', this.openAccount);
     eventBus.$on('close-modals', this.closeModals);
     eventBus.$on('open-alert', this.openAlert);
     eventBus.$on('close-alert', this.closeAlert);
     eventBus.$on('transaction-success', this.onTransactionSuccess);
     eventBus.$on('set-action-message', this.onSetActionMessage);
-    this.$store.dispatch('algorand/FETCH_APPLICATION_DATA');
+    this.$store.dispatch('algorand/FETCH_APPLICATION_DATA', {});
     this.$store.dispatch('algorand/GET_SERVICE_INSTANCE');
+    this.prefetchPairs();
   },
   methods: {
+    prefetchPairs() {
+      Object.keys(SINGLE_PAIRS).forEach(async (key) => {
+        const pair = SINGLE_PAIRS[key];
+        await this.$store.dispatch('algorand/FETCH_APPLICATION_DATA', { appId: pair.applicationId });
+      });
+    },
     openSelectAccount() {
       this.showSelectAccount = true;
     },
-    openAccount() {
-      this.showAccount = true;
-    },
     closeModals() {
       this.showSelectAccount = false;
-      this.showAccount = false;
     },
     closeAlert() {
       this.alert = {};
@@ -111,7 +104,7 @@ export default {
       }
       eventBus.$emit('open-alert', {
         type: 'success',
-        message: `Transaction has been successfuly processed. Click <a href="${address}${txId}" target="_blank" class="underline">here</a> to preview the transaction.`
+        message: `Transaction has been successfully processed. Click <a href="${address}${txId}" target="_blank" class="underline">here</a> to preview the transaction.`
       });
     },
     onSetActionMessage(actionMessage) {

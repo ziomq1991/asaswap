@@ -21,7 +21,7 @@ export function getInputError(value, decimalPoints, assetName) {
   return null;
 }
 
-export async function validateIfAccountCanAffordTxs(txs) {
+export async function validateTx(txs) {
   await store.dispatch('algorand/FETCH_ACCOUNT_DATA');
   const algoSpending = countAlgoSpending(txs);
   if (algoSpending > getAlgoBalance()) {

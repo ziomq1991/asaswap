@@ -18,10 +18,13 @@ export default function() {
     account: localStorage.getItem('account'),
     accountData: null,
     applicationData: null,
+    applicationDataCache: {},
+    actionQueue: [],
     pendingUpdate: false,
     pendingAction: null,
     pendingActionMessage: null,
+    pendingVerificationFunc: null,
     currentPair: getPair(),
-    changingPair: false,
+    changingPair: false
   };
 }

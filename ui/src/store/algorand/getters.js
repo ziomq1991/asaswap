@@ -1,7 +1,7 @@
 import { getMappedUserState, getMappedGlobalState, getMappedUserAssets } from './utils/format';
 import { ExchangeCalculator } from '@/utils/exchange';
 import { ASSET_PAIRS } from '@/utils/assetPairs';
-import { GLOBAL_A_BAL, GLOBAL_B_BAL } from '@/utils/constants';
+import { GLOBAL_A_BAL, GLOBAL_B_BAL, USR_A_BAL, USR_B_BAL, USR_LIQ_TOKENS } from '@/utils/constants';
 
 export function rawStore(state) {
   return {
@@ -15,6 +15,7 @@ export function rawStore(state) {
     pendingActionMessage: state.pendingActionMessage,
     pendingUpdate: state.pendingUpdate,
     fetchedAccounts: state.fetchedAccounts,
+    applicationDataCache: state.applicationDataCache
   };
 }
 
@@ -104,4 +105,21 @@ export function exchangeCalculator(state) {
   }
   const globalState = getMappedGlobalState(state.applicationData);
   return new ExchangeCalculator(globalState[GLOBAL_A_BAL], globalState[GLOBAL_B_BAL], ASSET_PAIRS[state.currentPair]);
+}
+
+export function hasToWithdrawAssets(state, getters) {
+  if (!state.accountData) {
+    return false;
+  }
+  if (getters.userState[USR_A_BAL] > 0 || getters.userState[USR_B_BAL] > 0) {
+    return true;
+  }
+  return getters.userState[USR_LIQ_TOKENS] > 0;
+}
+
+export function hasToWithdrawLiquidity(state, getters) {
+  if (!state.accountData) {
+    return false;
+  }
+  return getters.userState[USR_LIQ_TOKENS] > 0;
 }

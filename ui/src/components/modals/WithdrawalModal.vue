@@ -21,11 +21,14 @@
         aria-modal="true"
         aria-labelledby="modal-headline"
       >
-        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-          <div class="sm:flex sm:items-start">
-            <div class="w-full">
-              <Spinner :message="message || 'Waiting for confirmation...'" />
-            </div>
+        <div class="bg-white px-16 pt-20 pb-16 sm:p-6 sm:pb-4 text-center">
+          <div>
+            Before proceeding you need to withdraw your tokens.
+          </div>
+          <div class="flex mt-4 justify-center">
+            <t-button @click="withdraw">
+              Withdraw your tokens
+            </t-button>
           </div>
         </div>
       </div>
@@ -33,19 +36,12 @@
   </div>
 </template>
 <script>
-import Spinner from 'vue-simple-spinner';
-
 export default {
-  name: 'ActionModal',
-  components: {
-    Spinner
-  },
-  props: {
-    message: {
-      required: false,
-      type: String,
-      default: null
+  name: 'WithdrawalModal',
+  methods: {
+    withdraw() {
+      this.$store.dispatch('algorand/WITHDRAW');
     }
-  },
+  }
 };
 </script>

@@ -3,7 +3,7 @@
     <nav class="bg-gray-800">
       <div class="mx-auto px-2 sm:px-6 lg:px-8">
         <div class="relative flex items-center justify-between h-16">
-          <div class="inset-y-0 left-0 flex items-center lg:hidden">
+          <div class="inset-y-0 left-0 flex items-center md:hidden">
             <!-- Mobile menu button-->
             <button
               class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
@@ -60,12 +60,12 @@
           >
             <div class="flex-shrink-0 flex items-center">
               <img
-                class="hidden lg:block h-8 w-auto"
+                class="hidden md:block h-8 w-auto"
                 src="https://tailwindui.com/img/logos/workflow-mark-indigo-500.svg"
                 alt="Workflow"
               >
             </div>
-            <div class="hidden lg:block sm:ml-6">
+            <div class="hidden md:block sm:ml-6">
               <div class="flex space-x-2">
                 <router-link
                   v-for="entry in entries"
@@ -75,7 +75,7 @@
                   active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
                   class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
                 >
-                  {{ entry.label }} <ExclamationMark v-if="entry.exclamationMark" />
+                  {{ entry.label }}
                 </router-link>
               </div>
             </div>
@@ -84,7 +84,6 @@
             class="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0"
           >
             <AlgoSignerButton />
-            <PairPicker />
           </div>
         </div>
       </div>
@@ -104,7 +103,7 @@
             active-class="bg-gray-900 text-white block px-3 py-2 rounded-md text-base font-medium"
             class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
           >
-            {{ entry.label }} <ExclamationMark v-if="entry.exclamationMark" />
+            {{ entry.label }}
           </router-link>
         </div>
       </div>
@@ -114,17 +113,11 @@
 <script>
 import { mapGetters } from 'vuex';
 import AlgoSignerButton from './AlgoSignerButton.vue';
-import ExclamationMark from './ExclamationMark';
-import PairPicker from './PairPicker';
-import { USR_A_BAL, USR_B_BAL } from '@/utils/constants';
 
 export default {
   name: 'Navbar',
   components: {
-    AlgoSignerButton,
-    // eslint-disable-next-line vue/no-unused-components
-    ExclamationMark,
-    PairPicker
+    AlgoSignerButton
   },
   data() {
     return {
@@ -137,9 +130,9 @@ export default {
     }),
     menuClass() {
       if (this.menuIsOpened) {
-        return 'block lg:hidden';
+        return 'block md:hidden';
       } else {
-        return 'hidden lg:hidden';
+        return 'hidden md:hidden';
       }
     },
     entries() {
@@ -150,18 +143,9 @@ export default {
           exact: true
         },
         {
-          label: 'Add Liquidity',
-          to: '/add-liquidity',
-        },
-        {
-          label: 'Remove Liquidity',
-          to: '/remove-liquidity',
-        },
-        {
-          label: 'Withdraw',
-          to: '/withdraw',
-          exclamationMark: this.userState[USR_A_BAL] || this.userState[USR_B_BAL]
-        },
+          label: 'Pool',
+          to: '/pool',
+        }
       ];
     }
   },

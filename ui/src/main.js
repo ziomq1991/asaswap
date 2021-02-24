@@ -4,7 +4,6 @@ import App from './App.vue';
 import '@/assets/css/tailwind.css';
 import '@/assets/css/custom.css';
 import store from './store';
-import waitForAction from './mixins/waitForAction';
 
 import VueTailwind from 'vue-tailwind';
 
@@ -33,7 +32,6 @@ const settings = {
 };
 
 Vue.use(VueTailwind, settings);
-Vue.mixin(waitForAction);
 
 Vue.config.productionTip = false;
 

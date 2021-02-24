@@ -3,7 +3,6 @@
     <SwapCard />
   </div>
 </template>
-
 <script>
 import SwapCard from '@/components/cards/SwapCard.vue';
 

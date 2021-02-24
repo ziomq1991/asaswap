@@ -28,10 +28,10 @@ export default {
         return;
       }
       if (this.rawStore.connected) {
+        this.$store.dispatch('algorand/FETCH_ACCOUNTS');
         this.$store.dispatch('algorand/FETCH_ACCOUNT_DATA');
       }
-      this.$store.dispatch('algorand/FETCH_APPLICATION_DATA');
-      this.$store.dispatch('algorand/FETCH_ACCOUNTS');
+      this.$store.dispatch('algorand/FETCH_APPLICATION_DATA', {});
     }
   }
 };

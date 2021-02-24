@@ -1,14 +1,19 @@
 <template>
   <div>
+    <WithdrawalModal v-if="hasToWithdrawLiquidity && !rawStore.pendingAction && !rawStore.pendingUpdate" />
     <Card>
       <div class="py-4 px-8 mt-3">
         <div class="flex flex-col mb-8">
-          <h2 class="text-gray-700 font-semibold text-2xl tracking-wide mb-2">
+          <h1 class="text-gray-700 font-semibold tracking-wide mb-2">
             Add Liquidity
-          </h2>
+          </h1>
           <p class="text-gray-500 text-base">
             Enter the amount of liquidity that you would like to add.
           </p>
+        </div>
+        <div class="mt-4">
+          <label>Pair</label>
+          <p>{{ currentPair.key }}</p>
         </div>
         <div class="mt-4">
           <NumberInput
@@ -41,27 +46,27 @@
       >
         <div class="py-4 px-4">
           <div class="flex flex-col">
-            <div class="flex flex-row">
+            <div class="flex sm:flex-row flex-col mt-2 sm:mt-0">
               <div>Exchange rate:</div>
-              <div class="text-right flex-grow font-bold">
+              <div class="sm:text-right flex-grow font-bold">
                 {{ primaryPerSecondary }}
               </div>
             </div>
-            <div class="flex flex-row">
+            <div class="flex sm:flex-row flex-col">
               <div />
-              <div class="text-right flex-grow font-bold">
+              <div class="sm:text-right flex-grow font-bold">
                 {{ secondaryPerPrimary }}
               </div>
             </div>
-            <div class="flex flex-row">
+            <div class="flex sm:flex-row flex-col mt-2 sm:mt-0">
               <div>Liquidity Tokens:</div>
-              <div class="text-right flex-grow font-bold">
+              <div class="sm:text-right flex-grow font-bold">
                 {{ liquidityTokensDisplay }}
               </div>
             </div>
-            <div class="flex flex-row">
+            <div class="flex sm:flex-row flex-col mt-2 sm:mt-0">
               <div>Pool Share:</div>
-              <div class="text-right flex-grow font-bold">
+              <div class="sm:text-right flex-grow font-bold">
                 {{ poolShareDisplay }}
               </div>
             </div>
@@ -83,14 +88,17 @@ import NumberInput from '../NumberInput';
 import { getInputError } from '@/utils/validation';
 import ActionButton from '../ActionButton';
 import Card from '@/components/cards/Card';
-import { GLOBAL_A_BAL, GLOBAL_LIQ_TOKENS } from '@/utils/constants';
+import { GLOBAL_A_BAL, GLOBAL_LIQ_TOKENS, USR_LIQ_TOKENS } from '@/utils/constants';
+import { ASSET_PAIRS } from '@/utils/assetPairs';
+import WithdrawalModal from '@/components/modals/WithdrawalModal';
 
 export default {
   name: 'AddLiquidityCard',
   components: {
     NumberInput,
     ActionButton,
-    Card
+    Card,
+    WithdrawalModal
   },
   data() {
     return {
@@ -104,7 +112,8 @@ export default {
       rawStore: 'algorand/rawStore',
       globalState: 'algorand/globalState',
       exchangeCalculator: 'algorand/exchangeCalculator',
-      currentPair: 'algorand/currentPair'
+      currentPair: 'algorand/currentPair',
+      hasToWithdrawLiquidity: 'algorand/hasToWithdrawLiquidity'
     }),
     primaryAsset() {
       return this.currentPair.primaryAsset;
@@ -145,12 +154,10 @@ export default {
       return `${value} ${this.secondaryAsset.assetName.toUpperCase()} PER ${this.primaryAsset.assetName.toUpperCase()}`;
     },
     difference() {
-      const difference =
-        Math.trunc(
-          (Math.abs(this.exchangeRate - this.globalExchangeRate) * this.currentPair.ratio) /
-            this.globalExchangeRate
-        ) / this.currentPair.ratio;
-      return difference;
+      return Math.trunc(
+        (Math.abs(this.exchangeRate - this.globalExchangeRate) * this.currentPair.ratio) /
+        this.globalExchangeRate
+      ) / this.currentPair.ratio;
     },
     isDifferenceCorrect() {
       if (isNaN(this.difference)) {
@@ -196,7 +203,17 @@ export default {
       this.validate();
     }
   },
+  created() {
+    const pairKey = this.decodePair(this.$route.params.pair);
+    if (!ASSET_PAIRS[pairKey]) {
+      this.$router.push('/pool');
+    }
+    this.$store.dispatch('algorand/SET_CURRENT_PAIR', { pairKey });
+  },
   methods: {
+    decodePair(pairName) {
+      return decodeURIComponent(pairName).toUpperCase().replace('-', '/');
+    },
     onAlgosInputChange(recalculate) {
       if (this.globalState[GLOBAL_LIQ_TOKENS] === 0) {
         this.validate();
@@ -264,9 +281,26 @@ export default {
     },
     async onAddLiquidity() {
       const accountAddress = this.rawStore.account;
-      await this.waitForAction(() =>
-        this.rawStore.serviceInstance.addLiquidity(accountAddress, this.primaryAsset.getRawAssetAmount(this.primaryAmount), this.secondaryAsset.getRawAssetAmount(this.secondaryAmount))
-      );
+      await this.$store.dispatch('algorand/QUEUE_ASSET_OPT_IN', {
+        assetIds: [this.currentPair.liquidityAsset.assetIndex]
+      });
+      const primaryAmount = this.primaryAsset.getRawAssetAmount(this.primaryAmount);
+      const secondaryAmount = this.secondaryAsset.getRawAssetAmount(this.secondaryAmount);
+      await this.$store.dispatch('algorand/QUEUE_ACTION', {
+        actionMethod: async () => {
+          await this.rawStore.serviceInstance.addLiquidity(accountAddress, primaryAmount, secondaryAmount);
+        },
+        actionMessage: 'Adding liquidity...',
+        actionVerificationMethod: ({ prevState, newState }) => {
+          return Number(prevState[USR_LIQ_TOKENS]) !== Number(newState[USR_LIQ_TOKENS]);
+        }
+      });
+      await this.$store.dispatch('algorand/QUEUE_ACTION', {
+        actionMethod: async () => {
+          await this.$store.dispatch('algorand/WITHDRAW');
+        },
+        actionMessage: 'Withdrawing...'
+      });
       this.primaryAmount = null;
       this.secondaryAmount = null;
     },
