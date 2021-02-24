@@ -1,0 +1,13 @@
+liquidity_token:
+  total: 9007199254740991
+  decimals: 0
+  defaultFrozen: false
+  unitName: "AU_LIQ"
+  url: "http://asaswap.ulam.io"
+  # User may get "signature validation failed" from node if shorter hash is used.
+  metadataHash: "12312442142141241244444411111133"
+  note: "Asaswap Liquidity Token for ALGOS/USDTG. Make sure to verify its authenticity"
+  manager: "UE77LYTFFBOV4X7QKASX6F5G3Y3337APFW6MLIIGZNXJCDEHZRXCKBILPA"
+  reserve: "UE77LYTFFBOV4X7QKASX6F5G3Y3337APFW6MLIIGZNXJCDEHZRXCKBILPA"
+  freeze: "UE77LYTFFBOV4X7QKASX6F5G3Y3337APFW6MLIIGZNXJCDEHZRXCKBILPA"
+  clawback: "UE77LYTFFBOV4X7QKASX6F5G3Y3337APFW6MLIIGZNXJCDEHZRXCKBILPA"

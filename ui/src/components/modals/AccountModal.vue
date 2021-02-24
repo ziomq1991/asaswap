@@ -91,6 +91,7 @@
 <script>
 import eventBus from '@/utils/eventBus';
 import { mapGetters } from 'vuex';
+import { GLOBAL_A_BAL, GLOBAL_B_BAL, USR_LIQ_TOKENS, USR_A_BAL, USR_B_BAL } from '@/utils/constants';
 
 export default {
   name: 'SelectAccountModal',
@@ -107,28 +108,28 @@ export default {
       return this.currentPair.secondaryAsset;
     },
     globalPrimaryAssetBalance() {
-      return this.primaryAsset.getAssetDisplayAmount(this.globalState['A']);
+      return this.primaryAsset.getAssetDisplayAmount(this.globalState[GLOBAL_A_BAL]);
     },
     globalSecondaryAssetBalance() {
-      return this.secondaryAsset.getAssetDisplayAmount(this.globalState['B']);
+      return this.secondaryAsset.getAssetDisplayAmount(this.globalState[GLOBAL_B_BAL]);
     },
     primaryAssetBalance() {
-      if (isNaN(this.userState['USR_A'])) {
+      if (isNaN(this.userState[USR_A_BAL])) {
         return 'N/A';
       }
-      return this.primaryAsset.getAssetDisplayAmount(this.userState['USR_A']);
+      return this.primaryAsset.getAssetDisplayAmount(this.userState[USR_A_BAL]);
     },
     secondaryAssetBalance() {
-      if (isNaN(this.userState['USR_B'])) {
+      if (isNaN(this.userState[USR_B_BAL])) {
         return 'N/A';
       }
-      return this.secondaryAsset.getAssetDisplayAmount(this.userState['USR_B']);
+      return this.secondaryAsset.getAssetDisplayAmount(this.userState[USR_B_BAL]);
     },
     liquidityTokens() {
-      if (isNaN(this.userState['USR_LIQ'])) {
+      if (isNaN(this.userState[USR_LIQ_TOKENS])) {
         return 'N/A';
       }
-      return this.userState['USR_LIQ'];
+      return this.userState[USR_LIQ_TOKENS];
     },
   },
   methods: {

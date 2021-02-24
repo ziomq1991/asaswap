@@ -22,8 +22,8 @@ let accounts = mkAccounts([{
   // This account is created using `make setup-master-account` command from our
   // `/infrastructure` directory. It already has many ALGOs
   name: "master",
-  addr: "JRJPHXJS5RLAVMCNOIVUNWF7EA5NOD3MU6LUUS2RNALMNQ3SYS6BG7C6Z4",
-  mnemonic: "blouse thought giggle bread asset squirrel grief buddy horror wet grab update patrol abuse range rally magnet april chuckle pyramid team maid exist abandon whip"
+  addr: "UE77LYTFFBOV4X7QKASX6F5G3Y3337APFW6MLIIGZNXJCDEHZRXCKBILPA",
+  mnemonic: "display asset record between test edge parent romance water only chalk cereal autumn such dance detect auction economy tonight verify hamster knife woman ability pyramid"
 }]);
 
 // ## ACCOUNTS loaded from a FILE ##

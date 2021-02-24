@@ -2,7 +2,7 @@
   <div id="app">
     <Navbar />
     <div class="absolute w-full">
-      <WithdrawalAlert v-if="userState.USR_A || userState.USR_B" />
+      <WithdrawalAlert v-if="showAlert" />
       <Alert
         v-if="alert.type"
         :header="alert.header"
@@ -32,6 +32,7 @@ import AccountModal from './components/modals/AccountModal';
 import ActionModal from './components/modals/ActionModal';
 import eventBus from './utils/eventBus';
 import WithdrawalAlert from './components/WithdrawalAlert.vue';
+import { USR_A_BAL, USR_B_BAL } from '@/utils/constants';
 
 export default {
   name: 'App',
@@ -67,6 +68,9 @@ export default {
         return 'Waiting for update...';
       }
       return '';
+    },
+    showAlert() {
+      return !!(this.userState[USR_A_BAL] || this.userState[USR_B_BAL]);
     }
   },
   mounted() {
@@ -100,7 +104,7 @@ export default {
     },
     onTransactionSuccess(txId) {
       let address;
-      if (ALGORAND_LEDGER == 'TestNet') {
+      if (ALGORAND_LEDGER === 'TestNet') {
         address = 'https://testnet.algoexplorer.io/tx/';
       } else {
         address = 'https://testnet.algoexplorer.io/tx/';

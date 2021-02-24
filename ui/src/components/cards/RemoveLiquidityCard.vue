@@ -10,10 +10,10 @@
             Enter the amount of liquidity that you would like to remove.
           </p>
           <p
-            v-if="maximumValueDisplay"
+            v-if="maximumValue"
             class="text-base text-gray-500"
           >
-            You have <b>{{ maximumValueDisplay }}</b> liquidity tokens that
+            You have <b>{{ maximumValue }}</b> liquidity tokens that
             you can remove.
           </p>
           <p
@@ -28,7 +28,7 @@
           <NumberInput
             v-model="liquidityTokens"
             label="Liquidity Tokens"
-            :max="userState.USR_LIQ"
+            :max="maximumValue"
             placeholder="0"
             :allow-decimals="false"
             @change="validate"
@@ -73,6 +73,7 @@ import { mapGetters } from 'vuex';
 import NumberInput from '../NumberInput';
 import ActionButton from '../ActionButton';
 import Card from './Card';
+import { GLOBAL_A_BAL, GLOBAL_B_BAL, GLOBAL_LIQ_TOKENS, USR_LIQ_TOKENS } from '@/utils/constants';
 
 export default {
   name: 'RemoveLiquidityCard',
@@ -101,16 +102,16 @@ export default {
     secondaryAsset() {
       return this.currentPair.secondaryAsset;
     },
-    maximumValueDisplay() {
-      return this.userState['USR_LIQ'];
+    maximumValue() {
+      return this.userState[USR_LIQ_TOKENS];
     },
     amountOfPrimaryAsset() {
-      if (this.globalState['LIQ'] === 0) {
+      if (this.globalState[GLOBAL_LIQ_TOKENS] === 0) {
         return;
       }
       let value = Math.trunc(
-        (this.globalState['A'] * this.liquidityTokens) /
-          this.globalState['LIQ']
+        (this.globalState[GLOBAL_A_BAL] * this.liquidityTokens) /
+          this.globalState[GLOBAL_LIQ_TOKENS]
       );
       if (typeof value !== 'number' || isNaN(value)) {
         return;
@@ -118,12 +119,12 @@ export default {
       return this.primaryAsset.getAssetDisplayAmount(value);
     },
     amountOfSecondaryAsset() {
-      if (this.globalState['LIQ'] === 0) {
+      if (this.globalState[GLOBAL_LIQ_TOKENS] === 0) {
         return;
       }
       const value = Math.trunc(
-        (this.globalState['B'] * this.liquidityTokens) /
-        this.globalState['LIQ']
+        (this.globalState[GLOBAL_B_BAL] * this.liquidityTokens) /
+        this.globalState[GLOBAL_LIQ_TOKENS]
       );
       if (typeof value !== 'number' || isNaN(value)) {
         return value;
@@ -157,7 +158,7 @@ export default {
   },
   methods: {
     validate() {
-      const userLiquidity = this.userState['USR_LIQ'] ? Number(this.userState['USR_LIQ']) : 0;
+      const userLiquidity = this.userState[USR_LIQ_TOKENS] ? Number(this.userState[USR_LIQ_TOKENS]) : 0;
       if (Number(this.liquidityTokens) <= 0) {
         this.error = 'Enter a valid amount';
       } else if (Number(this.liquidityTokens) > userLiquidity) {

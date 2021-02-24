@@ -116,6 +116,7 @@ import { mapGetters } from 'vuex';
 import AlgoSignerButton from './AlgoSignerButton.vue';
 import ExclamationMark from './ExclamationMark';
 import PairPicker from './PairPicker';
+import { USR_A_BAL, USR_B_BAL } from '@/utils/constants';
 
 export default {
   name: 'Navbar',
@@ -159,7 +160,7 @@ export default {
         {
           label: 'Withdraw',
           to: '/withdraw',
-          exclamationMark: this.userState['USR_A'] || this.userState['USR_B']
+          exclamationMark: this.userState[USR_A_BAL] || this.userState[USR_B_BAL]
         },
       ];
     }

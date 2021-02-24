@@ -5,9 +5,19 @@ import { Runtime, StoreAccount } from '@algorand-builder/runtime';
 import { RUNTIME_ERRORS } from '@algorand-builder/runtime/build/errors/errors-list.js';
 import chai from 'chai';
 import { expectTealError } from './utils/errors.mjs';
-import {AsaswapManager, ASA_TO_ASA, ALGOS_TO_ASA} from './utils/asaswap.mjs';
+import { AsaswapManager, ASA_TO_ASA, ALGOS_TO_ASA } from './utils/asaswap.mjs';
 import { setupAssets, fundAccounts } from './utils/assets.mjs';
+import constants from '../common/constants.js';
 
+const {
+  GLOBAL_A_BAL,
+  A_IDX, GLOBAL_B_BAL,
+  B_IDX, CREATOR_ADDRESS, ESCROW_ADDRESS, LIQ_IDX,
+  GLOB_LIQ_TOKENS,
+  USR_LIQ_TOKENS,
+  USR_A_BAL,
+  USR_B_BAL
+} = constants;
 const { assert } = chai;
 
 [ASA_TO_ASA, ALGOS_TO_ASA].forEach(function (contractType) {
@@ -19,6 +29,7 @@ const { assert } = chai;
 
     let runtime;
     let asaswap;
+    let assetIds;
 
     const getGlobal = (key) => runtime.getGlobalState(asaswap.getApplicationId(), key);
     const getLocal = (accountAddr, key) => runtime.getLocalState(asaswap.getApplicationId(), accountAddr, key);
@@ -28,9 +39,9 @@ const { assert } = chai;
       creator = new StoreAccount(minBalance);
       swapper = new StoreAccount(minBalance);
       runtime = new Runtime([master, creator, swapper]);
-      setupAssets(runtime, master);
-      fundAccounts(runtime, master, [master, creator, swapper]);
-      asaswap = new AsaswapManager(runtime, creator, 111, 123, contractType);
+      assetIds = setupAssets(runtime, master);
+      fundAccounts(runtime, master, [master, creator, swapper], assetIds);
+      asaswap = new AsaswapManager(runtime, creator, assetIds, contractType);
     });
 
     it('throws errors after trying to opt-in escrow after finishing setup', () => {
@@ -40,7 +51,7 @@ const { assert } = chai;
       asaswap.configureEscrowAddress(asaswap.getEscrowAddress());
 
       expectTealError(
-        () => asaswap.escrowOptInToAsset(),
+        () => asaswap.escrowSetupAssets(),
         RUNTIME_ERRORS.TEAL.INVALID_TYPE
       );
     });
@@ -95,9 +106,9 @@ const { assert } = chai;
       asaswap.addLiquidity(master.account, asaswap.getEscrowAddress(), 7000000, 6000000);
       asaswap.removeLiquidity(master.account, 7000000);
 
-      assert.equal(getLocal(master.address, 'USR_A'), 7000000);
-      assert.equal(getLocal(master.address, 'USR_B'), 6000000);
-      assert.equal(getLocal(master.address, 'USR_LIQ'), 0);
+      assert.equal(getLocal(master.address, USR_A_BAL), 7000000);
+      assert.equal(getLocal(master.address, USR_B_BAL), 6000000);
+      assert.equal(getLocal(master.address, USR_LIQ_TOKENS), 0);
 
       expectTealError(
         () => asaswap.withdraw(master, 121, 121),
@@ -120,9 +131,9 @@ const { assert } = chai;
       asaswap.addLiquidity(master.account, asaswap.getEscrowAddress(), 7000000, 6000000);
       asaswap.removeLiquidity(master.account, 6000000);
 
-      assert.equal(getLocal(master.address, 'USR_A'), 6000000);
-      assert.equal(getLocal(master.address, 'USR_B'), 5142857);
-      assert.equal(getLocal(master.address, 'USR_LIQ'), 1000000);
+      assert.equal(getLocal(master.address, USR_A_BAL), 6000000);
+      assert.equal(getLocal(master.address, USR_B_BAL), 5142857);
+      assert.equal(getLocal(master.address, USR_LIQ_TOKENS), 1000000);
 
       expectTealError(
         () => asaswap.withdraw(master, 6000000, 5142857, {
@@ -161,14 +172,14 @@ const { assert } = chai;
       asaswap.optIn(master.address);
       expectTealError(
         () => asaswap.addLiquidity(master.account, asaswap.getEscrowAddress(), 7000000, 6000000, {
-          secondaryAssetId: 100
+          secondaryAssetId: assetIds['primaryAssetId']
         }),
         RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
       );
-      if (contractType == ASA_TO_ASA) {
+      if (contractType === ASA_TO_ASA) {
         expectTealError(
           () => asaswap.addLiquidity(master.account, asaswap.getEscrowAddress(), 7000000, 6000000, {
-            primaryAssetId: 100
+            primaryAssetId: assetIds['secondaryAssetId']
           }),
           RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
         );
@@ -182,14 +193,14 @@ const { assert } = chai;
       asaswap.addLiquidity(master.account, asaswap.getEscrowAddress(), 7000000, 6000000);
       expectTealError(
         () => asaswap.secondaryAssetSwap(swapper.account, asaswap.getEscrowAddress(), 100, {
-          secondaryAssetId: 100
+          assetId: assetIds['invalidAssetId']
         }),
         RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
       );
-      if (contractType == ASA_TO_ASA) {
+      if (contractType === ASA_TO_ASA) {
         expectTealError(
           () => asaswap.primaryAssetSwap(swapper.account, asaswap.getEscrowAddress(), 100, {
-            primaryAssetId: 100
+            assetId: assetIds['invalidAssetId']
           }),
           RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
         );
@@ -203,9 +214,9 @@ const { assert } = chai;
       asaswap.addLiquidity(master.account, asaswap.getEscrowAddress(), 7000000, 6000000);
       asaswap.removeLiquidity(master.account, 7000000);
 
-      assert.equal(getLocal(master.address, 'USR_A'), 7000000);
-      assert.equal(getLocal(master.address, 'USR_B'), 6000000);
-      assert.equal(getLocal(master.address, 'USR_LIQ'), 0);
+      assert.equal(getLocal(master.address, USR_A_BAL), 7000000);
+      assert.equal(getLocal(master.address, USR_B_BAL), 6000000);
+      assert.equal(getLocal(master.address, USR_LIQ_TOKENS), 0);
 
       expectTealError(
         () => asaswap.withdraw(master, 121, 121),
@@ -234,6 +245,93 @@ const { assert } = chai;
       );
     });
 
+    it('successfully withdraws liquidity', () => {
+      asaswap.setupApplicationWithEscrow(master);
+      asaswap.optIn(master.address);
+      asaswap.addLiquidity(master.account, asaswap.getEscrowAddress(), 7000000, 10);
+      assert.equal(getLocal(master.address, USR_LIQ_TOKENS), 7000000);
+      asaswap.withdrawLiquidity(master, 5000000);
+      assert.equal(getLocal(master.address, USR_LIQ_TOKENS), 2000000);
+    });
+
+    it('successfully adds liquidity', () => {
+      asaswap.setupApplicationWithEscrow(master);
+      asaswap.optIn(master.address);
+      asaswap.addLiquidity(master.account, asaswap.getEscrowAddress(), 700000, 10);
+      assert.equal(getLocal(master.address, USR_LIQ_TOKENS), 700000);
+      asaswap.addLiquidity(master.account, asaswap.getEscrowAddress(), 700000, 10);
+      assert.equal(getLocal(master.address, USR_LIQ_TOKENS), 1400000);
+    });
+
+    it('throws error when trying to withdraw liquidity with altered fee', () => {
+      asaswap.setupApplicationWithEscrow(master);
+      asaswap.optIn(master.address);
+      asaswap.addLiquidity(master.account, asaswap.getEscrowAddress(), 7000000, 10);
+      assert.equal(getLocal(master.address, USR_LIQ_TOKENS), 7000000);
+      expectTealError(
+        () => asaswap.withdrawLiquidity(master, 7000000, {
+          assetFee: 10000,
+        }),
+        RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
+      );
+    });
+
+    it('throws error when trying to withdraw liquidity with fee being sent to wrong account', () => {
+      asaswap.setupApplicationWithEscrow(master);
+      asaswap.optIn(master.address);
+      asaswap.addLiquidity(master.account, asaswap.getEscrowAddress(), 7000000, 10);
+      assert.equal(getLocal(master.address, USR_LIQ_TOKENS), 7000000);
+      expectTealError(
+        () => asaswap.withdrawLiquidity(master, 7000000, {
+          feeTo: master.address
+        }),
+        RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
+      );
+    });
+
+    it('throws error when trying to withdraw liquidity with invalid asset', () => {
+      asaswap.setupApplicationWithEscrow(master);
+      asaswap.optIn(master.address);
+      asaswap.addLiquidity(master.account, asaswap.getEscrowAddress(), 7000000, 10);
+      assert.equal(getLocal(master.address, USR_LIQ_TOKENS), 7000000);
+      expectTealError(
+        () => asaswap.withdrawLiquidity(master, 7000000, {
+          assetId: assetIds['primaryAssetId']
+        }),
+        RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
+      );
+    });
+
+    it('throws error when trying to withdraw liquidity over balance', () => {
+      asaswap.setupApplicationWithEscrow(master);
+      asaswap.optIn(master.address);
+      asaswap.addLiquidity(master.account, asaswap.getEscrowAddress(), 7000000, 10);
+      assert.equal(getLocal(master.address, USR_LIQ_TOKENS), 7000000);
+      expectTealError(
+        () => asaswap.withdrawLiquidity(master, 8000000),
+        RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
+      );
+    });
+
+    it('successfully deposits liquidity', () => {
+      asaswap.setupApplicationWithEscrow(master);
+      asaswap.optIn(master.address);
+      assert.equal(getLocal(master.address, USR_LIQ_TOKENS), 0);
+      asaswap.depositLiquidity(master.account, 5000000);
+      assert.equal(getLocal(master.address, USR_LIQ_TOKENS), 5000000);
+    });
+
+    it('throws error when trying to deposit liquidity with invalid asset id', () => {
+      asaswap.setupApplicationWithEscrow(master);
+      asaswap.optIn(master.address);
+      expectTealError(
+        () => asaswap.depositLiquidity(master.account, 5000000, {
+          assetId: assetIds['primaryAssetId']
+        }),
+        RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
+      );
+    });
+
     it('successfully swaps and withdraws', () => {
       const creatorPk = addressToPk(creator.address);
 
@@ -242,14 +340,14 @@ const { assert } = chai;
 
       assert.isDefined(asaswap.getApplicationId());
       if (contractType === ASA_TO_ASA) {
-        assert.equal(getGlobal('A_IDX'), 111);
+        assert.equal(getGlobal(A_IDX), assetIds['primaryAssetId']);
       }
-      assert.equal(getGlobal('B_IDX'), 123);
-      assert.equal(getGlobal('LIQ'), 0);
-      assert.equal(getGlobal('A'), 0);
-      assert.equal(getGlobal('B'), 0);
-      assert.equal(getGlobal('ESC'), undefined);
-      assert.deepEqual(getGlobal('CRT'), creatorPk);
+      assert.equal(getGlobal(B_IDX), assetIds['secondaryAssetId']);
+      assert.equal(getGlobal(GLOB_LIQ_TOKENS), 0);
+      assert.equal(getGlobal(GLOBAL_A_BAL), 0);
+      assert.equal(getGlobal(GLOBAL_B_BAL), 0);
+      assert.equal(getGlobal(ESCROW_ADDRESS), undefined);
+      assert.deepEqual(getGlobal(CREATOR_ADDRESS), creatorPk);
 
       // Setup escrow account
       asaswap.setupEscrow();
@@ -258,58 +356,59 @@ const { assert } = chai;
       asaswap.configureEscrowAddress(asaswap.getEscrowAddress());
 
       // Verify escrow storage
-      assert.deepEqual(getGlobal('ESC'), addressToPk(asaswap.getEscrowAddress()));
+      assert.deepEqual(getGlobal(ESCROW_ADDRESS), addressToPk(asaswap.getEscrowAddress()));
       if (contractType === ASA_TO_ASA) {
-        assert.equal(getGlobal('A_IDX'), 111);
+        assert.equal(getGlobal(A_IDX), assetIds['primaryAssetId']);
       }
-      assert.equal(getGlobal('B_IDX'), 123);
+      assert.equal(getGlobal(B_IDX), assetIds['secondaryAssetId']);
+      assert.equal(getGlobal(LIQ_IDX), assetIds['liquidityAssetId']);
 
       // Opt-in and add liquidity
       asaswap.optIn(master.address);
       asaswap.addLiquidity(master.account, asaswap.getEscrowAddress(), 7000000, 6000000);
 
-      assert.equal(getGlobal('LIQ'), 7000000);
-      assert.equal(getGlobal('A'), 7000000);
-      assert.equal(getGlobal('B'), 6000000);
-      assert.equal(getLocal(master.address, 'USR_A'), 0);
-      assert.equal(getLocal(master.address, 'USR_B'), 0);
-      assert.equal(getLocal(master.address, 'USR_LIQ'), 7000000);
+      assert.equal(getGlobal(GLOB_LIQ_TOKENS), 7000000);
+      assert.equal(getGlobal(GLOBAL_A_BAL), 7000000);
+      assert.equal(getGlobal(GLOBAL_B_BAL), 6000000);
+      assert.equal(getLocal(master.address, USR_A_BAL), 0);
+      assert.equal(getLocal(master.address, USR_B_BAL), 0);
+      assert.equal(getLocal(master.address, USR_LIQ_TOKENS), 7000000);
 
       // Make a primary asset swap
       asaswap.optIn(swapper.address);
       asaswap.primaryAssetSwap(swapper.account, asaswap.getEscrowAddress(), 1000000);
 
-      assert.equal(getGlobal('LIQ'), 7000000);
-      assert.equal(getGlobal('A'), 8000000);
-      assert.equal(getGlobal('B'), 5272500);
-      assert.equal(getLocal(master.address, 'USR_A'), 0);
-      assert.equal(getLocal(master.address, 'USR_B'), 0);
-      assert.equal(getLocal(master.address, 'USR_LIQ'), 7000000);
-      assert.equal(getLocal(swapper.address, 'USR_A'), 0);
-      assert.equal(getLocal(swapper.address, 'USR_B'), 727500);
-      assert.equal(getLocal(swapper.address, 'USR_LIQ'), 0);
+      assert.equal(getGlobal(GLOB_LIQ_TOKENS), 7000000);
+      assert.equal(getGlobal(GLOBAL_A_BAL), 8000000);
+      assert.equal(getGlobal(GLOBAL_B_BAL), 5272500);
+      assert.equal(getLocal(master.address, USR_A_BAL), 0);
+      assert.equal(getLocal(master.address, USR_B_BAL), 0);
+      assert.equal(getLocal(master.address, USR_LIQ_TOKENS), 7000000);
+      assert.equal(getLocal(swapper.address, USR_A_BAL), 0);
+      assert.equal(getLocal(swapper.address, USR_B_BAL), 727500);
+      assert.equal(getLocal(swapper.address, USR_LIQ_TOKENS), 0);
 
       // Withdraw tokens
       asaswap.withdraw(swapper, 0, 727500);
-      assert.equal(getGlobal('LIQ'), 7000000);
-      assert.equal(getGlobal('A'), 8000000);
-      assert.equal(getGlobal('B'), 5272500);
-      assert.equal(getLocal(swapper.address, 'USR_A'), 0);
-      assert.equal(getLocal(swapper.address, 'USR_B'), 0);
-      assert.equal(getLocal(swapper.address, 'USR_LIQ'), 0);
+      assert.equal(getGlobal(GLOB_LIQ_TOKENS), 7000000);
+      assert.equal(getGlobal(GLOBAL_A_BAL), 8000000);
+      assert.equal(getGlobal(GLOBAL_B_BAL), 5272500);
+      assert.equal(getLocal(swapper.address, USR_A_BAL), 0);
+      assert.equal(getLocal(swapper.address, USR_B_BAL), 0);
+      assert.equal(getLocal(swapper.address, USR_LIQ_TOKENS), 0);
 
       // Make a secondary asset swap
       asaswap.secondaryAssetSwap(master.account, asaswap.getEscrowAddress(), 1000000);
 
-      assert.equal(getGlobal('LIQ'), 7000000);
-      assert.equal(getGlobal('A'), 6762855);
-      assert.equal(getGlobal('B'), 6272500);
-      assert.equal(getLocal(master.address, 'USR_A'), 1237145);
-      assert.equal(getLocal(master.address, 'USR_B'), 0);
-      assert.equal(getLocal(master.address, 'USR_LIQ'), 7000000);
-      assert.equal(getLocal(swapper.address, 'USR_A'), 0);
-      assert.equal(getLocal(swapper.address, 'USR_B'), 0);
-      assert.equal(getLocal(swapper.address, 'USR_LIQ'), 0);
+      assert.equal(getGlobal(GLOB_LIQ_TOKENS), 7000000);
+      assert.equal(getGlobal(GLOBAL_A_BAL), 6762855);
+      assert.equal(getGlobal(GLOBAL_B_BAL), 6272500);
+      assert.equal(getLocal(master.address, USR_A_BAL), 1237145);
+      assert.equal(getLocal(master.address, USR_B_BAL), 0);
+      assert.equal(getLocal(master.address, USR_LIQ_TOKENS), 7000000);
+      assert.equal(getLocal(swapper.address, USR_A_BAL), 0);
+      assert.equal(getLocal(swapper.address, USR_B_BAL), 0);
+      assert.equal(getLocal(swapper.address, USR_LIQ_TOKENS), 0);
 
       // Withdraw primary asset
       asaswap.withdraw(master, 1237145, 0);

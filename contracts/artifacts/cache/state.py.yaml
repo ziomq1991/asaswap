@@ -1,397 +1,199 @@
 filename: state.py
-timestamp: 1614097604
-compiled: AiALAAEEBQIDwIQ9kE4GYWQmEAZVUERBVEUNQUREX0xJUVVJRElUWRBSRU1PVkVfTElRVUlESVRZBFNXQVAIV0lUSERSQVcMU0VUVVBfRVNDUk9XBUJfSURYBUFfSURYAUIBQQNMSVEDQ1JUBVVTUl9CBVVTUl9BB1VTUl9MSVEDRVNDMRgiEkAASzEZIxJAAGgxGSQlERJAAHMxGSEEEkAAcDYaACgSQACDNhoAKRJAAJY2GgAqEkABlzYaACsSQAICNhoAJwQSQAKzNhoAJwUSQAMBACcGNhoAF2cnBzYaARdnJwgiZycJImcnCiJnJwsxAGcjQ0IC7yInDCJmIicNImYiJw4iZiNDQgLbIkNCAtYiJwxiIhIiJw1iIhIQIicOYiISEEAAAQBCArsxACcLZBInD2QiEhBAAAEAJw82HAFnI0NCAqAyBCEFEjMBECQSEDMBFCcPZBIQMwERJwZkEhAzAhAkEjMCEScHZBIQMwIUJw9kEhAQQAABACcIZCITJwlkIhMQQQBvJwlkIQYLJwhkCjMCEiEGCzMBEgoPQAAtMwISIQYLMwESCicJZCEGCycIZAoJIQYLJwlkIQYLJwhkCgohBwxAAAEAQgAqJwlkIQYLJwhkCjMCEiEGCzMBEgoJIQYLJwlkIQYLJwhkCgohBwxAAAEAJwpkIhJAACkiJw4iJw5iMwISJwpkCycJZAoIZicKJwpkMwISJwpkCycJZAoIZ0IADSInDjMCEmYnCjMCEmcnCCcIZDMBEghnJwknCWQzAhIIZyNDQgGXMgQjEiInDmI2GgEXDxAiJw1iIhIQIicMYiISEEAAAQAiJw0nCWQ2GgEXCycKZApmIicMJwhkNhoBFwsnCmQKZiInDiInDmI2GgEXCWYnCicKZDYaARcJZycJJwlkIicNYglnJwgnCGQiJwxiCWcjQ0IBJDIEIQQSMwAQIQgSECInDWIiEhAiJwxiIhIQQAABADMBECQSMwERJwZkEhBAABkzARAkEjMBEScHZBIQMwEUJw9kEhBAAD8AMwEUJw9kEkAAAQAnCCcIZDMBEghnIicNJwlkIQYLJwhkCjMBEgshCQshBgohCgpmJwknCWQiJw1iCWdCADAnCScJZDMBEghnIicMMwESIQkLIQYLIQoKJwlkIQYLJwhkCgpmJwgnCGQiJwxiCWcjQ0IAajIEJBIzARIiJwxiEhAzAQAnD2QSEDMBEScGZBIQMwIQJBIzAhEnB2QSEDMCACcPZBIQEDMCEiInDWISEDMDBycPZBIQQAABACInDCJmIicNImYjQ0IAEzMAACcLZBInD2QiEhBAAAEAI0M=
-compiledHash: OUZ5GVJ7L7SOYHKJNQK4AUXGCO6J6TMQBY4RAZYXQEGM7FV75SSK2AJYRM
-srcHash: 614824683
+timestamp: 1614331770
+compiled: AiALAAEEBQIGYcCEPWQDkE4mDwFVAUEBUgFTAVcBRQFYAVkBWgEzAUMBMgExAUIBTDEYIhJAA0oxGSMSQAMyMRkkJRESQAMnMRkhBBJAAwQ2GgAoEkAC5DYaACkSQAIQNhoAKhJAAZs2GgArEkAA6jYaACcEEkAAlTYaACcFEkAAeTYaACcGEkAAPjYaACcHEkAAAQAyBCEEEjMAECEFEhAzARAkEhAzAREnCGQSEDMBFCcFZBIQQAABACInCSInCWIzARIIZiNDMwERJwhkEiInCWIzARIPEDMBACcFZBIQMwIHJwVkEhBAAAEAIicJIicJYjMBEglmI0MzAAAnCmQSJwVkIhIQQAABACNDMgQkEjMBEiInC2ISEDMBACcFZBIQMwERJwdkEhAzAhAjEjMCACcFZBIQEDMCCCInDGISEDMDBycFZBIQQAABACInCyJmIicMImYjQzIEIQQSMwAQIQUSECInDGIiEhAiJwtiIhIQQAABADMBECQSMwERJwdkEhBAAEEzARAjEjMBBycFZBIQQAABACkpZDMBCAhnIicLMwEIIQYLIQcLIQgKKWQhBwsnDWQKCmYnDScNZCInC2IJZ0IAODMBFCcFZBJAAAEAJw0nDWQzARIIZyInDClkIQcLJw1kCjMBEgshBgshBwohCApmKSlkIicMYglnI0MyBCMSIicJYjYaARcPECInDGIiEhAiJwtiIhIQQAABACInDClkNhoBFwsnDmQKZiInCycNZDYaARcLJw5kCmYiJwkiJwliNhoBFwlmJw4nDmQ2GgEXCWcpKWQiJwxiCWcnDScNZCInC2IJZyNDMgQhCRIzARAkEhAzARQnBWQSEDMBEScHZBIQMwIQIxIzAgcnBWQSEBBAAAEAJw1kIhMpZCITEEEARilkIQcLJw1kCjUAMwIIIQcLMwESCjUBNAA0AQ9AABU0ATQACSEHCzQACiEKDEAAAQBCABI0ADQBCSEHCzQACiEKDEAAAQAnDmQiEkAAIzMCCCcOZAspZAo1AiInCSInCWI0AghmJw4nDmQ0AghnQgANIicJMwIIZicOMwIIZycNJw1kMwESCGcpKWQzAggIZyNDMQAnCmQSJwVkIhIQQAABACcFNhwBZyNDIicLYiISIicMYiISECInCWIiEhBAAAEAQgAzIkMiJwsiZiInDCJmIicJImYjQycHNhoAF2cnCDYaARdnJw0iZykiZycOImcnCjEAZyND
+compiledHash: 3X4S4DOA2SAEQ63HV3GJHO4GC75APGX6OOCBZVQOPTZXP6QSOSGPW7H73Q
+srcHash: 3774095521
 tealCode: |
   #pragma version 2
   txn ApplicationID
   int 0
   ==
-  bnz l0
+  bnz l61
   txn OnCompletion
   int OptIn
   ==
-  bnz l1
+  bnz l60
   txn OnCompletion
   int UpdateApplication
   int DeleteApplication
   ||
   ==
-  bnz l2
+  bnz l59
   txn OnCompletion
   int CloseOut
   ==
-  bnz l3
+  bnz l56
   txna ApplicationArgs 0
-  byte "UPDATE"
+  byte "U"
   ==
-  bnz l4
+  bnz l53
   txna ApplicationArgs 0
-  byte "ADD_LIQUIDITY"
-  ==
-  bnz l5
-  txna ApplicationArgs 0
-  byte "REMOVE_LIQUIDITY"
-  ==
-  bnz l6
-  txna ApplicationArgs 0
-  byte "SWAP"
-  ==
-  bnz l7
-  txna ApplicationArgs 0
-  byte "WITHDRAW"
-  ==
-  bnz l8
-  txna ApplicationArgs 0
-  byte "SETUP_ESCROW"
-  ==
-  bnz l9
-  err
-  l0:
-  byte "B_IDX"
-  txna ApplicationArgs 0
-  btoi
-  app_global_put
-  byte "A_IDX"
-  txna ApplicationArgs 1
-  btoi
-  app_global_put
-  byte "B"
-  int 0
-  app_global_put
   byte "A"
-  int 0
-  app_global_put
-  byte "LIQ"
-  int 0
-  app_global_put
-  byte "CRT"
-  txn Sender
-  app_global_put
-  int 1
-  return
-  b l10
-  l1:
-  int 0
-  byte "USR_B"
-  int 0
-  app_local_put
-  int 0
-  byte "USR_A"
-  int 0
-  app_local_put
-  int 0
-  byte "USR_LIQ"
-  int 0
-  app_local_put
-  int 1
-  return
-  b l10
-  l2:
-  int 0
-  return
-  b l10
-  l3:
-  int 0
-  byte "USR_B"
-  app_local_get
-  int 0
   ==
-  int 0
-  byte "USR_A"
-  app_local_get
-  int 0
+  bnz l38
+  txna ApplicationArgs 0
+  byte "R"
   ==
-  &&
-  int 0
-  byte "USR_LIQ"
-  app_local_get
-  int 0
+  bnz l35
+  txna ApplicationArgs 0
+  byte "S"
   ==
-  &&
-  bnz l11
+  bnz l25
+  txna ApplicationArgs 0
+  byte "W"
+  ==
+  bnz l22
+  txna ApplicationArgs 0
+  byte "E"
+  ==
+  bnz l19
+  txna ApplicationArgs 0
+  byte "X"
+  ==
+  bnz l16
+  txna ApplicationArgs 0
+  byte "Y"
+  ==
+  bnz l13
   err
-  l11:
-  b l10
-  l4:
-  txn Sender
-  byte "CRT"
-  app_global_get
-  ==
-  byte "ESC"
-  app_global_get
-  int 0
-  ==
-  &&
-  bnz l12
-  err
-  l12:
-  byte "ESC"
-  txna Accounts 1
-  app_global_put
-  int 1
-  return
-  b l10
-  l5:
+  l13:
   global GroupSize
-  int 3
+  int 2
   ==
+  gtxn 0 TypeEnum
+  int appl
+  ==
+  &&
   gtxn 1 TypeEnum
   int axfer
   ==
   &&
-  gtxn 1 AssetReceiver
-  byte "ESC"
-  app_global_get
-  ==
-  &&
   gtxn 1 XferAsset
-  byte "B_IDX"
+  byte "Z"
   app_global_get
   ==
   &&
-  gtxn 2 TypeEnum
-  int axfer
-  ==
-  gtxn 2 XferAsset
-  byte "A_IDX"
+  gtxn 1 AssetReceiver
+  byte "E"
   app_global_get
   ==
   &&
-  gtxn 2 AssetReceiver
-  byte "ESC"
-  app_global_get
-  ==
-  &&
-  &&
-  bnz l13
-  err
-  l13:
-  byte "B"
-  app_global_get
-  int 0
-  !=
-  byte "A"
-  app_global_get
-  int 0
-  !=
-  &&
-  bz l14
-  byte "A"
-  app_global_get
-  int 1000000
-  *
-  byte "B"
-  app_global_get
-  /
-  gtxn 2 AssetAmount
-  int 1000000
-  *
-  gtxn 1 AssetAmount
-  /
-  >=
   bnz l15
-  gtxn 2 AssetAmount
-  int 1000000
-  *
-  gtxn 1 AssetAmount
-  /
-  byte "A"
-  app_global_get
-  int 1000000
-  *
-  byte "B"
-  app_global_get
-  /
-  -
-  int 1000000
-  *
-  byte "A"
-  app_global_get
-  int 1000000
-  *
-  byte "B"
-  app_global_get
-  /
-  /
-  int 10000
-  <
-  bnz l17
   err
-  l17:
-  b l18
   l15:
-  byte "A"
-  app_global_get
-  int 1000000
-  *
-  byte "B"
-  app_global_get
-  /
-  gtxn 2 AssetAmount
-  int 1000000
-  *
-  gtxn 1 AssetAmount
-  /
-  -
-  int 1000000
-  *
-  byte "A"
-  app_global_get
-  int 1000000
-  *
-  byte "B"
-  app_global_get
-  /
-  /
-  int 10000
-  <
-  bnz l16
-  err
-  l16:
-  l18:
-  l14:
-  byte "LIQ"
-  app_global_get
   int 0
-  ==
-  bnz l19
+  byte "3"
   int 0
-  byte "USR_LIQ"
-  int 0
-  byte "USR_LIQ"
+  byte "3"
   app_local_get
-  gtxn 2 AssetAmount
-  byte "LIQ"
-  app_global_get
-  *
-  byte "A"
-  app_global_get
-  /
-  +
-  app_local_put
-  byte "LIQ"
-  byte "LIQ"
-  app_global_get
-  gtxn 2 AssetAmount
-  byte "LIQ"
-  app_global_get
-  *
-  byte "A"
-  app_global_get
-  /
-  +
-  app_global_put
-  b l20
-  l19:
-  int 0
-  byte "USR_LIQ"
-  gtxn 2 AssetAmount
-  app_local_put
-  byte "LIQ"
-  gtxn 2 AssetAmount
-  app_global_put
-  l20:
-  byte "B"
-  byte "B"
-  app_global_get
   gtxn 1 AssetAmount
   +
-  app_global_put
-  byte "A"
-  byte "A"
-  app_global_get
-  gtxn 2 AssetAmount
-  +
-  app_global_put
+  app_local_put
   int 1
   return
-  b l10
-  l6:
-  global GroupSize
-  int 1
+  l16:
+  gtxn 1 XferAsset
+  byte "Z"
+  app_global_get
   ==
   int 0
-  byte "USR_LIQ"
+  byte "3"
   app_local_get
-  txna ApplicationArgs 1
-  btoi
+  gtxn 1 AssetAmount
   >=
   &&
-  int 0
-  byte "USR_A"
-  app_local_get
-  int 0
+  gtxn 1 Sender
+  byte "E"
+  app_global_get
   ==
   &&
+  gtxn 2 Receiver
+  byte "E"
+  app_global_get
+  ==
+  &&
+  bnz l18
+  err
+  l18:
   int 0
-  byte "USR_B"
+  byte "3"
+  int 0
+  byte "3"
   app_local_get
+  gtxn 1 AssetAmount
+  -
+  app_local_put
+  int 1
+  return
+  l19:
+  gtxn 0 Sender
+  byte "C"
+  app_global_get
+  ==
+  byte "E"
+  app_global_get
   int 0
   ==
   &&
   bnz l21
   err
   l21:
-  int 0
-  byte "USR_A"
-  byte "A"
-  app_global_get
-  txna ApplicationArgs 1
-  btoi
-  *
-  byte "LIQ"
-  app_global_get
-  /
-  app_local_put
-  int 0
-  byte "USR_B"
-  byte "B"
-  app_global_get
-  txna ApplicationArgs 1
-  btoi
-  *
-  byte "LIQ"
-  app_global_get
-  /
-  app_local_put
-  int 0
-  byte "USR_LIQ"
-  int 0
-  byte "USR_LIQ"
-  app_local_get
-  txna ApplicationArgs 1
-  btoi
-  -
-  app_local_put
-  byte "LIQ"
-  byte "LIQ"
-  app_global_get
-  txna ApplicationArgs 1
-  btoi
-  -
-  app_global_put
-  byte "A"
-  byte "A"
-  app_global_get
-  int 0
-  byte "USR_A"
-  app_local_get
-  -
-  app_global_put
-  byte "B"
-  byte "B"
-  app_global_get
-  int 0
-  byte "USR_B"
-  app_local_get
-  -
-  app_global_put
   int 1
   return
-  b l10
-  l7:
+  l22:
+  global GroupSize
+  int 4
+  ==
+  gtxn 1 AssetAmount
+  int 0
+  byte "2"
+  app_local_get
+  ==
+  &&
+  gtxn 1 Sender
+  byte "E"
+  app_global_get
+  ==
+  &&
+  gtxn 1 XferAsset
+  byte "Y"
+  app_global_get
+  ==
+  &&
+  gtxn 2 TypeEnum
+  int pay
+  ==
+  gtxn 2 Sender
+  byte "E"
+  app_global_get
+  ==
+  &&
+  &&
+  gtxn 2 Amount
+  int 0
+  byte "1"
+  app_local_get
+  ==
+  &&
+  gtxn 3 Receiver
+  byte "E"
+  app_global_get
+  ==
+  &&
+  bnz l24
+  err
+  l24:
+  int 0
+  byte "2"
+  int 0
+  app_local_put
+  int 0
+  byte "1"
+  int 0
+  app_local_put
+  int 1
+  return
+  l25:
   global GroupSize
   int 2
   ==
@@ -400,197 +202,417 @@ tealCode: |
   ==
   &&
   int 0
-  byte "USR_A"
+  byte "1"
   app_local_get
   int 0
   ==
   &&
   int 0
-  byte "USR_B"
+  byte "2"
   app_local_get
   int 0
-  ==
-  &&
-  bnz l22
-  err
-  l22:
-  gtxn 1 TypeEnum
-  int axfer
-  ==
-  gtxn 1 XferAsset
-  byte "B_IDX"
-  app_global_get
-  ==
-  &&
-  bnz l23
-  gtxn 1 TypeEnum
-  int axfer
-  ==
-  gtxn 1 XferAsset
-  byte "A_IDX"
-  app_global_get
-  ==
-  &&
-  gtxn 1 AssetReceiver
-  byte "ESC"
-  app_global_get
-  ==
-  &&
-  bnz l24
-  err
-  l23:
-  gtxn 1 AssetReceiver
-  byte "ESC"
-  app_global_get
-  ==
-  bnz l26
-  err
-  l26:
-  byte "B"
-  byte "B"
-  app_global_get
-  gtxn 1 AssetAmount
-  +
-  app_global_put
-  int 0
-  byte "USR_A"
-  byte "A"
-  app_global_get
-  int 1000000
-  *
-  byte "B"
-  app_global_get
-  /
-  gtxn 1 AssetAmount
-  *
-  int 97
-  *
-  int 1000000
-  /
-  int 100
-  /
-  app_local_put
-  byte "A"
-  byte "A"
-  app_global_get
-  int 0
-  byte "USR_A"
-  app_local_get
-  -
-  app_global_put
-  b l25
-  l24:
-  byte "A"
-  byte "A"
-  app_global_get
-  gtxn 1 AssetAmount
-  +
-  app_global_put
-  int 0
-  byte "USR_B"
-  gtxn 1 AssetAmount
-  int 97
-  *
-  int 1000000
-  *
-  int 100
-  /
-  byte "A"
-  app_global_get
-  int 1000000
-  *
-  byte "B"
-  app_global_get
-  /
-  /
-  app_local_put
-  byte "B"
-  byte "B"
-  app_global_get
-  int 0
-  byte "USR_B"
-  app_local_get
-  -
-  app_global_put
-  l25:
-  int 1
-  return
-  b l10
-  l8:
-  global GroupSize
-  int 4
-  ==
-  gtxn 1 AssetAmount
-  int 0
-  byte "USR_B"
-  app_local_get
-  ==
-  &&
-  gtxn 1 Sender
-  byte "ESC"
-  app_global_get
-  ==
-  &&
-  gtxn 1 XferAsset
-  byte "B_IDX"
-  app_global_get
-  ==
-  &&
-  gtxn 2 TypeEnum
-  int axfer
-  ==
-  gtxn 2 XferAsset
-  byte "A_IDX"
-  app_global_get
-  ==
-  &&
-  gtxn 2 Sender
-  byte "ESC"
-  app_global_get
-  ==
-  &&
-  &&
-  gtxn 2 AssetAmount
-  int 0
-  byte "USR_A"
-  app_local_get
-  ==
-  &&
-  gtxn 3 Receiver
-  byte "ESC"
-  app_global_get
   ==
   &&
   bnz l27
   err
   l27:
-  int 0
-  byte "USR_B"
-  int 0
-  app_local_put
-  int 0
-  byte "USR_A"
-  int 0
-  app_local_put
-  int 1
-  return
-  b l10
-  l9:
-  gtxn 0 Sender
-  byte "CRT"
+  gtxn 1 TypeEnum
+  int axfer
+  ==
+  gtxn 1 XferAsset
+  byte "Y"
   app_global_get
   ==
-  byte "ESC"
+  &&
+  bnz l31
+  gtxn 1 TypeEnum
+  int pay
+  ==
+  gtxn 1 Receiver
+  byte "E"
+  app_global_get
+  ==
+  &&
+  bnz l30
+  err
+  l30:
+  byte "A"
+  byte "A"
+  app_global_get
+  gtxn 1 Amount
+  +
+  app_global_put
+  int 0
+  byte "2"
+  gtxn 1 Amount
+  int 97
+  *
+  int 1000000
+  *
+  int 100
+  /
+  byte "A"
+  app_global_get
+  int 1000000
+  *
+  byte "B"
+  app_global_get
+  /
+  /
+  app_local_put
+  byte "B"
+  byte "B"
+  app_global_get
+  int 0
+  byte "2"
+  app_local_get
+  -
+  app_global_put
+  b l34
+  l31:
+  gtxn 1 AssetReceiver
+  byte "E"
+  app_global_get
+  ==
+  bnz l33
+  err
+  l33:
+  byte "B"
+  byte "B"
+  app_global_get
+  gtxn 1 AssetAmount
+  +
+  app_global_put
+  int 0
+  byte "1"
+  byte "A"
+  app_global_get
+  int 1000000
+  *
+  byte "B"
+  app_global_get
+  /
+  gtxn 1 AssetAmount
+  *
+  int 97
+  *
+  int 1000000
+  /
+  int 100
+  /
+  app_local_put
+  byte "A"
+  byte "A"
+  app_global_get
+  int 0
+  byte "1"
+  app_local_get
+  -
+  app_global_put
+  l34:
+  int 1
+  return
+  l35:
+  global GroupSize
+  int 1
+  ==
+  int 0
+  byte "3"
+  app_local_get
+  txna ApplicationArgs 1
+  btoi
+  >=
+  &&
+  int 0
+  byte "1"
+  app_local_get
+  int 0
+  ==
+  &&
+  int 0
+  byte "2"
+  app_local_get
+  int 0
+  ==
+  &&
+  bnz l37
+  err
+  l37:
+  int 0
+  byte "1"
+  byte "A"
+  app_global_get
+  txna ApplicationArgs 1
+  btoi
+  *
+  byte "L"
+  app_global_get
+  /
+  app_local_put
+  int 0
+  byte "2"
+  byte "B"
+  app_global_get
+  txna ApplicationArgs 1
+  btoi
+  *
+  byte "L"
+  app_global_get
+  /
+  app_local_put
+  int 0
+  byte "3"
+  int 0
+  byte "3"
+  app_local_get
+  txna ApplicationArgs 1
+  btoi
+  -
+  app_local_put
+  byte "L"
+  byte "L"
+  app_global_get
+  txna ApplicationArgs 1
+  btoi
+  -
+  app_global_put
+  byte "A"
+  byte "A"
+  app_global_get
+  int 0
+  byte "1"
+  app_local_get
+  -
+  app_global_put
+  byte "B"
+  byte "B"
+  app_global_get
+  int 0
+  byte "2"
+  app_local_get
+  -
+  app_global_put
+  int 1
+  return
+  l38:
+  global GroupSize
+  int 3
+  ==
+  gtxn 1 TypeEnum
+  int axfer
+  ==
+  &&
+  gtxn 1 AssetReceiver
+  byte "E"
+  app_global_get
+  ==
+  &&
+  gtxn 1 XferAsset
+  byte "Y"
+  app_global_get
+  ==
+  &&
+  gtxn 2 TypeEnum
+  int pay
+  ==
+  gtxn 2 Receiver
+  byte "E"
+  app_global_get
+  ==
+  &&
+  &&
+  bnz l40
+  err
+  l40:
+  byte "B"
+  app_global_get
+  int 0
+  !=
+  byte "A"
+  app_global_get
+  int 0
+  !=
+  &&
+  bz l49
+  byte "A"
+  app_global_get
+  int 1000000
+  *
+  byte "B"
+  app_global_get
+  /
+  store 0
+  gtxn 2 Amount
+  int 1000000
+  *
+  gtxn 1 AssetAmount
+  /
+  store 1
+  load 0
+  load 1
+  >=
+  bnz l45
+  load 1
+  load 0
+  -
+  int 1000000
+  *
+  load 0
+  /
+  int 10000
+  <
+  bnz l44
+  err
+  l44:
+  b l48
+  l45:
+  load 0
+  load 1
+  -
+  int 1000000
+  *
+  load 0
+  /
+  int 10000
+  <
+  bnz l47
+  err
+  l47:
+  l48:
+  l49:
+  byte "L"
+  app_global_get
+  int 0
+  ==
+  bnz l51
+  gtxn 2 Amount
+  byte "L"
+  app_global_get
+  *
+  byte "A"
+  app_global_get
+  /
+  store 2
+  int 0
+  byte "3"
+  int 0
+  byte "3"
+  app_local_get
+  load 2
+  +
+  app_local_put
+  byte "L"
+  byte "L"
+  app_global_get
+  load 2
+  +
+  app_global_put
+  b l52
+  l51:
+  int 0
+  byte "3"
+  gtxn 2 Amount
+  app_local_put
+  byte "L"
+  gtxn 2 Amount
+  app_global_put
+  l52:
+  byte "B"
+  byte "B"
+  app_global_get
+  gtxn 1 AssetAmount
+  +
+  app_global_put
+  byte "A"
+  byte "A"
+  app_global_get
+  gtxn 2 Amount
+  +
+  app_global_put
+  int 1
+  return
+  l53:
+  txn Sender
+  byte "C"
+  app_global_get
+  ==
+  byte "E"
   app_global_get
   int 0
   ==
   &&
-  bnz l28
+  bnz l55
   err
-  l28:
+  l55:
+  byte "E"
+  txna Accounts 1
+  app_global_put
   int 1
   return
-  l10:
+  l56:
+  int 0
+  byte "2"
+  app_local_get
+  int 0
+  ==
+  int 0
+  byte "1"
+  app_local_get
+  int 0
+  ==
+  &&
+  int 0
+  byte "3"
+  app_local_get
+  int 0
+  ==
+  &&
+  bnz l58
+  err
+  l58:
+  b l62
+  l59:
+  int 0
+  return
+  l60:
+  int 0
+  byte "2"
+  int 0
+  app_local_put
+  int 0
+  byte "1"
+  int 0
+  app_local_put
+  int 0
+  byte "3"
+  int 0
+  app_local_put
+  int 1
+  return
+  l61:
+  byte "Y"
+  txna ApplicationArgs 0
+  btoi
+  app_global_put
+  byte "Z"
+  txna ApplicationArgs 1
+  btoi
+  app_global_put
+  byte "B"
+  int 0
+  app_global_put
+  byte "A"
+  int 0
+  app_global_put
+  byte "L"
+  int 0
+  app_global_put
+  byte "C"
+  txn Sender
+  app_global_put
+  int 1
+  return
+  l62:
 base64ToBytes:
   - 2
   - 32
@@ -600,144 +622,61 @@ base64ToBytes:
   - 4
   - 5
   - 2
-  - 3
+  - 6
+  - 97
   - 192
   - 132
   - 61
+  - 100
+  - 3
   - 144
   - 78
-  - 6
-  - 97
-  - 100
   - 38
-  - 16
-  - 6
+  - 15
+  - 1
   - 85
-  - 80
-  - 68
+  - 1
   - 65
-  - 84
-  - 69
-  - 13
-  - 65
-  - 68
-  - 68
-  - 95
-  - 76
-  - 73
-  - 81
-  - 85
-  - 73
-  - 68
-  - 73
-  - 84
-  - 89
-  - 16
+  - 1
   - 82
+  - 1
+  - 83
+  - 1
+  - 87
+  - 1
   - 69
-  - 77
-  - 79
-  - 86
-  - 69
-  - 95
-  - 76
-  - 73
-  - 81
-  - 85
-  - 73
-  - 68
-  - 73
-  - 84
+  - 1
+  - 88
+  - 1
   - 89
-  - 4
-  - 83
-  - 87
-  - 65
-  - 80
-  - 8
-  - 87
-  - 73
-  - 84
-  - 72
-  - 68
-  - 82
-  - 65
-  - 87
-  - 12
-  - 83
-  - 69
-  - 84
-  - 85
-  - 80
-  - 95
-  - 69
-  - 83
+  - 1
+  - 90
+  - 1
+  - 51
+  - 1
   - 67
-  - 82
-  - 79
-  - 87
-  - 5
-  - 66
-  - 95
-  - 73
-  - 68
-  - 88
-  - 5
-  - 65
-  - 95
-  - 73
-  - 68
-  - 88
+  - 1
+  - 50
+  - 1
+  - 49
   - 1
   - 66
   - 1
-  - 65
-  - 3
   - 76
-  - 73
-  - 81
-  - 3
-  - 67
-  - 82
-  - 84
-  - 5
-  - 85
-  - 83
-  - 82
-  - 95
-  - 66
-  - 5
-  - 85
-  - 83
-  - 82
-  - 95
-  - 65
-  - 7
-  - 85
-  - 83
-  - 82
-  - 95
-  - 76
-  - 73
-  - 81
-  - 3
-  - 69
-  - 83
-  - 67
   - 49
   - 24
   - 34
   - 18
   - 64
-  - 0
-  - 75
+  - 3
+  - 74
   - 49
   - 25
   - 35
   - 18
   - 64
-  - 0
-  - 104
+  - 3
+  - 50
   - 49
   - 25
   - 36
@@ -745,32 +684,32 @@ base64ToBytes:
   - 17
   - 18
   - 64
-  - 0
-  - 115
+  - 3
+  - 39
   - 49
   - 25
   - 33
   - 4
   - 18
   - 64
-  - 0
-  - 112
+  - 3
+  - 4
   - 54
   - 26
   - 0
   - 40
   - 18
   - 64
-  - 0
-  - 131
+  - 2
+  - 228
   - 54
   - 26
   - 0
   - 41
   - 18
   - 64
-  - 0
-  - 150
+  - 2
+  - 16
   - 54
   - 26
   - 0
@@ -778,15 +717,15 @@ base64ToBytes:
   - 18
   - 64
   - 1
-  - 151
+  - 155
   - 54
   - 26
   - 0
   - 43
   - 18
   - 64
-  - 2
-  - 2
+  - 0
+  - 234
   - 54
   - 26
   - 0
@@ -794,8 +733,8 @@ base64ToBytes:
   - 4
   - 18
   - 64
-  - 2
-  - 179
+  - 0
+  - 149
   - 54
   - 26
   - 0
@@ -803,158 +742,171 @@ base64ToBytes:
   - 5
   - 18
   - 64
-  - 3
-  - 1
+  - 0
+  - 121
+  - 54
+  - 26
   - 0
   - 39
   - 6
+  - 18
+  - 64
+  - 0
+  - 62
   - 54
   - 26
   - 0
-  - 23
-  - 103
   - 39
   - 7
-  - 54
-  - 26
-  - 1
-  - 23
-  - 103
-  - 39
-  - 8
-  - 34
-  - 103
-  - 39
-  - 9
-  - 34
-  - 103
-  - 39
-  - 10
-  - 34
-  - 103
-  - 39
-  - 11
-  - 49
-  - 0
-  - 103
-  - 35
-  - 67
-  - 66
-  - 2
-  - 239
-  - 34
-  - 39
-  - 12
-  - 34
-  - 102
-  - 34
-  - 39
-  - 13
-  - 34
-  - 102
-  - 34
-  - 39
-  - 14
-  - 34
-  - 102
-  - 35
-  - 67
-  - 66
-  - 2
-  - 219
-  - 34
-  - 67
-  - 66
-  - 2
-  - 214
-  - 34
-  - 39
-  - 12
-  - 98
-  - 34
   - 18
-  - 34
-  - 39
-  - 13
-  - 98
-  - 34
-  - 18
-  - 16
-  - 34
-  - 39
-  - 14
-  - 98
-  - 34
-  - 18
-  - 16
   - 64
   - 0
   - 1
   - 0
-  - 66
-  - 2
-  - 187
-  - 49
-  - 0
-  - 39
-  - 11
-  - 100
-  - 18
-  - 39
-  - 15
-  - 100
-  - 34
-  - 18
-  - 16
-  - 64
-  - 0
-  - 1
-  - 0
-  - 39
-  - 15
-  - 54
-  - 28
-  - 1
-  - 103
-  - 35
-  - 67
-  - 66
-  - 2
-  - 160
   - 50
   - 4
   - 33
+  - 4
+  - 18
+  - 51
+  - 0
+  - 16
+  - 33
   - 5
   - 18
+  - 16
   - 51
   - 1
   - 16
   - 36
-  - 18
-  - 16
-  - 51
-  - 1
-  - 20
-  - 39
-  - 15
-  - 100
   - 18
   - 16
   - 51
   - 1
   - 17
   - 39
-  - 6
+  - 8
+  - 100
+  - 18
+  - 16
+  - 51
+  - 1
+  - 20
+  - 39
+  - 5
+  - 100
+  - 18
+  - 16
+  - 64
+  - 0
+  - 1
+  - 0
+  - 34
+  - 39
+  - 9
+  - 34
+  - 39
+  - 9
+  - 98
+  - 51
+  - 1
+  - 18
+  - 8
+  - 102
+  - 35
+  - 67
+  - 51
+  - 1
+  - 17
+  - 39
+  - 8
+  - 100
+  - 18
+  - 34
+  - 39
+  - 9
+  - 98
+  - 51
+  - 1
+  - 18
+  - 15
+  - 16
+  - 51
+  - 1
+  - 0
+  - 39
+  - 5
   - 100
   - 18
   - 16
   - 51
   - 2
+  - 7
+  - 39
+  - 5
+  - 100
+  - 18
   - 16
+  - 64
+  - 0
+  - 1
+  - 0
+  - 34
+  - 39
+  - 9
+  - 34
+  - 39
+  - 9
+  - 98
+  - 51
+  - 1
+  - 18
+  - 9
+  - 102
+  - 35
+  - 67
+  - 51
+  - 0
+  - 0
+  - 39
+  - 10
+  - 100
+  - 18
+  - 39
+  - 5
+  - 100
+  - 34
+  - 18
+  - 16
+  - 64
+  - 0
+  - 1
+  - 0
+  - 35
+  - 67
+  - 50
+  - 4
   - 36
   - 18
   - 51
-  - 2
+  - 1
+  - 18
+  - 34
+  - 39
+  - 11
+  - 98
+  - 18
+  - 16
+  - 51
+  - 1
+  - 0
+  - 39
+  - 5
+  - 100
+  - 18
+  - 16
+  - 51
+  - 1
   - 17
   - 39
   - 7
@@ -963,9 +915,366 @@ base64ToBytes:
   - 16
   - 51
   - 2
+  - 16
+  - 35
+  - 18
+  - 51
+  - 2
+  - 0
+  - 39
+  - 5
+  - 100
+  - 18
+  - 16
+  - 16
+  - 51
+  - 2
+  - 8
+  - 34
+  - 39
+  - 12
+  - 98
+  - 18
+  - 16
+  - 51
+  - 3
+  - 7
+  - 39
+  - 5
+  - 100
+  - 18
+  - 16
+  - 64
+  - 0
+  - 1
+  - 0
+  - 34
+  - 39
+  - 11
+  - 34
+  - 102
+  - 34
+  - 39
+  - 12
+  - 34
+  - 102
+  - 35
+  - 67
+  - 50
+  - 4
+  - 33
+  - 4
+  - 18
+  - 51
+  - 0
+  - 16
+  - 33
+  - 5
+  - 18
+  - 16
+  - 34
+  - 39
+  - 12
+  - 98
+  - 34
+  - 18
+  - 16
+  - 34
+  - 39
+  - 11
+  - 98
+  - 34
+  - 18
+  - 16
+  - 64
+  - 0
+  - 1
+  - 0
+  - 51
+  - 1
+  - 16
+  - 36
+  - 18
+  - 51
+  - 1
+  - 17
+  - 39
+  - 7
+  - 100
+  - 18
+  - 16
+  - 64
+  - 0
+  - 65
+  - 51
+  - 1
+  - 16
+  - 35
+  - 18
+  - 51
+  - 1
+  - 7
+  - 39
+  - 5
+  - 100
+  - 18
+  - 16
+  - 64
+  - 0
+  - 1
+  - 0
+  - 41
+  - 41
+  - 100
+  - 51
+  - 1
+  - 8
+  - 8
+  - 103
+  - 34
+  - 39
+  - 11
+  - 51
+  - 1
+  - 8
+  - 33
+  - 6
+  - 11
+  - 33
+  - 7
+  - 11
+  - 33
+  - 8
+  - 10
+  - 41
+  - 100
+  - 33
+  - 7
+  - 11
+  - 39
+  - 13
+  - 100
+  - 10
+  - 10
+  - 102
+  - 39
+  - 13
+  - 39
+  - 13
+  - 100
+  - 34
+  - 39
+  - 11
+  - 98
+  - 9
+  - 103
+  - 66
+  - 0
+  - 56
+  - 51
+  - 1
   - 20
   - 39
+  - 5
+  - 100
+  - 18
+  - 64
+  - 0
+  - 1
+  - 0
+  - 39
+  - 13
+  - 39
+  - 13
+  - 100
+  - 51
+  - 1
+  - 18
+  - 8
+  - 103
+  - 34
+  - 39
+  - 12
+  - 41
+  - 100
+  - 33
+  - 7
+  - 11
+  - 39
+  - 13
+  - 100
+  - 10
+  - 51
+  - 1
+  - 18
+  - 11
+  - 33
+  - 6
+  - 11
+  - 33
+  - 7
+  - 10
+  - 33
+  - 8
+  - 10
+  - 102
+  - 41
+  - 41
+  - 100
+  - 34
+  - 39
+  - 12
+  - 98
+  - 9
+  - 103
+  - 35
+  - 67
+  - 50
+  - 4
+  - 35
+  - 18
+  - 34
+  - 39
+  - 9
+  - 98
+  - 54
+  - 26
+  - 1
+  - 23
   - 15
+  - 16
+  - 34
+  - 39
+  - 12
+  - 98
+  - 34
+  - 18
+  - 16
+  - 34
+  - 39
+  - 11
+  - 98
+  - 34
+  - 18
+  - 16
+  - 64
+  - 0
+  - 1
+  - 0
+  - 34
+  - 39
+  - 12
+  - 41
+  - 100
+  - 54
+  - 26
+  - 1
+  - 23
+  - 11
+  - 39
+  - 14
+  - 100
+  - 10
+  - 102
+  - 34
+  - 39
+  - 11
+  - 39
+  - 13
+  - 100
+  - 54
+  - 26
+  - 1
+  - 23
+  - 11
+  - 39
+  - 14
+  - 100
+  - 10
+  - 102
+  - 34
+  - 39
+  - 9
+  - 34
+  - 39
+  - 9
+  - 98
+  - 54
+  - 26
+  - 1
+  - 23
+  - 9
+  - 102
+  - 39
+  - 14
+  - 39
+  - 14
+  - 100
+  - 54
+  - 26
+  - 1
+  - 23
+  - 9
+  - 103
+  - 41
+  - 41
+  - 100
+  - 34
+  - 39
+  - 12
+  - 98
+  - 9
+  - 103
+  - 39
+  - 13
+  - 39
+  - 13
+  - 100
+  - 34
+  - 39
+  - 11
+  - 98
+  - 9
+  - 103
+  - 35
+  - 67
+  - 50
+  - 4
+  - 33
+  - 9
+  - 18
+  - 51
+  - 1
+  - 16
+  - 36
+  - 18
+  - 16
+  - 51
+  - 1
+  - 20
+  - 39
+  - 5
+  - 100
+  - 18
+  - 16
+  - 51
+  - 1
+  - 17
+  - 39
+  - 7
+  - 100
+  - 18
+  - 16
+  - 51
+  - 2
+  - 16
+  - 35
+  - 18
+  - 51
+  - 2
+  - 7
+  - 39
+  - 5
   - 100
   - 18
   - 16
@@ -975,80 +1284,62 @@ base64ToBytes:
   - 1
   - 0
   - 39
-  - 8
+  - 13
   - 100
   - 34
   - 19
-  - 39
-  - 9
+  - 41
   - 100
   - 34
   - 19
   - 16
   - 65
   - 0
-  - 111
-  - 39
-  - 9
+  - 70
+  - 41
   - 100
   - 33
-  - 6
+  - 7
   - 11
   - 39
-  - 8
+  - 13
   - 100
   - 10
+  - 53
+  - 0
   - 51
   - 2
-  - 18
+  - 8
   - 33
-  - 6
+  - 7
   - 11
   - 51
   - 1
   - 18
   - 10
+  - 53
+  - 1
+  - 52
+  - 0
+  - 52
+  - 1
   - 15
   - 64
   - 0
-  - 45
-  - 51
-  - 2
-  - 18
-  - 33
-  - 6
-  - 11
-  - 51
+  - 21
+  - 52
   - 1
-  - 18
-  - 10
-  - 39
+  - 52
+  - 0
   - 9
-  - 100
-  - 33
-  - 6
-  - 11
-  - 39
-  - 8
-  - 100
-  - 10
-  - 9
-  - 33
-  - 6
-  - 11
-  - 39
-  - 9
-  - 100
-  - 33
-  - 6
-  - 11
-  - 39
-  - 8
-  - 100
-  - 10
-  - 10
   - 33
   - 7
+  - 11
+  - 52
+  - 0
+  - 10
+  - 33
+  - 10
   - 12
   - 64
   - 0
@@ -1056,540 +1347,200 @@ base64ToBytes:
   - 0
   - 66
   - 0
-  - 42
-  - 39
-  - 9
-  - 100
-  - 33
-  - 6
-  - 11
-  - 39
-  - 8
-  - 100
-  - 10
-  - 51
-  - 2
   - 18
-  - 33
-  - 6
-  - 11
-  - 51
+  - 52
+  - 0
+  - 52
   - 1
-  - 18
-  - 10
   - 9
-  - 33
-  - 6
-  - 11
-  - 39
-  - 9
-  - 100
-  - 33
-  - 6
-  - 11
-  - 39
-  - 8
-  - 100
-  - 10
-  - 10
   - 33
   - 7
+  - 11
+  - 52
+  - 0
+  - 10
+  - 33
+  - 10
   - 12
   - 64
   - 0
   - 1
   - 0
   - 39
-  - 10
+  - 14
   - 100
   - 34
   - 18
   - 64
   - 0
+  - 35
+  - 51
+  - 2
+  - 8
+  - 39
+  - 14
+  - 100
+  - 11
+  - 41
+  - 100
+  - 10
+  - 53
+  - 2
+  - 34
+  - 39
+  - 9
+  - 34
+  - 39
+  - 9
+  - 98
+  - 52
+  - 2
+  - 8
+  - 102
+  - 39
+  - 14
+  - 39
+  - 14
+  - 100
+  - 52
+  - 2
+  - 8
+  - 103
+  - 66
+  - 0
+  - 13
+  - 34
+  - 39
+  - 9
+  - 51
+  - 2
+  - 8
+  - 102
+  - 39
+  - 14
+  - 51
+  - 2
+  - 8
+  - 103
+  - 39
+  - 13
+  - 39
+  - 13
+  - 100
+  - 51
+  - 1
+  - 18
+  - 8
+  - 103
+  - 41
+  - 41
+  - 100
+  - 51
+  - 2
+  - 8
+  - 8
+  - 103
+  - 35
+  - 67
+  - 49
+  - 0
+  - 39
+  - 10
+  - 100
+  - 18
+  - 39
+  - 5
+  - 100
+  - 34
+  - 18
+  - 16
+  - 64
+  - 0
+  - 1
+  - 0
+  - 39
+  - 5
+  - 54
+  - 28
+  - 1
+  - 103
+  - 35
+  - 67
+  - 34
+  - 39
+  - 11
+  - 98
+  - 34
+  - 18
+  - 34
+  - 39
+  - 12
+  - 98
+  - 34
+  - 18
+  - 16
+  - 34
+  - 39
+  - 9
+  - 98
+  - 34
+  - 18
+  - 16
+  - 64
+  - 0
+  - 1
+  - 0
+  - 66
+  - 0
+  - 51
+  - 34
+  - 67
+  - 34
+  - 39
+  - 11
+  - 34
+  - 102
+  - 34
+  - 39
+  - 12
+  - 34
+  - 102
+  - 34
+  - 39
+  - 9
+  - 34
+  - 102
+  - 35
+  - 67
+  - 39
+  - 7
+  - 54
+  - 26
+  - 0
+  - 23
+  - 103
+  - 39
+  - 8
+  - 54
+  - 26
+  - 1
+  - 23
+  - 103
+  - 39
+  - 13
+  - 34
+  - 103
   - 41
   - 34
+  - 103
   - 39
   - 14
   - 34
-  - 39
-  - 14
-  - 98
-  - 51
-  - 2
-  - 18
-  - 39
-  - 10
-  - 100
-  - 11
-  - 39
-  - 9
-  - 100
-  - 10
-  - 8
-  - 102
-  - 39
-  - 10
-  - 39
-  - 10
-  - 100
-  - 51
-  - 2
-  - 18
-  - 39
-  - 10
-  - 100
-  - 11
-  - 39
-  - 9
-  - 100
-  - 10
-  - 8
-  - 103
-  - 66
-  - 0
-  - 13
-  - 34
-  - 39
-  - 14
-  - 51
-  - 2
-  - 18
-  - 102
-  - 39
-  - 10
-  - 51
-  - 2
-  - 18
   - 103
   - 39
-  - 8
-  - 39
-  - 8
-  - 100
-  - 51
-  - 1
-  - 18
-  - 8
+  - 10
+  - 49
+  - 0
   - 103
-  - 39
-  - 9
-  - 39
-  - 9
-  - 100
-  - 51
-  - 2
-  - 18
-  - 8
-  - 103
-  - 35
-  - 67
-  - 66
-  - 1
-  - 151
-  - 50
-  - 4
-  - 35
-  - 18
-  - 34
-  - 39
-  - 14
-  - 98
-  - 54
-  - 26
-  - 1
-  - 23
-  - 15
-  - 16
-  - 34
-  - 39
-  - 13
-  - 98
-  - 34
-  - 18
-  - 16
-  - 34
-  - 39
-  - 12
-  - 98
-  - 34
-  - 18
-  - 16
-  - 64
-  - 0
-  - 1
-  - 0
-  - 34
-  - 39
-  - 13
-  - 39
-  - 9
-  - 100
-  - 54
-  - 26
-  - 1
-  - 23
-  - 11
-  - 39
-  - 10
-  - 100
-  - 10
-  - 102
-  - 34
-  - 39
-  - 12
-  - 39
-  - 8
-  - 100
-  - 54
-  - 26
-  - 1
-  - 23
-  - 11
-  - 39
-  - 10
-  - 100
-  - 10
-  - 102
-  - 34
-  - 39
-  - 14
-  - 34
-  - 39
-  - 14
-  - 98
-  - 54
-  - 26
-  - 1
-  - 23
-  - 9
-  - 102
-  - 39
-  - 10
-  - 39
-  - 10
-  - 100
-  - 54
-  - 26
-  - 1
-  - 23
-  - 9
-  - 103
-  - 39
-  - 9
-  - 39
-  - 9
-  - 100
-  - 34
-  - 39
-  - 13
-  - 98
-  - 9
-  - 103
-  - 39
-  - 8
-  - 39
-  - 8
-  - 100
-  - 34
-  - 39
-  - 12
-  - 98
-  - 9
-  - 103
-  - 35
-  - 67
-  - 66
-  - 1
-  - 36
-  - 50
-  - 4
-  - 33
-  - 4
-  - 18
-  - 51
-  - 0
-  - 16
-  - 33
-  - 8
-  - 18
-  - 16
-  - 34
-  - 39
-  - 13
-  - 98
-  - 34
-  - 18
-  - 16
-  - 34
-  - 39
-  - 12
-  - 98
-  - 34
-  - 18
-  - 16
-  - 64
-  - 0
-  - 1
-  - 0
-  - 51
-  - 1
-  - 16
-  - 36
-  - 18
-  - 51
-  - 1
-  - 17
-  - 39
-  - 6
-  - 100
-  - 18
-  - 16
-  - 64
-  - 0
-  - 25
-  - 51
-  - 1
-  - 16
-  - 36
-  - 18
-  - 51
-  - 1
-  - 17
-  - 39
-  - 7
-  - 100
-  - 18
-  - 16
-  - 51
-  - 1
-  - 20
-  - 39
-  - 15
-  - 100
-  - 18
-  - 16
-  - 64
-  - 0
-  - 63
-  - 0
-  - 51
-  - 1
-  - 20
-  - 39
-  - 15
-  - 100
-  - 18
-  - 64
-  - 0
-  - 1
-  - 0
-  - 39
-  - 8
-  - 39
-  - 8
-  - 100
-  - 51
-  - 1
-  - 18
-  - 8
-  - 103
-  - 34
-  - 39
-  - 13
-  - 39
-  - 9
-  - 100
-  - 33
-  - 6
-  - 11
-  - 39
-  - 8
-  - 100
-  - 10
-  - 51
-  - 1
-  - 18
-  - 11
-  - 33
-  - 9
-  - 11
-  - 33
-  - 6
-  - 10
-  - 33
-  - 10
-  - 10
-  - 102
-  - 39
-  - 9
-  - 39
-  - 9
-  - 100
-  - 34
-  - 39
-  - 13
-  - 98
-  - 9
-  - 103
-  - 66
-  - 0
-  - 48
-  - 39
-  - 9
-  - 39
-  - 9
-  - 100
-  - 51
-  - 1
-  - 18
-  - 8
-  - 103
-  - 34
-  - 39
-  - 12
-  - 51
-  - 1
-  - 18
-  - 33
-  - 9
-  - 11
-  - 33
-  - 6
-  - 11
-  - 33
-  - 10
-  - 10
-  - 39
-  - 9
-  - 100
-  - 33
-  - 6
-  - 11
-  - 39
-  - 8
-  - 100
-  - 10
-  - 10
-  - 102
-  - 39
-  - 8
-  - 39
-  - 8
-  - 100
-  - 34
-  - 39
-  - 12
-  - 98
-  - 9
-  - 103
-  - 35
-  - 67
-  - 66
-  - 0
-  - 106
-  - 50
-  - 4
-  - 36
-  - 18
-  - 51
-  - 1
-  - 18
-  - 34
-  - 39
-  - 12
-  - 98
-  - 18
-  - 16
-  - 51
-  - 1
-  - 0
-  - 39
-  - 15
-  - 100
-  - 18
-  - 16
-  - 51
-  - 1
-  - 17
-  - 39
-  - 6
-  - 100
-  - 18
-  - 16
-  - 51
-  - 2
-  - 16
-  - 36
-  - 18
-  - 51
-  - 2
-  - 17
-  - 39
-  - 7
-  - 100
-  - 18
-  - 16
-  - 51
-  - 2
-  - 0
-  - 39
-  - 15
-  - 100
-  - 18
-  - 16
-  - 16
-  - 51
-  - 2
-  - 18
-  - 34
-  - 39
-  - 13
-  - 98
-  - 18
-  - 16
-  - 51
-  - 3
-  - 7
-  - 39
-  - 15
-  - 100
-  - 18
-  - 16
-  - 64
-  - 0
-  - 1
-  - 0
-  - 34
-  - 39
-  - 12
-  - 34
-  - 102
-  - 34
-  - 39
-  - 13
-  - 34
-  - 102
-  - 35
-  - 67
-  - 66
-  - 0
-  - 19
-  - 51
-  - 0
-  - 0
-  - 39
-  - 11
-  - 100
-  - 18
-  - 39
-  - 15
-  - 100
-  - 34
-  - 18
-  - 16
-  - 64
-  - 0
-  - 1
-  - 0
   - 35
   - 67

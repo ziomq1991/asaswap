@@ -22,33 +22,57 @@ class AlgosToAsaContract:
         self.setup_calculations()
 
     def setup_globals(self):
-        self.total_liquidity_tokens = GlobalState("LIQ")  # uint64
+        self.total_liquidity_tokens = GlobalState("L")  # uint64
         self.a_balance = GlobalState("A")  # uint64
         self.b_balance = GlobalState("B")  # uint64
-        self.escrow_addr = GlobalState("ESC")  # bytes
-        self.creator_addr = GlobalState("CRT")  # bytes
-        self.b_idx = GlobalState("B_IDX")  # uint64
+        self.escrow_addr = GlobalState("E")  # bytes
+        self.creator_addr = GlobalState("C")  # bytes
+        self.b_idx = GlobalState("Y")  # uint64
+        self.liq_idx = GlobalState("Z")  # uint64
 
     def setup_locals(self):
-        self.a_to_withdraw = LocalState("USR_A")  # uint64
-        self.b_to_withdraw = LocalState("USR_B")  # uint64
-        self.user_liquidity_tokens = LocalState("USR_LIQ")  # uint64
+        self.a_to_withdraw = LocalState("1")  # uint64
+        self.b_to_withdraw = LocalState("2")  # uint64
+        self.user_liquidity_tokens = LocalState("3")  # uint64
 
-    def setup_calculations(self):
-        self.tx_ratio = (
+    def calculate_exchange_rate(self) -> Expr:
+        self.exchange_rate = ScratchSlot()
+        return self.exchange_rate.store(
+            self.a_balance.get() * Int(self.ratio_decimal_points) / self.b_balance.get()
+        )
+
+    def get_exchange_rate(self, inline=False) -> Expr:
+        if inline:
+            return (
+                self.a_balance.get()
+                * Int(self.ratio_decimal_points)
+                / self.b_balance.get()
+            )
+        return self.exchange_rate.load(TealType.uint64)
+
+    def calculate_tx_ratio(self) -> Expr:
+        self.tx_ratio = ScratchSlot()
+        return self.tx_ratio.store(
             self.get_incoming_amount_for_primary_asset(Gtxn[2])
             * Int(self.ratio_decimal_points)
             / Gtxn[1].asset_amount()
         )
-        self.liquidity_calc = (
+
+    def get_tx_ratio(self) -> Expr:
+        return self.tx_ratio.load(TealType.uint64)
+
+    def calculate_liquidity_calc(self) -> Expr:
+        self.liquidity_calc = ScratchSlot()
+        return self.liquidity_calc.store(
             self.get_incoming_amount_for_primary_asset(Gtxn[2])
             * self.total_liquidity_tokens.get()
             / self.a_balance.get()
         )
-        # Exchange rate, always as ASA:ALGOS and in ratio_decimal_points precision
-        self.exchange_rate = (
-            self.a_balance.get() * Int(self.ratio_decimal_points) / self.b_balance.get()
-        )
+
+    def get_liquidity_calc(self) -> Expr:
+        return self.liquidity_calc.load(TealType.uint64)
+
+    def setup_calculations(self):
         self.a_calc = (
             self.a_balance.get()
             * Btoi(Txn.application_args[1])
@@ -70,18 +94,20 @@ class AlgosToAsaContract:
                 Return(Int(0)),
             ],
             [Txn.on_completion() == OnComplete.CloseOut, self.on_closeout()],
-            [Txn.application_args[0] == Bytes("UPDATE"), self.on_update()],
+            [Txn.application_args[0] == Bytes("U"), self.on_update()],
             [
-                Txn.application_args[0] == Bytes("ADD_LIQUIDITY"),
+                Txn.application_args[0] == Bytes("A"),
                 self.on_add_liquidity(),
             ],
             [
-                Txn.application_args[0] == Bytes("REMOVE_LIQUIDITY"),
+                Txn.application_args[0] == Bytes("R"),
                 self.on_remove_liquidity(),
             ],
-            [Txn.application_args[0] == Bytes("SWAP"), self.on_swap()],
-            [Txn.application_args[0] == Bytes("WITHDRAW"), self.on_withdraw()],
-            [Txn.application_args[0] == Bytes("SETUP_ESCROW"), self.setup_escrow()],
+            [Txn.application_args[0] == Bytes("S"), self.on_swap()],
+            [Txn.application_args[0] == Bytes("W"), self.on_withdraw()],
+            [Txn.application_args[0] == Bytes("E"), self.setup_escrow()],
+            [Txn.application_args[0] == Bytes("X"), self.on_withdraw_liquidity()],
+            [Txn.application_args[0] == Bytes("Y"), self.on_deposit_liquidity()],
         )
 
     def get_incoming_amount_for_primary_asset(self, tx) -> Expr:
@@ -97,6 +123,7 @@ class AlgosToAsaContract:
         return Seq(
             [
                 self.b_idx.put(Btoi(Txn.application_args[0])),
+                self.liq_idx.put(Btoi(Txn.application_args[1])),
                 self.b_balance.put(Int(0)),
                 self.a_balance.put(Int(0)),
                 self.total_liquidity_tokens.put(Int(0)),
@@ -157,21 +184,27 @@ class AlgosToAsaContract:
                         self.b_balance.get() != Int(0),
                         self.a_balance.get() != Int(0),
                     ),
-                    If(
-                        # Check if transactions exchange rate matches or is max 1% different from current
-                        Ge(self.exchange_rate, self.tx_ratio),
-                        Assert(
-                            (self.exchange_rate - self.tx_ratio)
-                            * Int(self.ratio_decimal_points)
-                            / self.exchange_rate
-                            < Int(int(0.01 * self.ratio_decimal_points))
-                        ),
-                        Assert(
-                            (self.tx_ratio - self.exchange_rate)
-                            * Int(self.ratio_decimal_points)
-                            / self.exchange_rate
-                            < Int(int(0.01 * self.ratio_decimal_points))
-                        ),
+                    Seq(
+                        [
+                            self.calculate_exchange_rate(),
+                            self.calculate_tx_ratio(),
+                            If(
+                                # Check if transactions exchange rate matches or is max 1% different from current
+                                Ge(self.get_exchange_rate(), self.get_tx_ratio()),
+                                Assert(
+                                    (self.get_exchange_rate() - self.get_tx_ratio())
+                                    * Int(self.ratio_decimal_points)
+                                    / self.get_exchange_rate()
+                                    < Int(int(0.01 * self.ratio_decimal_points))
+                                ),
+                                Assert(
+                                    (self.get_tx_ratio() - self.get_exchange_rate())
+                                    * Int(self.ratio_decimal_points)
+                                    / self.get_exchange_rate()
+                                    < Int(int(0.01 * self.ratio_decimal_points))
+                                ),
+                            ),
+                        ]
                     ),
                 ),
                 If(
@@ -189,11 +222,14 @@ class AlgosToAsaContract:
                     ),
                     Seq(
                         [
+                            self.calculate_liquidity_calc(),
                             self.user_liquidity_tokens.put(
-                                self.user_liquidity_tokens.get() + self.liquidity_calc
+                                self.user_liquidity_tokens.get()
+                                + self.get_liquidity_calc()
                             ),
                             self.total_liquidity_tokens.put(
-                                self.total_liquidity_tokens.get() + self.liquidity_calc
+                                self.total_liquidity_tokens.get()
+                                + self.get_liquidity_calc()
                             ),
                         ]
                     ),
@@ -233,6 +269,43 @@ class AlgosToAsaContract:
             ]
         )
 
+    def on_withdraw_liquidity(self):
+        return Seq(
+            [
+                Assert(
+                    And(
+                        Gtxn[1].xfer_asset() == self.liq_idx.get(),
+                        self.user_liquidity_tokens.get() >= Gtxn[1].asset_amount(),
+                        Gtxn[1].sender() == self.escrow_addr.get(),
+                        Gtxn[2].receiver() == self.escrow_addr.get(),
+                    )
+                ),
+                self.user_liquidity_tokens.put(
+                    self.user_liquidity_tokens.get() - Gtxn[1].asset_amount()
+                ),
+                Return(Int(1)),
+            ]
+        )
+
+    def on_deposit_liquidity(self):
+        return Seq(
+            [
+                Assert(
+                    And(
+                        Global.group_size() == Int(2),
+                        Gtxn[0].type_enum() == TxnType.ApplicationCall,
+                        Gtxn[1].type_enum() == TxnType.AssetTransfer,
+                        Gtxn[1].xfer_asset() == self.liq_idx.get(),
+                        Gtxn[1].asset_receiver() == self.escrow_addr.get(),
+                    )
+                ),
+                self.user_liquidity_tokens.put(
+                    self.user_liquidity_tokens.get() + Gtxn[1].asset_amount()
+                ),
+                Return(Int(1)),
+            ]
+        )
+
     def on_swap(self):
         return Seq(
             [
@@ -261,7 +334,7 @@ class AlgosToAsaContract:
                                 self.a_to_withdraw.put(
                                     # Same as (exchange_rate * asset_amount * ((100 - fee_pct)/100)) / ratio_decimal_points
                                     (
-                                        self.exchange_rate
+                                        self.get_exchange_rate(inline=True)
                                         * Gtxn[1].asset_amount()
                                         * Int(100 - self.fee_pct)
                                     )
@@ -293,7 +366,7 @@ class AlgosToAsaContract:
                                     )
                                     * Int(self.ratio_decimal_points)
                                     / Int(100)
-                                    / self.exchange_rate
+                                    / self.get_exchange_rate(inline=True)
                                 ),
                                 self.b_balance.put(
                                     self.b_balance.get() - self.b_to_withdraw.get()
@@ -329,8 +402,8 @@ class AlgosToAsaContract:
 
     def verify_outgoing_tx_for_primary_asset(self, tx):
         return And(
-            Gtxn[2].type_enum() == TxnType.Payment,
-            Gtxn[2].sender() == self.escrow_addr.get(),
+            tx.type_enum() == TxnType.Payment,
+            tx.sender() == self.escrow_addr.get(),
         )
 
     def get_outgoing_amount_for_primary_asset(self, tx) -> Expr:
@@ -353,7 +426,7 @@ class AlgosToAsaContract:
 class AsaToAsaContract(AlgosToAsaContract):
     def __init__(self, ratio_decimal_points: int, fee_pct: int):
         super().__init__(ratio_decimal_points, fee_pct)
-        self.a_idx = GlobalState("A_IDX")  # uint64
+        self.a_idx = GlobalState("X")  # uint64
 
     def get_incoming_amount_for_primary_asset(self, tx) -> Expr:
         return tx.asset_amount()
@@ -367,9 +440,9 @@ class AsaToAsaContract(AlgosToAsaContract):
 
     def verify_outgoing_tx_for_primary_asset(self, tx):
         return And(
-            Gtxn[2].type_enum() == TxnType.AssetTransfer,
-            Gtxn[2].xfer_asset() == self.a_idx.get(),
-            Gtxn[2].sender() == self.escrow_addr.get(),
+            tx.type_enum() == TxnType.AssetTransfer,
+            tx.xfer_asset() == self.a_idx.get(),
+            tx.sender() == self.escrow_addr.get(),
         )
 
     def get_outgoing_amount_for_primary_asset(self, tx) -> Expr:
@@ -380,6 +453,7 @@ class AsaToAsaContract(AlgosToAsaContract):
             [
                 self.b_idx.put(Btoi(Txn.application_args[0])),
                 self.a_idx.put(Btoi(Txn.application_args[1])),
+                self.liq_idx.put(Btoi(Txn.application_args[2])),
                 self.b_balance.put(Int(0)),
                 self.a_balance.put(Int(0)),
                 self.total_liquidity_tokens.put(Int(0)),
@@ -393,7 +467,7 @@ if __name__ == "__main__":
     params = {
         "ratio_decimal_points": 1000000,
         "fee_pct": 3,
-        "type": ExchangeType.ASA_TO_ASA,
+        "type": ExchangeType.ALGOS_TO_ASA,
     }
 
     # Overwrite params if sys.argv[1] is passed

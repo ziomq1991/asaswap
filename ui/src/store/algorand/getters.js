@@ -1,6 +1,7 @@
 import { getMappedUserState, getMappedGlobalState, getMappedUserAssets } from './utils/format';
 import { ExchangeCalculator } from '@/utils/exchange';
 import { ASSET_PAIRS } from '@/utils/assetPairs';
+import { GLOBAL_A_BAL, GLOBAL_B_BAL } from '@/utils/constants';
 
 export function rawStore(state) {
   return {
@@ -102,5 +103,5 @@ export function exchangeCalculator(state) {
     return new ExchangeCalculator(0, 0, ASSET_PAIRS[state.currentPair]);
   }
   const globalState = getMappedGlobalState(state.applicationData);
-  return new ExchangeCalculator(globalState['A'], globalState['B'], ASSET_PAIRS[state.currentPair]);
+  return new ExchangeCalculator(globalState[GLOBAL_A_BAL], globalState[GLOBAL_B_BAL], ASSET_PAIRS[state.currentPair]);
 }

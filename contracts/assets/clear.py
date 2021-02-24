@@ -4,17 +4,17 @@ from helpers.state import GlobalState, LocalState
 
 
 def clear():
-    TOTAL_LIQUIDITY_TOKENS = GlobalState("LIQ")
+    GLOBAL_LIQ_TOKENS = GlobalState("LIQ")
     ALGOS_BALANCE = GlobalState("A")
     TOKENS_BALANCE = GlobalState("B")
     ALGOS_TO_WITHDRAW = LocalState("USR_A")
     TOKENS_TO_WITHDRAW = LocalState("USR_B")
-    USER_LIQUIDITY_TOKENS = LocalState("USR_LIQ")
+    USR_LIQ_TOKENS = LocalState("USR_LIQ")
 
     return Seq(
         [
-            TOTAL_LIQUIDITY_TOKENS.put(
-                TOTAL_LIQUIDITY_TOKENS.get() - USER_LIQUIDITY_TOKENS.get()
+            GLOBAL_LIQ_TOKENS.put(
+                GLOBAL_LIQ_TOKENS.get() - USR_LIQ_TOKENS.get()
             ),
             ALGOS_BALANCE.put(ALGOS_BALANCE.get() + ALGOS_TO_WITHDRAW.get()),
             TOKENS_BALANCE.put(TOKENS_BALANCE.get() + TOKENS_TO_WITHDRAW.get()),

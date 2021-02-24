@@ -7,6 +7,7 @@ import {
 } from '@/utils/transactions';
 import { AlgoExplorer } from '@/services/algoExplorer';
 import { AlgoSigner } from '@/services/algoSigner';
+import { ADD_LIQUIDITY, REMOVE_LIQUIDITY, SWAP, WITHDRAW } from '@/utils/constants';
 
 export default class AlgorandService {
   constructor(signer, ledger, assetPair) {
@@ -76,14 +77,14 @@ export default class AlgorandService {
 
   async addLiquidity(accountAddress, primaryAssetAmount, secondaryAssetAmount) {
     const suggestedParams = await this.getSuggestedParams();
-    const tx1 = this.txMaker.makeCallTx(accountAddress, ['ADD_LIQUIDITY'], suggestedParams);
+    const tx1 = this.txMaker.makeCallTx(accountAddress, [ADD_LIQUIDITY], suggestedParams);
     const tx2 = this.txMaker.makeSecondaryAssetDepositTx(accountAddress, secondaryAssetAmount, suggestedParams);
     const tx3 = this.txMaker.makePrimaryAssetDepositTx(accountAddress, primaryAssetAmount, suggestedParams);
     await validateIfAccountCanAffordTxs([tx1, tx2, tx3]);
     const txnGroup = await algosdk.assignGroupID([
       {
         ...tx1,
-        appArgs: encodeArrayForSDK(['ADD_LIQUIDITY'])
+        appArgs: encodeArrayForSDK([ADD_LIQUIDITY])
       },
       Object.assign({}, tx2),
       Object.assign({}, tx3)
@@ -106,7 +107,7 @@ export default class AlgorandService {
 
   async removeLiquidity(accountAddress, liquidityTokens) {
     const suggestedParams = await this.getSuggestedParams();
-    const tx = this.txMaker.makeCallTx(accountAddress, ['REMOVE_LIQUIDITY', Number(liquidityTokens)], suggestedParams);
+    const tx = this.txMaker.makeCallTx(accountAddress, [REMOVE_LIQUIDITY, Number(liquidityTokens)], suggestedParams);
     await validateIfAccountCanAffordTxs([tx]);
     eventBus.$emit('set-action-message', 'Signing transaction...');
     const signedTx = await this.signer.sign(tx);
@@ -118,13 +119,13 @@ export default class AlgorandService {
 
   async swapSecondary(accountAddress, assetAmount) {
     const suggestedParams = await this.getSuggestedParams();
-    const tx1 = this.txMaker.makeCallTx(accountAddress, ['SWAP'], suggestedParams);
+    const tx1 = this.txMaker.makeCallTx(accountAddress, [SWAP], suggestedParams);
     const tx2 = this.txMaker.makeSecondaryAssetDepositTx(accountAddress, assetAmount, suggestedParams);
     await validateIfAccountCanAffordTxs([tx1, tx2]);
     const txnGroup = await algosdk.assignGroupID([
       {
         ...tx1,
-        appArgs: encodeArrayForSDK(['SWAP'])
+        appArgs: encodeArrayForSDK([SWAP])
       },
       Object.assign({}, tx2),
     ]);
@@ -142,13 +143,13 @@ export default class AlgorandService {
 
   async swapPrimary(accountAddress, assetAmount) {
     const suggestedParams = await this.getSuggestedParams();
-    const tx1 = this.txMaker.makeCallTx(accountAddress, ['SWAP'], suggestedParams);
+    const tx1 = this.txMaker.makeCallTx(accountAddress, [SWAP], suggestedParams);
     const tx2 = this.txMaker.makePrimaryAssetDepositTx(accountAddress, assetAmount, suggestedParams);
     await validateIfAccountCanAffordTxs([tx1, tx2]);
     const txnGroup = await algosdk.assignGroupID([
       {
         ...tx1,
-        appArgs: encodeArrayForSDK(['SWAP'])
+        appArgs: encodeArrayForSDK([SWAP])
       },
       Object.assign({}, tx2),
     ]);
@@ -166,7 +167,7 @@ export default class AlgorandService {
 
   async withdraw(accountAddress, primaryAssetAmount, secondaryAssetAmount) {
     const suggestedParams = await this.getSuggestedParams();
-    const tx1 = this.txMaker.makeCallTx(accountAddress, ['WITHDRAW'], suggestedParams);
+    const tx1 = this.txMaker.makeCallTx(accountAddress, [WITHDRAW], suggestedParams);
     const tx2 = this.txMaker.makeSecondaryAssetWithdrawalTx(accountAddress, secondaryAssetAmount, suggestedParams);
     const tx3 = this.txMaker.makePrimaryAssetWithdrawalTx(accountAddress, primaryAssetAmount, suggestedParams);
     const tx4 = this.txMaker.makeAlgoPaymentTx(accountAddress, this.assetPair.escrowAddress, 2000, suggestedParams);
@@ -174,7 +175,7 @@ export default class AlgorandService {
     const txnGroup = await algosdk.assignGroupID([
       {
         ...tx1,
-        appArgs: encodeArrayForSDK(['WITHDRAW'])
+        appArgs: encodeArrayForSDK([WITHDRAW])
       },
       tx2,
       tx3,

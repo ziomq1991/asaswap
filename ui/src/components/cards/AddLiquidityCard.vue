@@ -36,7 +36,7 @@
         </div>
       </div>
       <div
-        v-if="globalState !== {}"
+        v-if="Object.keys(globalState).length"
         class="bg-gray-100 rounded-lg"
       >
         <div class="py-4 px-4">
@@ -83,6 +83,7 @@ import NumberInput from '../NumberInput';
 import { getInputError } from '@/utils/validation';
 import ActionButton from '../ActionButton';
 import Card from '@/components/cards/Card';
+import { GLOBAL_A_BAL, GLOBAL_LIQ_TOKENS } from '@/utils/constants';
 
 export default {
   name: 'AddLiquidityCard',
@@ -161,12 +162,12 @@ export default {
       if (!this.globalState) {
         return;
       }
-      if (this.globalState['LIQ'] === 0) {
+      if (this.globalState[GLOBAL_LIQ_TOKENS] === 0) {
         return this.primaryAsset.getRawAssetAmount(this.primaryAmount);
       }
       return Math.trunc(
-        (this.primaryAsset.getRawAssetAmount(this.primaryAmount) * this.globalState['LIQ']) /
-          this.globalState['A']
+        (this.primaryAsset.getRawAssetAmount(this.primaryAmount) * this.globalState[GLOBAL_LIQ_TOKENS]) /
+          this.globalState[GLOBAL_A_BAL]
       );
     },
     liquidityTokensDisplay() {
@@ -176,12 +177,12 @@ export default {
       return this.liquidityTokens;
     },
     poolShareDisplay() {
-      if (this.liquidityTokens && this.globalState['LIQ'] === 0) {
+      if (this.liquidityTokens && this.globalState[GLOBAL_LIQ_TOKENS] === 0) {
         return '100%';
-      } else if (!this.globalState['LIQ']) {
+      } else if (!this.globalState[GLOBAL_LIQ_TOKENS]) {
         return '0%';
       }
-      const value = (this.liquidityTokens * 100 / (this.globalState['LIQ'] + this.liquidityTokens)).toFixed(2);
+      const value = (this.liquidityTokens * 100 / (this.globalState[GLOBAL_LIQ_TOKENS] + this.liquidityTokens)).toFixed(2);
       if (value >= 100) {
         return '99.99%';
       }
@@ -197,7 +198,7 @@ export default {
   },
   methods: {
     onAlgosInputChange(recalculate) {
-      if (this.globalState['LIQ'] === 0) {
+      if (this.globalState[GLOBAL_LIQ_TOKENS] === 0) {
         this.validate();
         return;
       }
@@ -221,7 +222,7 @@ export default {
       this.validate();
     },
     onAssetInputChange(recalculate) {
-      if (this.globalState['LIQ'] === 0) {
+      if (this.globalState[GLOBAL_LIQ_TOKENS] === 0) {
         this.validate();
         return;
       }
@@ -253,7 +254,7 @@ export default {
       if (
         !error &&
         !this.isDifferenceCorrect &&
-        this.globalState['LIQ'] > 0
+        this.globalState[GLOBAL_LIQ_TOKENS] > 0
       ) {
         error = 'Invalid exchange rate';
       }

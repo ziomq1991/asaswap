@@ -27,7 +27,7 @@
         <span>Waiting for AlgoSigner...</span>
       </t-button>
     </div>
-    <div v-else-if="currentRouteName !== 'Withdraw' && (userState.USR_B || userState.USR_A)">
+    <div v-else-if="disabled">
       <t-button
         disabled
         classes="block tracking-widest w-full uppercase text-center shadow bg-indigo-600 hover:bg-indigo-700 focus:shadow-outline focus:outline-none text-white text-xs py-3 px-10 rounded disabled:opacity-50 disabled:cursor-not-allowed"
@@ -49,6 +49,7 @@
 <script>
 import { mapGetters } from 'vuex';
 import Spinner from 'vue-simple-spinner';
+import { USR_A_BAL, USR_B_BAL } from '@/utils/constants';
 
 export default {
   name: 'ActionButton',
@@ -95,6 +96,9 @@ export default {
     }),
     currentRouteName() {
       return this.$route.name;
+    },
+    disabled() {
+      return this.currentRouteName !== 'Withdraw' && (this.userState[USR_B_BAL] || this.userState[USR_A_BAL]);
     }
   },
   watch: {

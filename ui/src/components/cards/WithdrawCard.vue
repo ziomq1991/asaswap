@@ -13,7 +13,7 @@
             You need to withdraw them in full before performing any other operation.
           </p>
         </div>
-        <div v-if="!!(userState.USR_A || userState.USR_B)">
+        <div v-if="hasBalance">
           <div>
             <NumberInput
               :value="primaryAssetBalance"
@@ -31,7 +31,7 @@
           <div class="py-4">
             <ActionButton
               label="Withdraw"
-              :enable="!!(userState.USR_A || userState.USR_B)"
+              :enable="hasBalance"
               :execute="onWithdraw"
             />
           </div>
@@ -50,6 +50,7 @@ import { mapGetters } from 'vuex';
 import NumberInput from '../NumberInput';
 import ActionButton from '../ActionButton';
 import Card from './Card';
+import { USR_A_BAL, USR_B_BAL } from '@/utils/constants';
 
 export default {
   name: 'WithdrawCard',
@@ -72,10 +73,10 @@ export default {
       account: 'algorand/account'
     }),
     primaryAssetBalance() {
-      return Number(this.currentPair.primaryAsset.getAssetDisplayAmount(this.userState['USR_A'] || 0));
+      return Number(this.currentPair.primaryAsset.getAssetDisplayAmount(this.userState[USR_A_BAL] || 0));
     },
     secondaryAssetBalance() {
-      return Number(this.currentPair.secondaryAsset.getAssetDisplayAmount(this.userState['USR_B'] || 0));
+      return Number(this.currentPair.secondaryAsset.getAssetDisplayAmount(this.userState[USR_B_BAL] || 0));
     },
     assetsToOptIn() {
       const assets = [];
@@ -86,6 +87,9 @@ export default {
         assets.push(this.currentPair.secondaryAsset);
       }
       return assets;
+    },
+    hasBalance() {
+      return !!(this.userState[USR_A_BAL] || this.userState[USR_B_BAL]);
     }
   },
   watch: {
@@ -98,7 +102,7 @@ export default {
       if (value.length === 0 && this.executeAfterOptingIn) {
         this.executeAfterOptingIn = false;
         const accountAddress = this.rawStore.account;
-        this.waitForAction(() => this.rawStore.serviceInstance.withdraw(accountAddress, this.userState['USR_A'], this.userState['USR_B']));
+        this.waitForAction(() => this.rawStore.serviceInstance.withdraw(accountAddress, this.userState[USR_A_BAL], this.userState[USR_B_BAL]));
       }
     }
   },
@@ -109,7 +113,7 @@ export default {
         await this.waitForAction(() => this.rawStore.serviceInstance.optInAsset(this.assetsToOptIn[0], accountAddress), 'Opting-In to Asset...');
         this.executeAfterOptingIn = true;
       } else {
-        await this.waitForAction(() => this.rawStore.serviceInstance.withdraw(accountAddress, this.userState['USR_A'], this.userState['USR_B']));
+        await this.waitForAction(() => this.rawStore.serviceInstance.withdraw(accountAddress, this.userState[USR_A_BAL], this.userState[USR_B_BAL]));
       }
     }
   }

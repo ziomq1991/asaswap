@@ -6,7 +6,7 @@ authors = ["krystiansiwek <krystian.siwek@yahoo.com>", "sebastiangula <sebastian
 
 [tool.poetry.dependencies]
 python = "^3.7"
-pyteal = "^0.6.1"
+pyteal = {git = "https://github.com/algorand/pyteal.git", rev = "120202cf73b43612426a054d5b731320d13bfdf1"}
 PyYAML = "^5.4.1"
 
 [tool.poetry.dev-dependencies]
