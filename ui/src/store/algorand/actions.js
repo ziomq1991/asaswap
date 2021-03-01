@@ -74,7 +74,13 @@ export async function FETCH_ACCOUNT_DATA({ commit, state, getters, dispatch }) {
   const newState = getters.userState;
   const newAssets = getters.userAssets;
   if (state.pendingUpdate && state.pendingVerificationFunc) {
-    const verified = await state.pendingVerificationFunc({ prevState, prevAssets, newState, newAssets, getters });
+    const verified = await state.pendingVerificationFunc({
+      prevState,
+      prevAssets,
+      newState,
+      newAssets,
+      getters
+    });
     if (verified) {
       commit('SET_PENDING_UPDATE', false);
       if (state.actionQueue.length > 0) {
@@ -84,7 +90,7 @@ export async function FETCH_ACCOUNT_DATA({ commit, state, getters, dispatch }) {
   }
 }
 
-export async function FETCH_APPLICATION_DATA({ state, commit }, { appId=null }) {
+export async function FETCH_APPLICATION_DATA({ state, commit }, { appId = null }) {
   const applicationData = await AlgorandService.getApplicationData(ALGORAND_LEDGER, appId ? appId : ASSET_PAIRS[state.currentPair].applicationId);
   if (!appId || appId === state.currentPair.applicationId) {
     commit('SET_APPLICATION_DATA', applicationData);
@@ -147,9 +153,14 @@ function defaultVerificationFunc({ prevState, newState, prevAssets, newAssets })
   return false;
 }
 
-export async function QUEUE_ACTION({ commit, dispatch, state }, { actionMethod, actionMessage=null, actionVerificationMethod=null }) {
+export async function QUEUE_ACTION({ commit, dispatch, state }, {
+  actionMethod,
+  actionMessage = null,
+  actionVerificationMethod = null,
+  backgroundAction = false
+}) {
   let queue = Object.assign([], state.actionQueue);
-  queue.push({ actionMethod, actionMessage, actionVerificationMethod });
+  queue.push({ actionMethod, actionMessage, actionVerificationMethod, backgroundAction });
   await commit('SET_ACTION_QUEUE', queue);
   if (state.actionQueue.length === 1) {
     dispatch('EXECUTE_PENDING_ACTION');
@@ -161,8 +172,13 @@ export async function EXECUTE_PENDING_ACTION({ state, dispatch, commit }) {
     return;
   }
   let queue = Object.assign([], state.actionQueue);
-  const { actionMethod, actionVerificationMethod, actionMessage } = queue.shift();
+  const { actionMethod, actionVerificationMethod, actionMessage, backgroundAction } = queue.shift();
   await commit('SET_ACTION_QUEUE', queue);
+  if (backgroundAction) {
+    actionMethod();
+    dispatch('EXECUTE_PENDING_ACTION');
+    return;
+  }
   try {
     if (actionVerificationMethod) {
       await commit('SET_PENDING_VERIFICATION_FUNC', actionVerificationMethod);
@@ -219,7 +235,7 @@ export async function QUEUE_ASSET_OPT_IN({ dispatch, state, getters }, { assetId
       continue;
     }
     await dispatch('QUEUE_ACTION', {
-      actionMethod: async() => await state.serviceInstance.optInAsset(new Asset({
+      actionMethod: async () => await state.serviceInstance.optInAsset(new Asset({
         assetIndex: assetIndex
       }), state.account),
       actionMessage: 'Opting-In to Assets...',

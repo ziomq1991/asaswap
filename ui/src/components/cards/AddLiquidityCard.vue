@@ -295,6 +295,13 @@ export default {
           return Number(prevState[USR_LIQ_TOKENS]) !== Number(newState[USR_LIQ_TOKENS]);
         }
       });
+      const currentPairAppIndex = this.currentPair.applicationId;
+      await this.$store.dispatch('algorand/QUEUE_ACTION', {
+        actionMethod: async () => {
+          await this.$store.dispatch('algorand/FETCH_APPLICATION_DATA', { appId: currentPairAppIndex });
+        },
+        backgroundAction: true
+      });
       await this.$store.dispatch('algorand/QUEUE_ACTION', {
         actionMethod: async () => {
           await this.$store.dispatch('algorand/WITHDRAW');
