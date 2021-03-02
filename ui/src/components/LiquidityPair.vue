@@ -89,7 +89,7 @@ export default {
       this.$router.push(`/add-liquidity/${this.encodePair(this.pair.key)}`);
     },
     onRemove() {
-      this.$router.push(`remove-liquidity/${this.encodePair(this.pair.key)}`);
+      this.$router.push(`/remove-liquidity/${this.encodePair(this.pair.key)}`);
     }
   }
 };

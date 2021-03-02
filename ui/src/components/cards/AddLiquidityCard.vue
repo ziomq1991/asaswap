@@ -19,16 +19,16 @@
           <NumberInput
             v-model="primaryAmount"
             :label="currentPair.primaryAsset.assetName"
-            @change="onAlgosInputChange(true)"
-            @input.native="onAlgosInputChange(false)"
+            @change="onPrimaryInputChange(true)"
+            @input.native="onPrimaryInputChange(false)"
           />
         </div>
         <div class="mt-4">
           <NumberInput
             v-model="secondaryAmount"
             :label="currentPair.secondaryAsset.assetName"
-            @change="onAssetInputChange(true)"
-            @input.native="onAssetInputChange(false)"
+            @change="onSecondaryInputChange(true)"
+            @input.native="onSecondaryInputChange(false)"
           />
         </div>
         <div class="py-4">
@@ -214,7 +214,7 @@ export default {
     decodePair(pairName) {
       return decodeURIComponent(pairName).toUpperCase().replace('-', '/');
     },
-    onAlgosInputChange(recalculate) {
+    onPrimaryInputChange(recalculate) {
       if (this.globalState[GLOBAL_LIQ_TOKENS] === 0) {
         this.validate();
         return;
@@ -238,7 +238,7 @@ export default {
       }
       this.validate();
     },
-    onAssetInputChange(recalculate) {
+    onSecondaryInputChange(recalculate) {
       if (this.globalState[GLOBAL_LIQ_TOKENS] === 0) {
         this.validate();
         return;
@@ -249,7 +249,7 @@ export default {
       }
       this.primaryAmount = this.primaryAsset.getAssetDisplayAmount(
         Math.trunc(
-          (this.globalExchangeRate * this.secondaryAsset.getRawAssetAmount(this.assetAmount)) /
+          (this.globalExchangeRate * this.secondaryAsset.getRawAssetAmount(this.secondaryAmount)) /
             this.currentPair.ratio
         )
       );
