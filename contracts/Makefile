@@ -17,4 +17,8 @@ image:		## Build the docker image
 
 tests: 		## Run eslint and tests
 	docker run -it --rm \
-		$(REPO) yarn lint && poetry run yarn test
+		$(REPO) yarn lint && docker run -it --rm $(REPO) poetry run yarn test
+
+ci-tests:       ## Run eslint and tests
+	docker run --rm \
+		$(REPO) yarn lint && docker run --rm $(REPO) poetry run yarn test

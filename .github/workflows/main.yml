@@ -1,0 +1,31 @@
+name: CI
+
+on: ['push']
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build an image
+        run: |
+          cd contracts &&
+          make image
+      - name: Run contract tests 
+        run: |
+          cd contracts &&
+          make ci-tests
+  ui:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install frontend dependencies
+        run: |
+          cd ui &&
+          yarn install
+      - name: Run frontend eslint
+        run: |
+          cd ui &&
+          yarn lint

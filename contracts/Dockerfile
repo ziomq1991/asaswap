@@ -6,6 +6,7 @@ ENV LANG=C.UTF-8
 WORKDIR /
 RUN git clone https://github.com/scale-it/algorand-builder.git
 WORKDIR /algorand-builder
+RUN git checkout 606efcfe998f497bccd5b9e92f214664096ad50d
 RUN yarn install
 RUN yarn build
 RUN cd packages/algob && yarn link
