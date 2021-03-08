@@ -215,23 +215,39 @@ class AlgosAsaManager {
   }
 
   configureLiquidityToken() {
-    this.runtime.modifyAsset(this.liquidityAssetId, {
-      manager: null,
-      reserve: this.escrow.address,
-      freeze: null,
-      clawback: null
-    });
-    // Minting through atomic transaction doesn't work
     const assetDef = this.runtime.getAssetDef(this.liquidityAssetId);
-    this.runtime.transferAsset({
-      assetID: this.liquidityAssetId,
-      fromAccount: this.runtime.getAccount(assetDef.creator).account,
-      toAccountAddr: this.escrow.address,
-      amount: 10000000000,
-      payFlags: {
-        totalFee: 1000
+    let tx = [
+      {
+        type: TransactionType.ModifyAsset,
+        assetID: this.liquidityAssetId,
+        sign: SignType.SecretKey,
+        fromAccount: this.runtime.getAccount(assetDef.creator).account,
+        fields: {
+          manager: this.escrow.address,
+          reserve: this.escrow.address,
+          freeze: this.escrow.address,
+          clawback: this.escrow.address
+        },
+        payFlags: {
+          totalFee: 1000
+        }
       }
-    });
+    ];
+    this.runtime.executeTx(tx);
+    tx = [
+      {
+        type: TransactionType.TransferAsset,
+        assetID: this.liquidityAssetId,
+        sign: SignType.SecretKey,
+        fromAccount: this.runtime.getAccount(assetDef.creator).account,
+        toAccountAddr: this.escrow.address,
+        amount: 10000000000,
+        payFlags: {
+          totalFee: 1000
+        }
+      }
+    ];
+    this.runtime.executeTx(tx);
   }
 
   getEscrowAddress() {
@@ -257,7 +273,7 @@ class AlgosAsaManager {
         fromAccount: this.creator.account,
         appId: this.applicationId,
         appArgs: appArgs,
-        accounts: [this.creator.address, escrowAddress], // sender must be first
+        accounts: [escrowAddress],
         payFlags: { totalFee: 1000 },
       }
     ];

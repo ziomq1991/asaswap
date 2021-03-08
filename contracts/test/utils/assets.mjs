@@ -1,3 +1,5 @@
+import { SignType, TransactionType } from '@algorand-builder/runtime/build/types.js';
+
 export function setupAssets(runtime, account) {
   return {
     primaryAssetId: setupPrimaryAsset(runtime, account),
@@ -67,15 +69,20 @@ function setupInvalidAsset(runtime, account) {
 export function fundAccounts(runtime, fundingAccount, accounts, assets) {
   function fund(assetId, account) {
     runtime.optIntoASA(assetId, account.address, {});
-    runtime.transferAsset({
-      assetID: assetId,
-      fromAccount: fundingAccount.account,
-      toAccountAddr: account.address,
-      amount: 1000000,
-      payFlags: {
-        totalFee: 1000
+    let tx = [
+      {
+        type: TransactionType.TransferAsset,
+        assetID: assetId,
+        sign: SignType.SecretKey,
+        fromAccount: fundingAccount.account,
+        toAccountAddr: account.address,
+        amount: 1000000,
+        payFlags: {
+          totalFee: 1000
+        }
       }
-    });
+    ];
+    runtime.executeTx(tx);
   }
   accounts.forEach((account) => {
     Object.keys(assets).forEach((key) => {
@@ -85,7 +92,7 @@ export function fundAccounts(runtime, fundingAccount, accounts, assets) {
 }
 
 export function setupLiquidityToken(runtime, account) {
-  const assetId = runtime.createAsset('liquidity_token', { creator: account.account });
+  const assetId = runtime.addAsset('liquidity_token', { creator: account.account });
   const rawAsset = account.createdAssets.get(assetId);
   rawAsset['manager'] = account.address;
   rawAsset['reserve'] = account.address;
