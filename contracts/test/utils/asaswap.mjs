@@ -1,12 +1,11 @@
 import { getProgram, stringToBytes } from '@algorand-builder/algob';
 import { SignType, TransactionType } from '@algorand-builder/runtime/build/types.js';
-import constants from '../../common/constants.js';
+import constants, { SETUP_ESCROW } from '../../common/constants.js';
 
 const {
   ADD_LIQUIDITY,
   DEPOSIT_LIQUIDITY,
   REMOVE_LIQUIDITY,
-  SETUP_ESCROW,
   SWAP,
   UPDATE,
   WITHDRAW,
@@ -19,11 +18,9 @@ export const ASA_TO_ASA = 'ASA_TO_ASA';
 export class AsaswapManager {
   constructor(runtime, creator, assets, type = ALGOS_TO_ASA) {
     if (type === ALGOS_TO_ASA) {
-      const program = getProgram('state.py', { type: ALGOS_TO_ASA });
-      this.manager = new AlgosAsaManager(runtime, creator, assets, program);
+      this.manager = new AlgosAsaManager(runtime, creator, assets);
     } else {
-      const program = getProgram('state.py', { type: ASA_TO_ASA });
-      this.manager = new AsaToAsaManager(runtime, creator, assets, program);
+      this.manager = new AsaToAsaManager(runtime, creator, assets);
     }
   }
 
@@ -55,12 +52,16 @@ export class AsaswapManager {
     return this.manager.getApplicationId();
   }
 
+  getValidatorId() {
+    return this.manager.getValidatorId();
+  }
+
   setupApplicationWithEscrow() {
     return this.manager.setupApplicationWithEscrow();
   }
 
-  configureEscrowAddress(escrowAddress) {
-    return this.manager.configureEscrowAddress(escrowAddress);
+  configureContract(escrowAddress, validatorId) {
+    return this.manager.configureContract(escrowAddress, validatorId);
   }
 
   optIn(address) {
@@ -97,12 +98,11 @@ export class AsaswapManager {
 }
 
 class AlgosAsaManager {
-  constructor(runtime, creator, assets, program) {
+  constructor(runtime, creator, assets) {
     this.creator = creator;
     this.runtime = runtime;
     this.secondaryAssetId = assets['secondaryAssetId'];
     this.liquidityAssetId = assets['liquidityAssetId'];
-    this.program = program;
 
     this.creationArgs = [
       `int:${this.secondaryAssetId}`,
@@ -112,17 +112,52 @@ class AlgosAsaManager {
       sender: creator.account,
       localInts: 3,
       localBytes: 0,
-      globalInts: 5,
+      globalInts: 6,
       globalBytes: 2
+    };
+    this.validatorFlags = {
+      sender: creator.account,
+      localInts: 0,
+      localBytes: 0,
+      globalInts: 0,
+      globalBytes: 0
     };
     this.escrow = null;
     this.applicationId = null;
+    this.validatorId = null;
     this.lSig = null;
   }
 
+  getProgram() {
+    return getProgram('state.py', { type: ALGOS_TO_ASA });
+  }
+
+  getValidatorProgram(appId) {
+    return getProgram('validator.py', { type: ALGOS_TO_ASA, app_id: appId });
+  }
+
   setupApplication() {
-    this.creationFlags = Object.assign({}, this.flags);
-    this.applicationId = this.runtime.addApp({ ...this.creationFlags, appArgs: this.creationArgs }, {}, this.program);
+    this.applicationId = this.runtime.addApp({ ...this.flags, appArgs: this.creationArgs }, {}, this.getProgram());
+    this.validatorId = this.runtime.addApp({ ...this.validatorFlags }, {}, this.getValidatorProgram(this.applicationId));
+  }
+
+  execute(txGroup) {
+    this.runtime.executeTx(txGroup);
+  }
+
+  executeWithValidator(txGroup) {
+    let newTxGroup = [
+      {
+        type: TransactionType.CallNoOpSSC,
+        sign: SignType.SecretKey,
+        fromAccount: txGroup[0].fromAccount,
+        appId: this.validatorId,
+        foreignApps: [this.applicationId],
+        payFlags: { totalFee: 1001 },
+      },
+      ...txGroup
+    ];
+    this.execute(newTxGroup);
   }
 
   setupEscrow() {
@@ -144,7 +179,7 @@ class AlgosAsaManager {
         }
       }
     ];
-    this.runtime.executeTx(txGroup, {}, []);
+    this.execute(txGroup);
   }
 
   deployEscrow() {
@@ -184,7 +219,7 @@ class AlgosAsaManager {
         },
       },
     ];
-    this.runtime.executeTx(txGroup, this.program, []);
+    this.execute(txGroup);
   }
 
   escrowOptInToLiquidityToken() {
@@ -211,7 +246,7 @@ class AlgosAsaManager {
         },
       },
     ];
-    this.runtime.executeTx(txGroup, this.program, []);
+    this.execute(txGroup);
   }
 
   configureLiquidityToken() {
@@ -258,14 +293,18 @@ class AlgosAsaManager {
     return this.applicationId;
   }
 
+  getValidatorId() {
+    return this.validatorId;
+  }
+
   setupApplicationWithEscrow() {
     this.setupApplication();
     this.setupEscrow();
-    this.configureEscrowAddress(this.escrow.address);
+    this.configureContract(this.escrow.address, this.validatorId);
   }
 
-  configureEscrowAddress(escrowAddress) {
-    let appArgs = [stringToBytes(UPDATE)];
+  configureContract(escrowAddress, validatorAppId) {
+    let appArgs = [stringToBytes(UPDATE), `int:${validatorAppId}`];
     let txGroup = [
       {
         type: TransactionType.CallNoOpSSC,
@@ -277,11 +316,12 @@ class AlgosAsaManager {
         payFlags: { totalFee: 1000 },
       }
     ];
-    this.runtime.executeTx(txGroup, this.program, []);
+    this.execute(txGroup);
   }
 
   optIn(address) {
-    this.runtime.optInToApp(address, this.applicationId, {}, {}, this.program);
+    this.runtime.optInToApp(address, this.validatorId, {}, {}, this.getValidatorProgram(this.applicationId));
+    this.runtime.optInToApp(address, this.applicationId, {}, {}, this.getProgram());
   }
 
   addLiquidity(fromAccount, escrowAddress, primaryAssetAmount, secondaryAssetAmount, params = {}) {
@@ -317,7 +357,7 @@ class AlgosAsaManager {
         },
       }
     ];
-    this.runtime.executeTx(txGroup, this.program, []);
+    this.executeWithValidator(txGroup);
   }
 
   removeLiquidity(fromAccount, amount) {
@@ -332,7 +372,7 @@ class AlgosAsaManager {
         payFlags: { totalFee: 1000 },
       }
     ];
-    this.runtime.executeTx(txGroup, this.program, []);
+    this.executeWithValidator(txGroup);
   }
 
   withdrawLiquidity(sender, liquidityAmount, params={}) {
@@ -369,7 +409,7 @@ class AlgosAsaManager {
         },
       }
     ];
-    this.runtime.executeTx(txGroup, this.program, []);
+    this.executeWithValidator(txGroup);
   }
 
   depositLiquidity(fromAccount, liquidityAmount, params={}) {
@@ -395,7 +435,7 @@ class AlgosAsaManager {
         },
       }
     ];
-    this.runtime.executeTx(txGroup, this.program, []);
+    this.executeWithValidator(txGroup);
   }
 
   secondaryAssetSwap(fromAccount, escrowAddress, assetAmount, params={}) {
@@ -421,7 +461,7 @@ class AlgosAsaManager {
         },
       },
     ];
-    this.runtime.executeTx(txGroup, this.program, []);
+    this.executeWithValidator(txGroup);
   }
 
   // eslint-disable-next-line no-unused-vars
@@ -447,7 +487,7 @@ class AlgosAsaManager {
         },
       },
     ];
-    this.runtime.executeTx(txGroup, this.program, []);
+    this.executeWithValidator(txGroup);
   }
 
   withdraw(sender, primaryAssetAmount, secondaryAssetAmount, params={}) {
@@ -495,18 +535,18 @@ class AlgosAsaManager {
         },
       }
     ];
-    this.runtime.executeTx(txGroup, this.program, []);
+    this.executeWithValidator(txGroup);
   }
 }
 
 class AsaToAsaManager extends AlgosAsaManager {
-  constructor(runtime, creator, assets, program) {
-    super(runtime, creator, assets, program);
+  constructor(runtime, creator, assets) {
+    super(runtime, creator, assets);
     this.flags = {
       sender: creator.account,
       localInts: 3,
       localBytes: 0,
-      globalInts: 6,
+      globalInts: 7,
       globalBytes: 2
     };
     this.primaryAssetId = assets['primaryAssetId'];
@@ -515,6 +555,14 @@ class AsaToAsaManager extends AlgosAsaManager {
       `int:${this.primaryAssetId}`,
       `int:${this.liquidityAssetId}`
     ];
+  }
+
+  getProgram() {
+    return getProgram('state.py', { type: ASA_TO_ASA });
+  }
+
+  getValidatorProgram(appId) {
+    return getProgram('validator.py', { type: ASA_TO_ASA, app_id: appId });
   }
 
   addLiquidity(fromAccount, escrowAddress, primaryAssetAmount, secondaryAssetAmount, params = {}) {
@@ -551,7 +599,7 @@ class AsaToAsaManager extends AlgosAsaManager {
         },
       }
     ];
-    this.runtime.executeTx(txGroup, this.program, []);
+    this.executeWithValidator(txGroup);
   }
 
   escrowSetupAssets() {
@@ -583,7 +631,7 @@ class AsaToAsaManager extends AlgosAsaManager {
         },
       },
     ];
-    this.runtime.executeTx(txGroup, this.program, []);
+    this.execute(txGroup);
   }
 
   withdraw(sender, primaryAssetAmount, secondaryAssetAmount, params={}) {
@@ -632,7 +680,7 @@ class AsaToAsaManager extends AlgosAsaManager {
         },
       }
     ];
-    this.runtime.executeTx(txGroup, this.program, []);
+    this.executeWithValidator(txGroup);
   }
 
   addFundsToEscrow() {
@@ -648,7 +696,7 @@ class AsaToAsaManager extends AlgosAsaManager {
         }
       }
     ];
-    this.runtime.executeTx(txGroup, {}, []);
+    this.execute(txGroup);
   }
 
   primaryAssetSwap(fromAccount, escrowAddress, primaryAssetAmount, params={}) {
@@ -674,6 +722,6 @@ class AsaToAsaManager extends AlgosAsaManager {
         },
       },
     ];
-    this.runtime.executeTx(txGroup, this.program, []);
+    this.executeWithValidator(txGroup);
   }
 }

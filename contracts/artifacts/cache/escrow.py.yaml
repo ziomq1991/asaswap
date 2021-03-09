@@ -1,8 +1,8 @@
 filename: escrow.py
-timestamp: 1614331770
-compiled: AiAHAgQDBnsAASYDAVgBVwFFMgQiEkAA2jIEIxJAAFoyBCQSQAABADMAECUSMwEJMgMSEDMBIDIDEhAzABghBBIQMwAQJRIQNwAaACgSEDMBECMSEDMBEiEFDRAzAgAzAAASEDMCECEGEhAzAggzAQEPEEAAAQAhBkMzAQkyAxIzASAyAxIQMwIJMgMSEDMCIDIDEhAzABghBBIQMwAQJRIQNwAaACkSEDMBECMSEDMCECEGEjMCECMSERAzARIhBQ0zAgghBQ0RMwISIQUNERAzAwAzAAASEDMDECEGEhAzAwgzAQEzAgEIDxBAAAEAIQZDMwEJMgMSMwEgMgMSEDMAGCEEEhAzABAlEhA3ABoAKhIQMwEQIxIQMwESIQUSEEAAAQAhBkM=
-compiledHash: LONYJATWXSGVR4RSAXHTPS4W2ZR4KDR3JCXDHXH25KRMPD3CYAGPCHFHNE
-srcHash: 976897816
+timestamp: 1615390663
+compiled: AiAHAgUEBnsAASYDAVgBVwFFMgQiEkAA4DIEIxJAAFoyBCQSQAABADMAECUSMwIJMgMSEDMCIDIDEhAzARghBBIQMwEQJRIQNwEaACgSEDMCECQSEDMCEiEFDRAzAwAzAQASEDMDECEGEhAzAwgzAgEPEEAAAQAhBkMzAgkyAxIzAiAyAxIQMwMJMgMSEDMDIDIDEhAzARghBBIQMwAQJRIQMwEQJRIQNwEaACkSEDMCECQSEDMDECEGEjMDECQSERAzAhIhBQ0zAwghBQ0RMwMSIQUNERAzBAAzAQASEDMEECEGEhAzBAgzAgEzAwEIDxBAAAEAIQZDMwEJMgMSMwEgMgMSEDMAGCEEEhAzABAlEhA3ABoAKhIQMwEQJBIQMwESIQUSEEAAAQAhBkM=
+compiledHash: AVM7EPGHLR6ZSH4RUIYJHCASJ2FIYS3PYX6KDJ3KRD3JE6GQSMV5WUM5NE
+srcHash: 1172177071
 tealCode: |
   #pragma version 2
   global GroupSize
@@ -10,11 +10,11 @@ tealCode: |
   ==
   bnz l10
   global GroupSize
-  int 4
+  int 5
   ==
   bnz l7
   global GroupSize
-  int 3
+  int 4
   ==
   bnz l4
   err
@@ -22,59 +22,6 @@ tealCode: |
   gtxn 0 TypeEnum
   int appl
   ==
-  gtxn 1 CloseRemainderTo
-  global ZeroAddress
-  ==
-  &&
-  gtxn 1 RekeyTo
-  global ZeroAddress
-  ==
-  &&
-  gtxn 0 ApplicationID
-  int 123
-  ==
-  &&
-  gtxn 0 TypeEnum
-  int appl
-  ==
-  &&
-  gtxna 0 ApplicationArgs 0
-  byte "X"
-  ==
-  &&
-  gtxn 1 TypeEnum
-  int axfer
-  ==
-  &&
-  gtxn 1 AssetAmount
-  int 0
-  >
-  &&
-  gtxn 2 Sender
-  gtxn 0 Sender
-  ==
-  &&
-  gtxn 2 TypeEnum
-  int pay
-  ==
-  &&
-  gtxn 2 Amount
-  gtxn 1 Fee
-  >=
-  &&
-  bnz l6
-  err
-  l6:
-  int 1
-  return
-  l7:
-  gtxn 1 CloseRemainderTo
-  global ZeroAddress
-  ==
-  gtxn 1 RekeyTo
-  global ZeroAddress
-  ==
-  &&
   gtxn 2 CloseRemainderTo
   global ZeroAddress
   ==
@@ -83,44 +30,28 @@ tealCode: |
   global ZeroAddress
   ==
   &&
-  gtxn 0 ApplicationID
+  gtxn 1 ApplicationID
   int 123
   ==
   &&
-  gtxn 0 TypeEnum
+  gtxn 1 TypeEnum
   int appl
   ==
   &&
-  gtxna 0 ApplicationArgs 0
-  byte "W"
-  ==
-  &&
-  gtxn 1 TypeEnum
-  int axfer
+  gtxna 1 ApplicationArgs 0
+  byte "X"
   ==
   &&
   gtxn 2 TypeEnum
-  int pay
-  ==
-  gtxn 2 TypeEnum
   int axfer
   ==
-  ||
   &&
-  gtxn 1 AssetAmount
-  int 0
-  >
-  gtxn 2 Amount
-  int 0
-  >
-  ||
   gtxn 2 AssetAmount
   int 0
   >
-  ||
   &&
   gtxn 3 Sender
-  gtxn 0 Sender
+  gtxn 1 Sender
   ==
   &&
   gtxn 3 TypeEnum
@@ -128,8 +59,81 @@ tealCode: |
   ==
   &&
   gtxn 3 Amount
-  gtxn 1 Fee
   gtxn 2 Fee
+  >=
+  &&
+  bnz l6
+  err
+  l6:
+  int 1
+  return
+  l7:
+  gtxn 2 CloseRemainderTo
+  global ZeroAddress
+  ==
+  gtxn 2 RekeyTo
+  global ZeroAddress
+  ==
+  &&
+  gtxn 3 CloseRemainderTo
+  global ZeroAddress
+  ==
+  &&
+  gtxn 3 RekeyTo
+  global ZeroAddress
+  ==
+  &&
+  gtxn 1 ApplicationID
+  int 123
+  ==
+  &&
+  gtxn 0 TypeEnum
+  int appl
+  ==
+  &&
+  gtxn 1 TypeEnum
+  int appl
+  ==
+  &&
+  gtxna 1 ApplicationArgs 0
+  byte "W"
+  ==
+  &&
+  gtxn 2 TypeEnum
+  int axfer
+  ==
+  &&
+  gtxn 3 TypeEnum
+  int pay
+  ==
+  gtxn 3 TypeEnum
+  int axfer
+  ==
+  ||
+  &&
+  gtxn 2 AssetAmount
+  int 0
+  >
+  gtxn 3 Amount
+  int 0
+  >
+  ||
+  gtxn 3 AssetAmount
+  int 0
+  >
+  ||
+  &&
+  gtxn 4 Sender
+  gtxn 1 Sender
+  ==
+  &&
+  gtxn 4 TypeEnum
+  int pay
+  ==
+  &&
+  gtxn 4 Amount
+  gtxn 2 Fee
+  gtxn 3 Fee
   +
   >=
   &&
@@ -176,8 +180,8 @@ base64ToBytes:
   - 32
   - 7
   - 2
+  - 5
   - 4
-  - 3
   - 6
   - 123
   - 0
@@ -196,7 +200,7 @@ base64ToBytes:
   - 18
   - 64
   - 0
-  - 218
+  - 224
   - 50
   - 4
   - 35
@@ -218,72 +222,72 @@ base64ToBytes:
   - 37
   - 18
   - 51
-  - 1
+  - 2
   - 9
   - 50
   - 3
   - 18
   - 16
   - 51
-  - 1
+  - 2
   - 32
   - 50
   - 3
   - 18
   - 16
   - 51
-  - 0
+  - 1
   - 24
   - 33
   - 4
   - 18
   - 16
   - 51
-  - 0
+  - 1
   - 16
   - 37
   - 18
   - 16
   - 55
-  - 0
+  - 1
   - 26
   - 0
   - 40
   - 18
   - 16
   - 51
-  - 1
+  - 2
   - 16
-  - 35
+  - 36
   - 18
   - 16
   - 51
-  - 1
+  - 2
   - 18
   - 33
   - 5
   - 13
   - 16
   - 51
-  - 2
+  - 3
   - 0
   - 51
-  - 0
+  - 1
   - 0
   - 18
   - 16
   - 51
-  - 2
+  - 3
   - 16
   - 33
   - 6
   - 18
   - 16
   - 51
-  - 2
+  - 3
   - 8
   - 51
-  - 1
+  - 2
   - 1
   - 15
   - 16
@@ -295,25 +299,11 @@ base64ToBytes:
   - 6
   - 67
   - 51
-  - 1
-  - 9
-  - 50
-  - 3
-  - 18
-  - 51
-  - 1
-  - 32
-  - 50
-  - 3
-  - 18
-  - 16
-  - 51
   - 2
   - 9
   - 50
   - 3
   - 18
-  - 16
   - 51
   - 2
   - 32
@@ -322,7 +312,21 @@ base64ToBytes:
   - 18
   - 16
   - 51
-  - 0
+  - 3
+  - 9
+  - 50
+  - 3
+  - 18
+  - 16
+  - 51
+  - 3
+  - 32
+  - 50
+  - 3
+  - 18
+  - 16
+  - 51
+  - 1
   - 24
   - 33
   - 4
@@ -334,59 +338,23 @@ base64ToBytes:
   - 37
   - 18
   - 16
+  - 51
+  - 1
+  - 16
+  - 37
+  - 18
+  - 16
   - 55
-  - 0
+  - 1
   - 26
   - 0
   - 41
   - 18
   - 16
   - 51
-  - 1
-  - 16
-  - 35
-  - 18
-  - 16
-  - 51
   - 2
   - 16
-  - 33
-  - 6
-  - 18
-  - 51
-  - 2
-  - 16
-  - 35
-  - 18
-  - 17
-  - 16
-  - 51
-  - 1
-  - 18
-  - 33
-  - 5
-  - 13
-  - 51
-  - 2
-  - 8
-  - 33
-  - 5
-  - 13
-  - 17
-  - 51
-  - 2
-  - 18
-  - 33
-  - 5
-  - 13
-  - 17
-  - 16
-  - 51
-  - 3
-  - 0
-  - 51
-  - 0
-  - 0
+  - 36
   - 18
   - 16
   - 51
@@ -395,15 +363,57 @@ base64ToBytes:
   - 33
   - 6
   - 18
+  - 51
+  - 3
   - 16
+  - 36
+  - 18
+  - 17
+  - 16
+  - 51
+  - 2
+  - 18
+  - 33
+  - 5
+  - 13
   - 51
   - 3
   - 8
+  - 33
+  - 5
+  - 13
+  - 17
+  - 51
+  - 3
+  - 18
+  - 33
+  - 5
+  - 13
+  - 17
+  - 16
+  - 51
+  - 4
+  - 0
   - 51
   - 1
-  - 1
+  - 0
+  - 18
+  - 16
+  - 51
+  - 4
+  - 16
+  - 33
+  - 6
+  - 18
+  - 16
+  - 51
+  - 4
+  - 8
   - 51
   - 2
+  - 1
+  - 51
+  - 3
   - 1
   - 8
   - 15
@@ -451,7 +461,7 @@ base64ToBytes:
   - 51
   - 1
   - 16
-  - 35
+  - 36
   - 18
   - 16
   - 51

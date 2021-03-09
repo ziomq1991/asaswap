@@ -1,5 +1,5 @@
 liquidity_token:
-  total: 9007199254740991
+  total: '9007199254740991'
   decimals: 0
   defaultFrozen: false
   unitName: "AU_LIQ"

@@ -26,6 +26,7 @@ class AlgosToAsaContract:
         self.a_balance = GlobalState("A")  # uint64
         self.b_balance = GlobalState("B")  # uint64
         self.escrow_addr = GlobalState("E")  # bytes
+        self.validator_id = GlobalState("V")  # uint64
         self.creator_addr = GlobalState("C")  # bytes
         self.b_idx = GlobalState("Y")  # uint64
         self.liq_idx = GlobalState("Z")  # uint64
@@ -53,9 +54,9 @@ class AlgosToAsaContract:
     def calculate_tx_ratio(self) -> Expr:
         self.tx_ratio = ScratchSlot()
         return self.tx_ratio.store(
-            self.get_incoming_amount_for_primary_asset(Gtxn[2])
+            self.get_incoming_amount_for_primary_asset(Gtxn[3])
             * Int(self.ratio_decimal_points)
-            / Gtxn[1].asset_amount()
+            / Gtxn[2].asset_amount()
         )
 
     def get_tx_ratio(self) -> Expr:
@@ -64,7 +65,7 @@ class AlgosToAsaContract:
     def calculate_liquidity_calc(self) -> Expr:
         self.liquidity_calc = ScratchSlot()
         return self.liquidity_calc.store(
-            self.get_incoming_amount_for_primary_asset(Gtxn[2])
+            self.get_incoming_amount_for_primary_asset(Gtxn[3])
             * self.total_liquidity_tokens.get()
             / self.a_balance.get()
         )
@@ -75,39 +76,64 @@ class AlgosToAsaContract:
     def setup_calculations(self):
         self.a_calc = (
             self.a_balance.get()
-            * Btoi(Txn.application_args[1])
+            * Btoi(Gtxn[1].application_args[1])
             / self.total_liquidity_tokens.get()
         )
         self.b_calc = (
             self.b_balance.get()
-            * Btoi(Txn.application_args[1])
+            * Btoi(Gtxn[1].application_args[1])
             / self.total_liquidity_tokens.get()
         )
 
     def get_contract(self):
-        return Cond(
-            [Txn.application_id() == Int(0), self.on_create()],
-            [Txn.on_completion() == OnComplete.OptIn, self.on_register()],
+        return Seq(
             [
-                Txn.on_completion()
-                == Or(OnComplete.UpdateApplication, OnComplete.DeleteApplication),
-                Return(Int(0)),
-            ],
-            [Txn.on_completion() == OnComplete.CloseOut, self.on_closeout()],
-            [Txn.application_args[0] == Bytes("U"), self.on_update()],
-            [
-                Txn.application_args[0] == Bytes("A"),
-                self.on_add_liquidity(),
-            ],
-            [
-                Txn.application_args[0] == Bytes("R"),
-                self.on_remove_liquidity(),
-            ],
-            [Txn.application_args[0] == Bytes("S"), self.on_swap()],
-            [Txn.application_args[0] == Bytes("W"), self.on_withdraw()],
-            [Txn.application_args[0] == Bytes("E"), self.setup_escrow()],
-            [Txn.application_args[0] == Bytes("X"), self.on_withdraw_liquidity()],
-            [Txn.application_args[0] == Bytes("Y"), self.on_deposit_liquidity()],
+                Cond(
+                    [Txn.application_id() == Int(0), self.on_create()],
+                    [Txn.on_completion() == OnComplete.OptIn, self.on_register()],
+                    [
+                        Txn.on_completion()
+                        == Or(
+                            OnComplete.UpdateApplication, OnComplete.DeleteApplication
+                        ),
+                        Return(Int(0)),
+                    ],
+                    [
+                        Txn.application_args[0] == Bytes("E"),
+                        self.setup_escrow(),
+                    ],
+                    [Txn.application_args[0] == Bytes("U"), self.on_update()],
+                    [
+                        And(
+                            Global.group_size() >= Int(2),
+                            Gtxn[0].type_enum() == TxnType.ApplicationCall,
+                        ),
+                        Cond(
+                            [
+                                Gtxn[1].application_args[0] == Bytes("A"),
+                                self.on_add_liquidity(),
+                            ],
+                            [
+                                Gtxn[1].application_args[0] == Bytes("R"),
+                                self.on_remove_liquidity(),
+                            ],
+                            [Gtxn[1].application_args[0] == Bytes("S"), self.on_swap()],
+                            [
+                                Gtxn[1].application_args[0] == Bytes("W"),
+                                self.on_withdraw(),
+                            ],
+                            [
+                                Gtxn[1].application_args[0] == Bytes("X"),
+                                self.on_withdraw_liquidity(),
+                            ],
+                            [
+                                Gtxn[1].application_args[0] == Bytes("Y"),
+                                self.on_deposit_liquidity(),
+                            ],
+                        ),
+                    ],
+                ),
+            ]
         )
 
     def get_incoming_amount_for_primary_asset(self, tx) -> Expr:
@@ -144,18 +170,11 @@ class AlgosToAsaContract:
         )
 
     def on_closeout(self):
-        return Assert(
-            And(
-                self.b_to_withdraw.get() == Int(0),
-                self.a_to_withdraw.get() == Int(0),
-                self.user_liquidity_tokens.get() == Int(0),
-            )
-        )
+        return Int(1)
 
     def on_update(self):
         return Seq(
             [
-                # Update escrow address after creating it
                 Assert(
                     And(
                         Txn.sender() == self.creator_addr.get(),
@@ -163,6 +182,7 @@ class AlgosToAsaContract:
                     )
                 ),
                 self.escrow_addr.put(Txn.accounts[1]),
+                self.validator_id.put(Btoi(Txn.application_args[1])),
                 Return(Int(1)),
             ]
         )
@@ -170,53 +190,16 @@ class AlgosToAsaContract:
     def on_add_liquidity(self):
         return Seq(
             [
-                Assert(
-                    And(
-                        Global.group_size() == Int(3),
-                        Gtxn[1].type_enum() == TxnType.AssetTransfer,
-                        Gtxn[1].asset_receiver() == self.escrow_addr.get(),
-                        Gtxn[1].xfer_asset() == self.b_idx.get(),
-                        self.validate_incoming_tx_for_primary_asset(Gtxn[2]),
-                    )
-                ),
-                If(
-                    And(
-                        self.b_balance.get() != Int(0),
-                        self.a_balance.get() != Int(0),
-                    ),
-                    Seq(
-                        [
-                            self.calculate_exchange_rate(),
-                            self.calculate_tx_ratio(),
-                            If(
-                                # Check if transactions exchange rate matches or is max 1% different from current
-                                Ge(self.get_exchange_rate(), self.get_tx_ratio()),
-                                Assert(
-                                    (self.get_exchange_rate() - self.get_tx_ratio())
-                                    * Int(self.ratio_decimal_points)
-                                    / self.get_exchange_rate()
-                                    < Int(int(0.01 * self.ratio_decimal_points))
-                                ),
-                                Assert(
-                                    (self.get_tx_ratio() - self.get_exchange_rate())
-                                    * Int(self.ratio_decimal_points)
-                                    / self.get_exchange_rate()
-                                    < Int(int(0.01 * self.ratio_decimal_points))
-                                ),
-                            ),
-                        ]
-                    ),
-                ),
                 If(
                     # If its first transaction then add tokens directly from txn amount, else based on calculations
                     self.total_liquidity_tokens.get() == Int(0),
                     Seq(
                         [
                             self.user_liquidity_tokens.put(
-                                self.get_incoming_amount_for_primary_asset(Gtxn[2])
+                                self.get_incoming_amount_for_primary_asset(Gtxn[3])
                             ),
                             self.total_liquidity_tokens.put(
-                                self.get_incoming_amount_for_primary_asset(Gtxn[2])
+                                self.get_incoming_amount_for_primary_asset(Gtxn[3])
                             ),
                         ]
                     ),
@@ -234,10 +217,10 @@ class AlgosToAsaContract:
                         ]
                     ),
                 ),
-                self.b_balance.put(self.b_balance.get() + Gtxn[1].asset_amount()),
+                self.b_balance.put(self.b_balance.get() + Gtxn[2].asset_amount()),
                 self.a_balance.put(
                     self.a_balance.get()
-                    + self.get_incoming_amount_for_primary_asset(Gtxn[2])
+                    + self.get_incoming_amount_for_primary_asset(Gtxn[3])
                 ),
                 Return(Int(1)),
             ]
@@ -246,22 +229,14 @@ class AlgosToAsaContract:
     def on_remove_liquidity(self):
         return Seq(
             [
-                Assert(
-                    And(
-                        Global.group_size() == Int(1),
-                        self.user_liquidity_tokens.get()
-                        >= Btoi(Txn.application_args[1]),
-                        self.a_to_withdraw.get() == Int(0),
-                        self.b_to_withdraw.get() == Int(0),
-                    )
-                ),
                 self.a_to_withdraw.put(self.a_calc),
                 self.b_to_withdraw.put(self.b_calc),
                 self.user_liquidity_tokens.put(
-                    self.user_liquidity_tokens.get() - Btoi(Txn.application_args[1])
+                    self.user_liquidity_tokens.get() - Btoi(Gtxn[1].application_args[1])
                 ),
                 self.total_liquidity_tokens.put(
-                    self.total_liquidity_tokens.get() - Btoi(Txn.application_args[1])
+                    self.total_liquidity_tokens.get()
+                    - Btoi(Gtxn[1].application_args[1])
                 ),
                 self.a_balance.put(self.a_balance.get() - self.a_to_withdraw.get()),
                 self.b_balance.put(self.b_balance.get() - self.b_to_withdraw.get()),
@@ -272,16 +247,8 @@ class AlgosToAsaContract:
     def on_withdraw_liquidity(self):
         return Seq(
             [
-                Assert(
-                    And(
-                        Gtxn[1].xfer_asset() == self.liq_idx.get(),
-                        self.user_liquidity_tokens.get() >= Gtxn[1].asset_amount(),
-                        Gtxn[1].sender() == self.escrow_addr.get(),
-                        Gtxn[2].receiver() == self.escrow_addr.get(),
-                    )
-                ),
                 self.user_liquidity_tokens.put(
-                    self.user_liquidity_tokens.get() - Gtxn[1].asset_amount()
+                    self.user_liquidity_tokens.get() - Gtxn[2].asset_amount()
                 ),
                 Return(Int(1)),
             ]
@@ -290,17 +257,8 @@ class AlgosToAsaContract:
     def on_deposit_liquidity(self):
         return Seq(
             [
-                Assert(
-                    And(
-                        Global.group_size() == Int(2),
-                        Gtxn[0].type_enum() == TxnType.ApplicationCall,
-                        Gtxn[1].type_enum() == TxnType.AssetTransfer,
-                        Gtxn[1].xfer_asset() == self.liq_idx.get(),
-                        Gtxn[1].asset_receiver() == self.escrow_addr.get(),
-                    )
-                ),
                 self.user_liquidity_tokens.put(
-                    self.user_liquidity_tokens.get() + Gtxn[1].asset_amount()
+                    self.user_liquidity_tokens.get() + Gtxn[2].asset_amount()
                 ),
                 Return(Int(1)),
             ]
@@ -309,35 +267,25 @@ class AlgosToAsaContract:
     def on_swap(self):
         return Seq(
             [
-                Assert(
-                    And(
-                        Global.group_size() == Int(2),
-                        Gtxn[0].type_enum() == TxnType.ApplicationCall,
-                        self.a_to_withdraw.get() == Int(0),
-                        self.b_to_withdraw.get() == Int(0),
-                    )
-                ),
                 Cond(
                     [
                         And(
-                            Gtxn[1].type_enum() == TxnType.AssetTransfer,
-                            Gtxn[1].xfer_asset() == self.b_idx.get(),
+                            Gtxn[2].type_enum() == TxnType.AssetTransfer,
+                            Gtxn[2].xfer_asset() == self.b_idx.get(),
                         ),
                         Seq(
                             [
                                 Assert(
-                                    Gtxn[1].asset_receiver() == self.escrow_addr.get(),
+                                    Gtxn[2].asset_receiver() == self.escrow_addr.get(),
                                 ),
                                 self.b_balance.put(
-                                    self.b_balance.get() + Gtxn[1].asset_amount()
+                                    self.b_balance.get() + Gtxn[2].asset_amount()
                                 ),
                                 self.a_to_withdraw.put(
                                     # Same as (exchange_rate * asset_amount * ((100 - fee_pct)/100)) / ratio_decimal_points
-                                    (
-                                        self.get_exchange_rate(inline=True)
-                                        * Gtxn[1].asset_amount()
-                                        * Int(100 - self.fee_pct)
-                                    )
+                                    self.get_exchange_rate(inline=True)
+                                    * Gtxn[2].asset_amount()
+                                    * Int(100 - self.fee_pct)
                                     / Int(self.ratio_decimal_points)
                                     / Int(100)
                                 ),
@@ -348,22 +296,18 @@ class AlgosToAsaContract:
                         ),
                     ],
                     [
-                        self.validate_incoming_tx_for_primary_asset(Gtxn[1]),
+                        self.validate_incoming_tx_for_primary_asset(Gtxn[2]),
                         Seq(
                             [
                                 self.a_balance.put(
                                     self.a_balance.get()
                                     + self.get_incoming_amount_for_primary_asset(
-                                        Gtxn[1]
+                                        Gtxn[2]
                                     )
                                 ),
                                 self.b_to_withdraw.put(
-                                    (
-                                        self.get_incoming_amount_for_primary_asset(
-                                            Gtxn[1]
-                                        )
-                                        * Int(100 - self.fee_pct)
-                                    )
+                                    self.get_incoming_amount_for_primary_asset(Gtxn[2])
+                                    * Int(100 - self.fee_pct)
                                     * Int(self.ratio_decimal_points)
                                     / Int(100)
                                     / self.get_exchange_rate(inline=True)
@@ -382,18 +326,6 @@ class AlgosToAsaContract:
     def on_withdraw(self):
         return Seq(
             [
-                Assert(
-                    And(
-                        Global.group_size() == Int(4),
-                        Gtxn[1].asset_amount() == self.b_to_withdraw.get(),
-                        Gtxn[1].sender() == self.escrow_addr.get(),
-                        Gtxn[1].xfer_asset() == self.b_idx.get(),
-                        self.verify_outgoing_tx_for_primary_asset(Gtxn[2]),
-                        self.get_outgoing_amount_for_primary_asset(Gtxn[2])
-                        == self.a_to_withdraw.get(),
-                        Gtxn[3].receiver() == self.escrow_addr.get(),
-                    )
-                ),
                 self.b_to_withdraw.put(Int(0)),
                 self.a_to_withdraw.put(Int(0)),
                 Return(Int(1)),
@@ -414,7 +346,7 @@ class AlgosToAsaContract:
             [
                 Assert(
                     And(
-                        Gtxn[0].sender() == self.creator_addr.get(),
+                        Txn.sender() == self.creator_addr.get(),
                         self.escrow_addr.get() == Int(0),
                     )
                 ),

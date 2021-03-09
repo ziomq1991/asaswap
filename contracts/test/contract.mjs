@@ -48,7 +48,7 @@ const { assert } = chai;
       asaswap.setupApplication(master);
       asaswap.deployEscrow();
       asaswap.addFundsToEscrow();
-      asaswap.configureEscrowAddress(asaswap.getEscrowAddress());
+      asaswap.configureContract(asaswap.getEscrowAddress(), asaswap.getValidatorId());
 
       expectTealError(
         () => asaswap.escrowSetupAssets(),
@@ -172,7 +172,7 @@ const { assert } = chai;
       asaswap.optIn(master.address);
       expectTealError(
         () => asaswap.addLiquidity(master.account, asaswap.getEscrowAddress(), 7000000, 6000000, {
-          secondaryAssetId: assetIds['primaryAssetId']
+          secondaryAssetId: assetIds['liquidityAssetId']
         }),
         RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
       );
@@ -326,7 +326,7 @@ const { assert } = chai;
       asaswap.optIn(master.address);
       expectTealError(
         () => asaswap.depositLiquidity(master.account, 5000000, {
-          assetId: assetIds['primaryAssetId']
+          assetId: assetIds['secondaryAssetId']
         }),
         RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
       );
@@ -353,7 +353,7 @@ const { assert } = chai;
       asaswap.setupEscrow();
 
       // Update application with correct escrow account address
-      asaswap.configureEscrowAddress(asaswap.getEscrowAddress());
+      asaswap.configureContract(asaswap.getEscrowAddress(), asaswap.getValidatorId());
 
       // Verify escrow storage
       assert.deepEqual(getGlobal(ESCROW_ADDRESS), addressToPk(asaswap.getEscrowAddress()));
