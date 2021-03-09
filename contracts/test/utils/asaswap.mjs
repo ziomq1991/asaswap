@@ -162,56 +162,10 @@ class AlgosAsaManager {
 
   escrowOptInToSecondaryAsset() {
     this.runtime.optIntoASA(this.secondaryAssetId, this.escrow.address, {}); // opt-in tx doesn't work
-    let txGroup = [
-      {
-        type: TransactionType.CallNoOpSSC,
-        sign: SignType.SecretKey,
-        fromAccount: this.creator.account,
-        appId: this.applicationId,
-        appArgs: [stringToBytes(SETUP_ESCROW)],
-        payFlags: { totalFee: 1000 }
-      },
-      {
-        type: TransactionType.TransferAsset,
-        assetID: this.secondaryAssetId,
-        sign: SignType.LogicSignature,
-        lsig: this.lSig,
-        fromAccount: this.escrow.account,
-        toAccountAddr: this.escrow.address,
-        amount: 0,
-        payFlags: {
-          totalFee: 1000,
-        },
-      },
-    ];
-    this.runtime.executeTx(txGroup, this.program, []);
   }
 
   escrowOptInToLiquidityToken() {
     this.runtime.optIntoASA(this.liquidityAssetId, this.escrow.address, {}); // opt-in tx doesn't work
-    let txGroup = [
-      {
-        type: TransactionType.CallNoOpSSC,
-        sign: SignType.SecretKey,
-        fromAccount: this.creator.account,
-        appId: this.applicationId,
-        appArgs: [stringToBytes(SETUP_ESCROW)],
-        payFlags: { totalFee: 1000 }
-      },
-      {
-        type: TransactionType.TransferAsset,
-        assetID: this.liquidityAssetId,
-        sign: SignType.LogicSignature,
-        lsig: this.lSig,
-        fromAccount: this.escrow.account,
-        toAccountAddr: this.escrow.address,
-        amount: 0,
-        payFlags: {
-          totalFee: 1000,
-        },
-      },
-    ];
-    this.runtime.executeTx(txGroup, this.program, []);
   }
 
   configureLiquidityToken() {
@@ -561,29 +515,6 @@ class AsaToAsaManager extends AlgosAsaManager {
 
   escrowOptInToPrimaryAsset() {
     this.runtime.optIntoASA(this.primaryAssetId, this.escrow.address, {}); // opt-in tx doesn't work
-    let txGroup = [
-      {
-        type: TransactionType.CallNoOpSSC,
-        sign: SignType.SecretKey,
-        fromAccount: this.creator.account,
-        appId: this.applicationId,
-        appArgs: [stringToBytes(SETUP_ESCROW)],
-        payFlags: { totalFee: 1000 }
-      },
-      {
-        type: TransactionType.TransferAsset,
-        assetID: this.primaryAssetId,
-        sign: SignType.LogicSignature,
-        lsig: this.lSig,
-        fromAccount: this.escrow.account,
-        toAccountAddr: this.escrow.address,
-        amount: 0,
-        payFlags: {
-          totalFee: 1000,
-        },
-      },
-    ];
-    this.runtime.executeTx(txGroup, this.program, []);
   }
 
   withdraw(sender, primaryAssetAmount, secondaryAssetAmount, params={}) {
