@@ -12,8 +12,8 @@ export function setupAssets(runtime, account) {
 function setupPrimaryAsset(runtime, account) {
   account.addAsset(111, 'ANOTHER', {
     creator: 'addr-1',
-    total: 10000000,
-    decimals: 10,
+    total: 9007199254740991 * 10e6,
+    decimals: 6,
     defaultFrozen: false,
     unitName: 'ASSET',
     name: 'ASSET',
@@ -31,8 +31,8 @@ function setupPrimaryAsset(runtime, account) {
 function setupSecondaryAsset(runtime, account) {
   account.addAsset(123, 'ASSET', {
     creator: 'addr-1',
-    total: 10000000,
-    decimals: 10,
+    total: 9007199254740991 * 10e6,
+    decimals: 6,
     defaultFrozen: false,
     unitName: 'ASSET',
     name: 'ASSET',
@@ -50,8 +50,8 @@ function setupSecondaryAsset(runtime, account) {
 function setupInvalidAsset(runtime, account) {
   account.addAsset(100, 'INVALID', {
     creator: 'addr-1',
-    total: 10000000,
-    decimals: 10,
+    total: 9007199254740991 * 10e6,
+    decimals: 6,
     defaultFrozen: false,
     unitName: 'ASSET',
     name: 'ASSET',
@@ -66,7 +66,7 @@ function setupInvalidAsset(runtime, account) {
   return 100;
 }
 
-export function fundAccounts(runtime, fundingAccount, accounts, assets) {
+export function fundAccounts(runtime, fundingAccount, accounts, assets, amount=1000000) {
   function fund(assetId, account) {
     runtime.optIntoASA(assetId, account.address, {});
     let tx = [
@@ -76,7 +76,7 @@ export function fundAccounts(runtime, fundingAccount, accounts, assets) {
         sign: SignType.SecretKey,
         fromAccount: fundingAccount.account,
         toAccountAddr: account.address,
-        amount: 1000000,
+        amount: amount,
         payFlags: {
           totalFee: 1000
         }
