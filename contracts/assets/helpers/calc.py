@@ -38,9 +38,22 @@ class mulw_divw3(Expr):
             A = ScratchSlot()
             div_factor = ScratchSlot()
             mod_factor = ScratchSlot()
-            result = ScratchSlot()            
-                       
-            yield Op.dup, self.A
+            temp = result = ScratchSlot()            
+            scaler = ScratchSlot()            
+
+            max_int = 2**60
+
+            yield Op.mulw, self.a, self.PT
+            yield Op.dup2,
+            yield Op.pop,
+            yield Op.div, Int(max_int)
+            yield Op.dup,
+            yield Op.logic_not,
+            yield Op.add,
+            yield Op.store, scaler            
+
+            yield Op.div, self.A, scaler.load()            
+            yield Op.dup,
             yield Op.store, A
             yield Op.dup,
             yield Op.bitwise_xor,
@@ -52,7 +65,13 @@ class mulw_divw3(Expr):
             yield Op.mod,
             yield Op.store, mod_factor
             
-            yield Op.mulw, self.a, self.PT                 
+            yield Op.load, scaler
+            yield Op.div,
+            yield Op.store, temp
+            yield Op.load, scaler
+            yield Op.div,
+            yield Op.load, temp      
+
             yield Op.dup2,
             yield Op.load, A
             yield Op.div, 
@@ -90,7 +109,7 @@ class mulw_divw3(Expr):
                 yield Op.load, mod_factor
             
             yield Op.mul,            
-            for _ in range(self.iters *2):
+            for _ in range(self.iters * 2):
                 yield Op.add,
             yield Op.load, A
             yield Op.div,
