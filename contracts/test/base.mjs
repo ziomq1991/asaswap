@@ -3,7 +3,7 @@ import { fundAccounts, setupAssets } from './utils/assets.mjs';
 import { AsaswapManager } from './utils/asaswap.mjs';
 
 export function configureTest(contractType) {
-  this.minBalance = 10e6;
+  this.minBalance = 1e7; // 10 Algos
 
   this.getGlobal = (key) => this.runtime.getGlobalState(this.asaswap.getApplicationId(), key);
 
@@ -11,7 +11,7 @@ export function configureTest(contractType) {
   this.getLocalNumber = (accountAddr, key) => Number(this.runtime.getLocalState(this.asaswap.getApplicationId(), accountAddr, key));
 
   this.beforeEach(() => {
-    this.master = new StoreAccount(1000e6);
+    this.master = new StoreAccount(1e9);
     this.creator = new StoreAccount(this.minBalance);
     this.swapper = new StoreAccount(this.minBalance);
     this.runtime = new Runtime([this.master, this.creator, this.swapper]);
