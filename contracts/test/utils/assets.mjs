@@ -9,11 +9,13 @@ export function setupAssets(runtime, account) {
   };
 }
 
+export const ASSET_TOTAL = 18446744073709551615n; // UINT64_MAX
+
 function setupPrimaryAsset(runtime, account) {
   account.addAsset(111, 'ANOTHER', {
     creator: 'addr-1',
-    total: 9007199254740991 * 10e6,
-    decimals: 6,
+    total: ASSET_TOTAL,
+    decimals: 0,
     defaultFrozen: false,
     unitName: 'ASSET',
     name: 'ASSET',
@@ -30,12 +32,12 @@ function setupPrimaryAsset(runtime, account) {
 
 function setupSecondaryAsset(runtime, account) {
   account.addAsset(123, 'ASSET', {
-    creator: 'addr-1',
-    total: 9007199254740991 * 10e6,
-    decimals: 6,
+    creator: account.address,
+    total: ASSET_TOTAL,
+    decimals: 0,
     defaultFrozen: false,
-    unitName: 'ASSET',
-    name: 'ASSET',
+    unitName: 'ASSET2',
+    name: 'ASSET2',
     url: 'assetUrl',
     metadataHash: 'hash',
     manager: 'addr-1',
@@ -50,11 +52,11 @@ function setupSecondaryAsset(runtime, account) {
 function setupInvalidAsset(runtime, account) {
   account.addAsset(100, 'INVALID', {
     creator: 'addr-1',
-    total: 9007199254740991 * 10e6,
-    decimals: 6,
+    total: ASSET_TOTAL,
+    decimals: 0,
     defaultFrozen: false,
-    unitName: 'ASSET',
-    name: 'ASSET',
+    unitName: 'ASSET3',
+    name: 'ASSET3',
     url: 'assetUrl',
     metadataHash: 'hash',
     manager: 'addr-1',
