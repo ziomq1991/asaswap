@@ -38,8 +38,7 @@ class mulw_divw3(Expr):
             A = ScratchSlot()
             div_factor = ScratchSlot()
             mod_factor = ScratchSlot()
-            result = ScratchSlot()
-            mods = ScratchSlot()
+            result = ScratchSlot()            
                        
             yield Op.dup, self.A
             yield Op.store, A
@@ -53,40 +52,45 @@ class mulw_divw3(Expr):
             yield Op.mod,
             yield Op.store, mod_factor
             
-            yield Op.mulw, self.a, self.PT
-            yield Op.load, A
+            yield Op.mulw, self.a, self.PT                 
             yield Op.dup2,
-            yield Op.div,
-            yield Op.store, result
-            yield Op.mod,
-            yield Op.store, mods                  
-            yield Op.dup,
-            yield Op.load, mod_factor
+            yield Op.load, A
+            yield Op.div, 
             yield Op.dup2,
             yield Op.pop,
             yield Op.load, div_factor
             yield Op.mul,
-            yield from make_append_to(result)
-
+            yield Op.add,
+            yield Op.store, result 
+            yield Op.pop,         
+            yield Op.load, A            
+            yield Op.mod,
+            yield Op.dup2,
+            yield Op.pop,                  
+            yield Op.load, mod_factor
+            
             for _ in range(1, self.iters):
-                yield Op.mulw,
+                yield Op.mulw, 
+                yield Op.dup2,
                 yield Op.load, A
-                yield Op.dup2,
                 yield Op.div,
-                yield from make_append_to(result)
-                yield Op.mod,
-                yield from make_append_to(mods)
-                yield Op.dup,
-                yield Op.load, mod_factor
                 yield Op.dup2,
-                yield Op.pop,
+                yield Op.pop,                                
                 yield Op.load, div_factor
                 yield Op.mul,
-                yield from make_append_to(result)
+                yield Op.add,
+                yield Op.load, result
+                yield Op.add,
+                yield Op.store, result
+                yield Op.pop,
+                yield Op.load, A            
+                yield Op.mod,
+                yield Op.dup2,
+                yield Op.pop,                  
+                yield Op.load, mod_factor
             
-            yield Op.mul,
-            yield Op.load, mods
-            for _ in range(self.iters + 1):
+            yield Op.mul,            
+            for _ in range(self.iters *2):
                 yield Op.add,
             yield Op.load, A
             yield Op.div,
