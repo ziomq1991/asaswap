@@ -1,5 +1,5 @@
 from pyteal import *
-
+        
 def mulw_divw2(a, PT, A):
     return a * PT / A
 
@@ -20,11 +20,6 @@ def make_teal(make_steps):
         end = step[1]
     return start, end
 
-def make_append_to(x):
-    yield Op.load, x
-    yield Op.add,
-    yield Op.store, x
-
 class mulw_divw3(Expr):
     def __init__(self, a, PT, A, iters):
         self.outputType = TealType.uint64
@@ -40,8 +35,9 @@ class mulw_divw3(Expr):
             mod_factor = ScratchSlot()
             temp = result = ScratchSlot()            
             scaler = ScratchSlot()            
-
-            max_int = 2**60
+                        
+            addings = self.iters * 2 + 2
+            max_int = (2**64-1) // addings + 1
 
             yield Op.mulw, self.a, self.PT
             yield Op.dup2,
@@ -52,18 +48,15 @@ class mulw_divw3(Expr):
             yield Op.add,
             yield Op.store, scaler            
 
-            yield Op.div, self.A, scaler.load()            
-            yield Op.dup,
+            yield Op.div, self.A, scaler.load()                                                                  
             yield Op.store, A
-            yield Op.dup,
-            yield Op.bitwise_xor,
-            yield Op.bitwise_not,
+            yield Op.bitwise_not, Int(0)
             yield Op.load, A
             yield Op.dup2,
             yield Op.div,
             yield Op.store, div_factor
             yield Op.mod,
-            yield Op.store, mod_factor
+            yield Op.store, mod_factor            
             
             yield Op.load, scaler
             yield Op.div,
@@ -71,25 +64,8 @@ class mulw_divw3(Expr):
             yield Op.load, scaler
             yield Op.div,
             yield Op.load, temp      
-
-            yield Op.dup2,
-            yield Op.load, A
-            yield Op.div, 
-            yield Op.dup2,
-            yield Op.pop,
-            yield Op.load, div_factor
-            yield Op.mul,
-            yield Op.add,
-            yield Op.store, result 
-            yield Op.pop,         
-            yield Op.load, A            
-            yield Op.mod,
-            yield Op.dup2,
-            yield Op.pop,                  
-            yield Op.load, mod_factor
             
-            for _ in range(1, self.iters):
-                yield Op.mulw, 
+            for iter in range(self.iters):                
                 yield Op.dup2,
                 yield Op.load, A
                 yield Op.div,
@@ -98,8 +74,9 @@ class mulw_divw3(Expr):
                 yield Op.load, div_factor
                 yield Op.mul,
                 yield Op.add,
-                yield Op.load, result
-                yield Op.add,
+                if iter:
+                    yield Op.load, result
+                    yield Op.add,
                 yield Op.store, result
                 yield Op.pop,
                 yield Op.load, A            
@@ -107,9 +84,28 @@ class mulw_divw3(Expr):
                 yield Op.dup2,
                 yield Op.pop,                  
                 yield Op.load, mod_factor
+                yield Op.mulw,                             
             
-            yield Op.mul,            
-            for _ in range(self.iters * 2):
+            yield Op.dup2,
+            yield Op.pop,
+            yield Op.bitwise_not, Int(0)
+            yield Op.load, A
+            yield Op.div,
+            yield Op.mul,
+            yield Op.dup2,
+            yield Op.pop,
+            yield Op.load, A
+            yield Op.div,
+            yield Op.add,
+
+            if self.iters:
+                yield Op.load, result
+                yield Op.add,
+            yield Op.store, result
+            yield Op.load, A
+            yield Op.mod, 
+
+            for _ in range(1, addings):
                 yield Op.add,
             yield Op.load, A
             yield Op.div,
