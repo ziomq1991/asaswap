@@ -66,28 +66,28 @@ export class AsaswapManager {
     return this.manager.optIn(address);
   }
 
-  addLiquidity(fromAccount, escrowAddress, primaryAssetAmount, secondaryAssetAmount, params = {}) {
-    return this.manager.addLiquidity(fromAccount, escrowAddress, primaryAssetAmount, secondaryAssetAmount, params);
+  addLiquidity(from, escrowAddress, primaryAssetAmount, secondaryAssetAmount, params = {}) {
+    return this.manager.addLiquidity(from, escrowAddress, primaryAssetAmount, secondaryAssetAmount, params);
   }
 
-  removeLiquidity(fromAccount, amount) {
-    return this.manager.removeLiquidity(fromAccount, amount);
+  removeLiquidity(from, amount) {
+    return this.manager.removeLiquidity(from, amount);
   }
 
   withdrawLiquidity(sender, amount, params={}) {
     return this.manager.withdrawLiquidity(sender, amount, params);
   }
 
-  depositLiquidity(fromAccount, amount, params={}) {
-    return this.manager.depositLiquidity(fromAccount, amount, params);
+  depositLiquidity(from, amount, params={}) {
+    return this.manager.depositLiquidity(from, amount, params);
   }
 
-  secondaryAssetSwap(fromAccount, escrowAddress, assetAmount, params={}) {
-    return this.manager.secondaryAssetSwap(fromAccount, escrowAddress, assetAmount, params);
+  secondaryAssetSwap(from, escrowAddress, assetAmount, params={}) {
+    return this.manager.secondaryAssetSwap(from, escrowAddress, assetAmount, params);
   }
 
-  primaryAssetSwap(fromAccount, escrowAddress, assetAmount, params={}) {
-    return this.manager.primaryAssetSwap(fromAccount, escrowAddress, assetAmount, params);
+  primaryAssetSwap(from, escrowAddress, assetAmount, params={}) {
+    return this.manager.primaryAssetSwap(from, escrowAddress, assetAmount, params);
   }
 
   withdraw(sender, primaryAssetAmount, secondaryAssetAmount, params={}) {
@@ -237,13 +237,13 @@ class AlgosAsaManager {
     this.runtime.optInToApp(address, this.applicationId, {}, {}, this.program);
   }
 
-  addLiquidity(fromAccount, escrowAddress, primaryAssetAmount, secondaryAssetAmount, params = {}) {
+  addLiquidity(from, escrowAddress, primaryAssetAmount, secondaryAssetAmount, params = {}) {
     let appArgs = [stringToBytes(ADD_LIQUIDITY)];
     let txGroup = [
       {
         type: TransactionType.CallNoOpSSC,
         sign: SignType.SecretKey,
-        fromAccount: fromAccount,
+        fromAccount: from.account,
         appId: this.applicationId,
         appArgs: appArgs,
         payFlags: { totalFee: 1000 },
@@ -252,7 +252,7 @@ class AlgosAsaManager {
         type: TransactionType.TransferAsset,
         assetID: params['secondaryAssetId'] ? params['secondaryAssetId'] : this.secondaryAssetId,
         sign: SignType.SecretKey,
-        fromAccount: fromAccount,
+        fromAccount: from.account,
         toAccountAddr: escrowAddress,
         amount: secondaryAssetAmount,
         payFlags: {
@@ -262,7 +262,7 @@ class AlgosAsaManager {
       {
         type: TransactionType.TransferAlgo,
         sign: SignType.SecretKey,
-        fromAccount: fromAccount,
+        fromAccount: from.account,
         toAccountAddr: escrowAddress,
         amountMicroAlgos: primaryAssetAmount,
         payFlags: {
@@ -273,13 +273,13 @@ class AlgosAsaManager {
     this.runtime.executeTx(txGroup, this.program, []);
   }
 
-  removeLiquidity(fromAccount, amount) {
+  removeLiquidity(from, amount) {
     let appArgs = [stringToBytes(REMOVE_LIQUIDITY), `int:${amount}`];
     let txGroup = [
       {
         type: TransactionType.CallNoOpSSC,
         sign: SignType.SecretKey,
-        fromAccount: fromAccount,
+        fromAccount: from.account,
         appId: this.applicationId,
         appArgs: appArgs,
         payFlags: { totalFee: 1000 },
@@ -325,13 +325,13 @@ class AlgosAsaManager {
     this.runtime.executeTx(txGroup, this.program, []);
   }
 
-  depositLiquidity(fromAccount, liquidityAmount, params={}) {
+  depositLiquidity(from, liquidityAmount, params={}) {
     let appArgs = [stringToBytes(DEPOSIT_LIQUIDITY)];
     let txGroup = [
       {
         type: TransactionType.CallNoOpSSC,
         sign: SignType.SecretKey,
-        fromAccount: fromAccount,
+        fromAccount: from.account,
         appId: this.applicationId,
         appArgs: appArgs,
         payFlags: { totalFee: 1000 },
@@ -340,7 +340,7 @@ class AlgosAsaManager {
         type: TransactionType.TransferAsset,
         assetID: params['assetId'] ? params['assetId'] : this.liquidityAssetId,
         sign: SignType.SecretKey,
-        fromAccount: fromAccount,
+        fromAccount: from.account,
         toAccountAddr: this.escrow.address,
         amount: liquidityAmount,
         payFlags: {
@@ -351,13 +351,13 @@ class AlgosAsaManager {
     this.runtime.executeTx(txGroup, this.program, []);
   }
 
-  secondaryAssetSwap(fromAccount, escrowAddress, assetAmount, params={}) {
+  secondaryAssetSwap(from, escrowAddress, assetAmount, params={}) {
     let appArgs = [stringToBytes(SWAP)];
     let txGroup = [
       {
         type: TransactionType.CallNoOpSSC,
         sign: SignType.SecretKey,
-        fromAccount: fromAccount,
+        fromAccount: from.account,
         appId: this.applicationId,
         appArgs: appArgs,
         payFlags: { totalFee: 1000 },
@@ -366,7 +366,7 @@ class AlgosAsaManager {
         type: TransactionType.TransferAsset,
         assetID: params['assetId'] ? params['assetId'] : this.secondaryAssetId,
         sign: SignType.SecretKey,
-        fromAccount: fromAccount,
+        fromAccount: from.account,
         toAccountAddr: escrowAddress,
         amount: assetAmount,
         payFlags: {
@@ -378,13 +378,13 @@ class AlgosAsaManager {
   }
 
   // eslint-disable-next-line no-unused-vars
-  primaryAssetSwap(fromAccount, escrowAddress, primaryAssetAmount, params={}) {
+  primaryAssetSwap(from, escrowAddress, primaryAssetAmount, params={}) {
     let appArgs = [stringToBytes(SWAP)];
     let txGroup = [
       {
         type: TransactionType.CallNoOpSSC,
         sign: SignType.SecretKey,
-        fromAccount: fromAccount,
+        fromAccount: from.account,
         appId: this.applicationId,
         appArgs: appArgs,
         payFlags: { totalFee: 1000 },
@@ -392,7 +392,7 @@ class AlgosAsaManager {
       {
         type: TransactionType.TransferAlgo,
         sign: SignType.SecretKey,
-        fromAccount: fromAccount,
+        fromAccount: from.account,
         toAccountAddr: escrowAddress,
         amountMicroAlgos: primaryAssetAmount,
         payFlags: {
@@ -470,13 +470,13 @@ class AsaToAsaManager extends AlgosAsaManager {
     ];
   }
 
-  addLiquidity(fromAccount, escrowAddress, primaryAssetAmount, secondaryAssetAmount, params = {}) {
+  addLiquidity(from, escrowAddress, primaryAssetAmount, secondaryAssetAmount, params = {}) {
     let appArgs = [stringToBytes(ADD_LIQUIDITY)];
     let txGroup = [
       {
         type: TransactionType.CallNoOpSSC,
         sign: SignType.SecretKey,
-        fromAccount: fromAccount,
+        fromAccount: from.account,
         appId: this.applicationId,
         appArgs: appArgs,
         payFlags: { totalFee: 1000 },
@@ -485,7 +485,7 @@ class AsaToAsaManager extends AlgosAsaManager {
         type: TransactionType.TransferAsset,
         assetID: params['secondaryAssetId'] ? params['secondaryAssetId'] : this.secondaryAssetId,
         sign: SignType.SecretKey,
-        fromAccount: fromAccount,
+        fromAccount: from.account,
         toAccountAddr: escrowAddress,
         amount: secondaryAssetAmount,
         payFlags: {
@@ -496,7 +496,7 @@ class AsaToAsaManager extends AlgosAsaManager {
         type: TransactionType.TransferAsset,
         assetID: params['primaryAssetId'] ? params['primaryAssetId'] : this.primaryAssetId,
         sign: SignType.SecretKey,
-        fromAccount: fromAccount,
+        fromAccount: from.account,
         toAccountAddr: escrowAddress,
         amount: primaryAssetAmount,
         payFlags: {
@@ -581,13 +581,13 @@ class AsaToAsaManager extends AlgosAsaManager {
     this.runtime.executeTx(txGroup, {}, []);
   }
 
-  primaryAssetSwap(fromAccount, escrowAddress, primaryAssetAmount, params={}) {
+  primaryAssetSwap(from, escrowAddress, primaryAssetAmount, params={}) {
     let appArgs = [stringToBytes(SWAP)];
     let txGroup = [
       {
         type: TransactionType.CallNoOpSSC,
         sign: SignType.SecretKey,
-        fromAccount: fromAccount,
+        fromAccount: from.account,
         appId: this.applicationId,
         appArgs: appArgs,
         payFlags: { totalFee: 1000 },
@@ -596,7 +596,7 @@ class AsaToAsaManager extends AlgosAsaManager {
         type: TransactionType.TransferAsset,
         assetID: params['assetId'] ? params['assetId'] : this.primaryAssetId,
         sign: SignType.SecretKey,
-        fromAccount: fromAccount,
+        fromAccount: from.account,
         toAccountAddr: escrowAddress,
         amount: primaryAssetAmount,
         payFlags: {

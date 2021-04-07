@@ -39,10 +39,10 @@ const MASTER_ALGOS = 1e8; // initial amount of microAlgos for master
 
     it('add little liquidity', () => {
       const LIQ_AMT = 2**31; // liquidity to be provided to contract
-      this.asaswap.addLiquidity(this.swapper.account, this.asaswap.getEscrowAddress(), LIQ_AMT, LIQ_AMT);
+      this.asaswap.addLiquidity(this.swapper, this.asaswap.getEscrowAddress(), LIQ_AMT, LIQ_AMT);
 
       const LIQ_AMT2 = LIQ_AMT - 1; // add more liquidity but don't exceed uint32 limit (2**32-1)
-      this.asaswap.addLiquidity(this.swapper.account, this.asaswap.getEscrowAddress(), LIQ_AMT2, LIQ_AMT2);
+      this.asaswap.addLiquidity(this.swapper, this.asaswap.getEscrowAddress(), LIQ_AMT2, LIQ_AMT2);
       this.asaswap.withdrawLiquidity(this.swapper, LIQ_AMT + LIQ_AMT2);
       assert.equal(
         this.runtime.getAssetHolding(this.assetIds.liquidityAssetId, this.swapper.address).amount, 
@@ -51,12 +51,12 @@ const MASTER_ALGOS = 1e8; // initial amount of microAlgos for master
     });
 
     it('overflow when adding huge amount of liquidity', () => {
-      this.asaswap.addLiquidity(this.swapper.account, this.asaswap.getEscrowAddress(), TRADE_MAX, TRADE_MAX/2n);
-      this.asaswap.removeLiquidity(this.swapper.account, TRADE_MAX);
+      this.asaswap.addLiquidity(this.swapper, this.asaswap.getEscrowAddress(), TRADE_MAX, TRADE_MAX/2n);
+      this.asaswap.removeLiquidity(this.swapper, TRADE_MAX);
       this.asaswap.withdraw(this.swapper, this.getLocalNumber(this.swapper.address, USR_A_BAL), this.getLocalNumber(this.swapper.address, USR_B_BAL));
 
-      this.asaswap.addLiquidity(this.swapper.account, this.asaswap.getEscrowAddress(), TRADE_MAX/2n, TRADE_MAX);
-      this.asaswap.removeLiquidity(this.swapper.account, TRADE_MAX/2n);
+      this.asaswap.addLiquidity(this.swapper, this.asaswap.getEscrowAddress(), TRADE_MAX/2n, TRADE_MAX);
+      this.asaswap.removeLiquidity(this.swapper, TRADE_MAX/2n);
       this.asaswap.withdraw(this.swapper, this.getLocalNumber(this.swapper.address, USR_A_BAL), this.getLocalNumber(this.swapper.address, USR_B_BAL));
     });
 
@@ -64,42 +64,42 @@ const MASTER_ALGOS = 1e8; // initial amount of microAlgos for master
       let PT = random(96) % TRADE_MAX;
       let A = random(96) % TRADE_MAX;
       let a = random(96) % TRADE_MAX;
-      this.asaswap.addLiquidity(this.swapper.account, this.asaswap.getEscrowAddress(), PT, PT);
+      this.asaswap.addLiquidity(this.swapper, this.asaswap.getEscrowAddress(), PT, PT);
       let PTissued = this.getLocalNumber(this.swapper.address, USR_LIQ_TOKENS);
       this.asaswap.withdrawLiquidity(this.swapper, this.getLocalNumber(this.swapper.address, USR_LIQ_TOKENS));
       // swap tokens so that the first token amount is close to A
       let delta = PT - A;
       let swap_amt = (PT*delta) / (PT-delta); // calculated, so that ratio is conserved (token_a * token_b = const)
       if (delta > 0) {
-        this.asaswap.secondaryAssetSwap(this.swapper.account, this.asaswap.getEscrowAddress(), swap_amt);
+        this.asaswap.secondaryAssetSwap(this.swapper, this.asaswap.getEscrowAddress(), swap_amt);
       } else if (delta < 0) {
-        this.asaswap.primaryAssetSwap(this.swapper.account, this.asaswap.getEscrowAddress(), -swap_amt);
+        this.asaswap.primaryAssetSwap(this.swapper, this.asaswap.getEscrowAddress(), -swap_amt);
       }
       this.asaswap.withdraw(this.swapper, this.getLocalNumber(this.swapper.address, USR_A_BAL), this.getLocalNumber(this.swapper.address, USR_B_BAL));
       A = this.getGlobalNumber(GLOBAL_A_BAL); // overwrite with actual A amount
       let B = this.getGlobalNumber(GLOBAL_B_BAL);
-      this.asaswap.addLiquidity(this.swapper.account, this.asaswap.getEscrowAddress(), a, a*B/A);
+      this.asaswap.addLiquidity(this.swapper, this.asaswap.getEscrowAddress(), a, a*B/A);
       let receivedPT = getLocalNumber(this.swapper.address, USR_LIQ_TOKENS);
       assert(receivedPT * getGlobalNumber(GLOBAL_A_BAL) <= a * PTissued, "User received too many liquidity tokens");
       assert((receivedPT + 1) * getGlobalNumber(GLOBAL_A_BAL) > a * PTissued, "User could receive more tokens, but didn't")
     });
 
     it('overflow in primary swap transactions', () => {
-      this.asaswap.addLiquidity(this.swapper.account, this.asaswap.getEscrowAddress(), TRADE_MAX/2n, TRADE_MAX/5n);
-      this.asaswap.primaryAssetSwap(this.swapper.account, this.asaswap.getEscrowAddress(), TRADE_MAX);
+      this.asaswap.addLiquidity(this.swapper, this.asaswap.getEscrowAddress(), TRADE_MAX/2n, TRADE_MAX/5n);
+      this.asaswap.primaryAssetSwap(this.swapper, this.asaswap.getEscrowAddress(), TRADE_MAX);
       this.asaswap.withdraw(this.swapper, this.getLocalNumber(this.swapper.address, USR_A_BAL), this.getLocalNumber(this.swapper.address, USR_B_BAL));
     });
 
     it('precision in primary swap transactions', () => {
-      this.asaswap.addLiquidity(this.swapper.account, this.asaswap.getEscrowAddress(), TRADE_MAX/10000n, 3);
-      this.asaswap.primaryAssetSwap(this.swapper.account, this.asaswap.getEscrowAddress(), TRADE_MAX/10000n);
+      this.asaswap.addLiquidity(this.swapper, this.asaswap.getEscrowAddress(), TRADE_MAX/10000n, 3);
+      this.asaswap.primaryAssetSwap(this.swapper, this.asaswap.getEscrowAddress(), TRADE_MAX/10000n);
       assert.notEqual(this.getLocalNumber(this.swapper.address, USR_B_BAL), 0);
       this.asaswap.withdraw(this.swapper, this.getLocalNumber(this.swapper.address, USR_A_BAL), this.getLocalNumber(this.swapper.address, USR_B_BAL));
     });
 
     it('precision in secondary swap transactions', () => {
-      this.asaswap.addLiquidity(this.swapper.account, this.asaswap.getEscrowAddress(), 3, TRADE_MAX/10000n);
-      this.asaswap.secondaryAssetSwap(this.swapper.account, this.asaswap.getEscrowAddress(), TRADE_MAX/10000n);
+      this.asaswap.addLiquidity(this.swapper, this.asaswap.getEscrowAddress(), 3, TRADE_MAX/10000n);
+      this.asaswap.secondaryAssetSwap(this.swapper, this.asaswap.getEscrowAddress(), TRADE_MAX/10000n);
       assert.notEqual(this.getLocalNumber(this.swapper.address, USR_A_BAL), 0);
       this.asaswap.withdraw(this.swapper, this.getLocalNumber(this.swapper.address, USR_A_BAL), this.getLocalNumber(this.swapper.address, USR_B_BAL));
     });

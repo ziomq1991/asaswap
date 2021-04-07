@@ -37,12 +37,12 @@ const { assert } = chai;
       this.asaswap.optIn(this.master.address);
 
       expectTealError(
-        () => this.asaswap.removeLiquidity(this.master.account, 8000000),
+        () => this.asaswap.removeLiquidity(this.master, 8000000),
         RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
       );
-      this.asaswap.addLiquidity(this.master.account, this.asaswap.getEscrowAddress(), 7000000, 10);
+      this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 10);
       expectTealError(
-        () => this.asaswap.removeLiquidity(this.master.account, 8000000),
+        () => this.asaswap.removeLiquidity(this.master, 8000000),
         RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
       );
     });
@@ -79,8 +79,8 @@ const { assert } = chai;
       this.asaswap.setupApplicationWithEscrow(this.master);
       this.asaswap.optIn(this.master.address);
 
-      this.asaswap.addLiquidity(this.master.account, this.asaswap.getEscrowAddress(), 7000000, 6000000);
-      this.asaswap.removeLiquidity(this.master.account, 7000000);
+      this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 6000000);
+      this.asaswap.removeLiquidity(this.master, 7000000);
 
       assert.equal(this.getLocalNumber(this.master.address, USR_A_BAL), 7000000);
       assert.equal(this.getLocalNumber(this.master.address, USR_B_BAL), 6000000);
@@ -104,8 +104,8 @@ const { assert } = chai;
       this.asaswap.setupApplicationWithEscrow(this.master);
       this.asaswap.optIn(this.master.address);
 
-      this.asaswap.addLiquidity(this.master.account, this.asaswap.getEscrowAddress(), 7000000, 6000000);
-      this.asaswap.removeLiquidity(this.master.account, 6000000);
+      this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 6000000);
+      this.asaswap.removeLiquidity(this.master, 6000000);
 
       assert.equal(this.getLocalNumber(this.master.address, USR_A_BAL), 6000000);
       assert.equal(this.getLocalNumber(this.master.address, USR_B_BAL), 5142857);
@@ -138,7 +138,7 @@ const { assert } = chai;
       this.asaswap.setupApplicationWithEscrow(this.master);
       this.asaswap.optIn(this.master.address);
       expectTealError(
-        () => this.asaswap.addLiquidity(this.master.account, this.swapper.address, 7000000, 6000000),
+        () => this.asaswap.addLiquidity(this.master, this.swapper.address, 7000000, 6000000),
         RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
       );
     });
@@ -147,14 +147,14 @@ const { assert } = chai;
       this.asaswap.setupApplicationWithEscrow(this.master);
       this.asaswap.optIn(this.master.address);
       expectTealError(
-        () => this.asaswap.addLiquidity(this.master.account, this.asaswap.getEscrowAddress(), 7000000, 6000000, {
+        () => this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 6000000, {
           secondaryAssetId: this.assetIds['primaryAssetId']
         }),
         RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
       );
       if (contractType === ASA_TO_ASA) {
         expectTealError(
-          () => this.asaswap.addLiquidity(this.master.account, this.asaswap.getEscrowAddress(), 7000000, 6000000, {
+          () => this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 6000000, {
             primaryAssetId: this.assetIds['secondaryAssetId']
           }),
           RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
@@ -166,16 +166,16 @@ const { assert } = chai;
       this.asaswap.setupApplicationWithEscrow(this.master);
       this.asaswap.optIn(this.master.address);
       this.asaswap.optIn(this.swapper.address);
-      this.asaswap.addLiquidity(this.master.account, this.asaswap.getEscrowAddress(), 7000000, 6000000);
+      this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 6000000);
       expectTealError(
-        () => this.asaswap.secondaryAssetSwap(this.swapper.account, this.asaswap.getEscrowAddress(), 100, {
+        () => this.asaswap.secondaryAssetSwap(this.swapper, this.asaswap.getEscrowAddress(), 100, {
           assetId: this.assetIds['invalidAssetId']
         }),
         RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
       );
       if (contractType === ASA_TO_ASA) {
         expectTealError(
-          () => this.asaswap.primaryAssetSwap(this.swapper.account, this.asaswap.getEscrowAddress(), 100, {
+          () => this.asaswap.primaryAssetSwap(this.swapper, this.asaswap.getEscrowAddress(), 100, {
             assetId: this.assetIds['invalidAssetId']
           }),
           RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
@@ -187,8 +187,8 @@ const { assert } = chai;
       this.asaswap.setupApplicationWithEscrow(this.master);
       this.asaswap.optIn(this.master.address);
 
-      this.asaswap.addLiquidity(this.master.account, this.asaswap.getEscrowAddress(), 7000000, 6000000);
-      this.asaswap.removeLiquidity(this.master.account, 7000000);
+      this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 6000000);
+      this.asaswap.removeLiquidity(this.master, 7000000);
 
       assert.equal(this.getLocalNumber(this.master.address, USR_A_BAL), 7000000);
       assert.equal(this.getLocalNumber(this.master.address, USR_B_BAL), 6000000);
@@ -214,9 +214,9 @@ const { assert } = chai;
       this.asaswap.setupApplicationWithEscrow(this.master);
       this.asaswap.optIn(this.master.address);
       this.asaswap.optIn(this.swapper.address);
-      this.asaswap.addLiquidity(this.master.account, this.asaswap.getEscrowAddress(), 7000000, 6000000);
+      this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 6000000);
       expectTealError(
-        () => this.asaswap.secondaryAssetSwap(this.swapper.account, this.master.address, 100),
+        () => this.asaswap.secondaryAssetSwap(this.swapper, this.master.address, 100),
         RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
       );
     });
@@ -224,7 +224,7 @@ const { assert } = chai;
     it('successfully withdraws liquidity', () => {
       this.asaswap.setupApplicationWithEscrow(this.master);
       this.asaswap.optIn(this.master.address);
-      this.asaswap.addLiquidity(this.master.account, this.asaswap.getEscrowAddress(), 7000000, 10);
+      this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 10);
       assert.equal(this.getLocalNumber(this.master.address, USR_LIQ_TOKENS), 7000000);
       this.asaswap.withdrawLiquidity(this.master, 5000000);
       assert.equal(this.getLocalNumber(this.master.address, USR_LIQ_TOKENS), 2000000);
@@ -233,16 +233,16 @@ const { assert } = chai;
     it('successfully adds liquidity', () => {
       this.asaswap.setupApplicationWithEscrow(this.master);
       this.asaswap.optIn(this.master.address);
-      this.asaswap.addLiquidity(this.master.account, this.asaswap.getEscrowAddress(), 700000, 10);
+      this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 700000, 10);
       assert.equal(this.getLocalNumber(this.master.address, USR_LIQ_TOKENS), 700000);
-      this.asaswap.addLiquidity(this.master.account, this.asaswap.getEscrowAddress(), 700000, 10);
+      this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 700000, 10);
       assert.equal(this.getLocalNumber(this.master.address, USR_LIQ_TOKENS), 1400000);
     });
 
     it('throws error when trying to withdraw liquidity with altered fee', () => {
       this.asaswap.setupApplicationWithEscrow(this.master);
       this.asaswap.optIn(this.master.address);
-      this.asaswap.addLiquidity(this.master.account, this.asaswap.getEscrowAddress(), 7000000, 10);
+      this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 10);
       assert.equal(this.getLocalNumber(this.master.address, USR_LIQ_TOKENS), 7000000);
       expectTealError(
         () => this.asaswap.withdrawLiquidity(this.master, 7000000, {
@@ -255,7 +255,7 @@ const { assert } = chai;
     it('throws error when trying to withdraw liquidity with fee being sent to wrong account', () => {
       this.asaswap.setupApplicationWithEscrow(this.master);
       this.asaswap.optIn(this.master.address);
-      this.asaswap.addLiquidity(this.master.account, this.asaswap.getEscrowAddress(), 7000000, 10);
+      this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 10);
       assert.equal(this.getLocalNumber(this.master.address, USR_LIQ_TOKENS), 7000000);
       expectTealError(
         () => this.asaswap.withdrawLiquidity(this.master, 7000000, {
@@ -268,7 +268,7 @@ const { assert } = chai;
     it('throws error when trying to withdraw liquidity with invalid asset', () => {
       this.asaswap.setupApplicationWithEscrow(this.master);
       this.asaswap.optIn(this.master.address);
-      this.asaswap.addLiquidity(this.master.account, this.asaswap.getEscrowAddress(), 7000000, 10);
+      this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 10);
       assert.equal(this.getLocalNumber(this.master.address, USR_LIQ_TOKENS), 7000000);
       expectTealError(
         () => this.asaswap.withdrawLiquidity(this.master, 7000000, {
@@ -281,7 +281,7 @@ const { assert } = chai;
     it('throws error when trying to withdraw liquidity over balance', () => {
       this.asaswap.setupApplicationWithEscrow(this.master);
       this.asaswap.optIn(this.master.address);
-      this.asaswap.addLiquidity(this.master.account, this.asaswap.getEscrowAddress(), 7000000, 10);
+      this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 10);
       assert.equal(this.getLocalNumber(this.master.address, USR_LIQ_TOKENS), 7000000);
       expectTealError(
         () => this.asaswap.withdrawLiquidity(this.master, 8000000),
@@ -293,7 +293,7 @@ const { assert } = chai;
       this.asaswap.setupApplicationWithEscrow(this.master);
       this.asaswap.optIn(this.master.address);
       assert.equal(this.getLocalNumber(this.master.address, USR_LIQ_TOKENS), 0);
-      this.asaswap.depositLiquidity(this.master.account, 5000000);
+      this.asaswap.depositLiquidity(this.master, 5000000);
       assert.equal(this.getLocalNumber(this.master.address, USR_LIQ_TOKENS), 5000000);
     });
 
@@ -301,7 +301,7 @@ const { assert } = chai;
       this.asaswap.setupApplicationWithEscrow(this.master);
       this.asaswap.optIn(this.master.address);
       expectTealError(
-        () => this.asaswap.depositLiquidity(this.master.account, 5000000, {
+        () => this.asaswap.depositLiquidity(this.master, 5000000, {
           assetId: this.assetIds['primaryAssetId']
         }),
         RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
@@ -312,16 +312,16 @@ const { assert } = chai;
       this.asaswap.setupApplicationWithEscrow(this.master);
       this.asaswap.optIn(this.master.address);
       this.asaswap.optIn(this.swapper.address);
-      this.asaswap.addLiquidity(this.master.account, this.asaswap.getEscrowAddress(), 10, 10);
+      this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 10, 10);
       if (contractType == ALGOS_TO_ASA) {
-        this.asaswap.primaryAssetSwap(this.swapper.account, this.asaswap.getEscrowAddress(), 1000);
+        this.asaswap.primaryAssetSwap(this.swapper, this.asaswap.getEscrowAddress(), 1000);
       } else /* contractType == ASA_TO_ASA */ {
-        this.asaswap.primaryAssetSwap(this.swapper.account, this.asaswap.getEscrowAddress(), 1000, { 'assetId': this.primaryAssetId });
+        this.asaswap.primaryAssetSwap(this.swapper, this.asaswap.getEscrowAddress(), 1000, { 'assetId': this.primaryAssetId });
       }
       this.asaswap.withdraw(this.swapper, 0, this.getLocalNumber(this.swapper.address, USR_B_BAL));
 
       this.asaswap.addLiquidity(
-        this.master.account, 
+        this.master, 
         this.asaswap.getEscrowAddress(), 
         this.getGlobalNumber(GLOBAL_A_BAL), // make sure to match the exchange ratio
         this.getGlobalNumber(GLOBAL_B_BAL)

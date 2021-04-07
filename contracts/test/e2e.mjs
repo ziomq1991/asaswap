@@ -55,8 +55,8 @@ const { assert } = chai;
       // Opt-in and add liquidity
       this.asaswap.optIn(this.master.address);
       this.asaswap.optIn(this.swapper.address);
-      this.asaswap.addLiquidity(this.master.account, this.asaswap.getEscrowAddress(), 700000, 600000);
-      this.asaswap.addLiquidity(this.swapper.account, this.asaswap.getEscrowAddress(), 700000, 600000);
+      this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 700000, 600000);
+      this.asaswap.addLiquidity(this.swapper, this.asaswap.getEscrowAddress(), 700000, 600000);
 
       assert.equal(this.getGlobalNumber(GLOB_LIQ_TOKENS), 1400000);
       assert.equal(this.getGlobalNumber(GLOBAL_A_BAL), 1400000);
@@ -87,7 +87,7 @@ const { assert } = chai;
       assert.equal(this.getLocalNumber(this.swapper.address, USR_LIQ_TOKENS), 0);
 
       // Make a primary asset swap
-      this.asaswap.primaryAssetSwap(this.swapper.account, this.asaswap.getEscrowAddress(), 100000);
+      this.asaswap.primaryAssetSwap(this.swapper, this.asaswap.getEscrowAddress(), 100000);
 
       assert.equal(this.getGlobalNumber(GLOB_LIQ_TOKENS), 1400000);
       assert.equal(this.getGlobalNumber(GLOBAL_A_BAL), 1500000);
@@ -106,8 +106,8 @@ const { assert } = chai;
       assert.equal(this.getLocalNumber(this.swapper.address, USR_LIQ_TOKENS), 0);
 
       // Deposit liquidity tokens
-      this.asaswap.depositLiquidity(this.master.account, 700000);
-      this.asaswap.depositLiquidity(this.swapper.account, 700000);
+      this.asaswap.depositLiquidity(this.master, 700000);
+      this.asaswap.depositLiquidity(this.swapper, 700000);
 
       assert.equal(this.getGlobalNumber(GLOB_LIQ_TOKENS), 1400000);
       assert.equal(this.getGlobalNumber(GLOBAL_A_BAL), 1500000);
@@ -122,7 +122,7 @@ const { assert } = chai;
       assert.equal(this.getLocalNumber(this.swapper.address, USR_LIQ_TOKENS), 700000);
 
       // Remove some liquidity
-      this.asaswap.removeLiquidity(this.master.account, 100000);
+      this.asaswap.removeLiquidity(this.master, 100000);
 
       assert.equal(this.getGlobalNumber(GLOB_LIQ_TOKENS), 1300000);
       assert.equal(this.getGlobalNumber(GLOBAL_A_BAL), 1392858);
@@ -131,7 +131,7 @@ const { assert } = chai;
       assert.equal(this.getLocalNumber(this.master.address, USR_B_BAL), 80171);
       assert.equal(this.getLocalNumber(this.master.address, USR_LIQ_TOKENS), 600000);
 
-      this.asaswap.removeLiquidity(this.swapper.account, 300000);
+      this.asaswap.removeLiquidity(this.swapper, 300000);
 
       assert.equal(this.getGlobalNumber(GLOB_LIQ_TOKENS), 1000000);
       assert.equal(this.getGlobalNumber(GLOBAL_A_BAL), 1071430);
@@ -159,7 +159,7 @@ const { assert } = chai;
       assert.equal(this.getLocalNumber(this.swapper.address, USR_LIQ_TOKENS), 400000);
 
       // Make a secondary asset swap
-      this.asaswap.secondaryAssetSwap(this.master.account, this.asaswap.getEscrowAddress(), 100000);
+      this.asaswap.secondaryAssetSwap(this.master, this.asaswap.getEscrowAddress(), 100000);
 
       assert.equal(this.getGlobalNumber(GLOB_LIQ_TOKENS), 1000000);
       assert.equal(this.getGlobalNumber(GLOBAL_A_BAL), 956174);
