@@ -1,5 +1,5 @@
-import { getProgram, stringToBytes } from '@algorand-builder/algob';
-import { SignType, TransactionType } from '@algorand-builder/runtime/build/types.js';
+import { getProgram, stringToBytes } from '@algo-builder/algob';
+import { SignType, TransactionType } from '@algo-builder/runtime/build/types.js';
 import constants from '../../common/constants.js';
 
 const {

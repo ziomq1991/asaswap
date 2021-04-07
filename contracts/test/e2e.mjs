@@ -1,6 +1,6 @@
 /* globals describe, it */
 
-import { addressToPk } from '@algorand-builder/algob';
+import { addressToPk } from '@algo-builder/algob';
 import chai from 'chai';
 import { ALGOS_TO_ASA, ASA_TO_ASA } from './utils/asaswap.mjs';
 import constants from '../common/constants.js';

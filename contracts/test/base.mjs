@@ -1,4 +1,4 @@
-import { Runtime, StoreAccount } from '@algorand-builder/runtime';
+import { Runtime, StoreAccount } from '@algo-builder/runtime';
 import { fundAccounts, setupAssets } from './utils/assets.mjs';
 import { AsaswapManager } from './utils/asaswap.mjs';
 
@@ -7,8 +7,8 @@ export function configureTest(contractType) {
 
   this.getGlobal = (key) => this.runtime.getGlobalState(this.asaswap.getApplicationId(), key);
 
-  this.getGlobalNumber = (key) => Number(this.runtime.getGlobalState(this.asaswap.getApplicationId(), key));
-  this.getLocalNumber = (accountAddr, key) => Number(this.runtime.getLocalState(this.asaswap.getApplicationId(), accountAddr, key));
+  this.getGlobalNumber = (key) => this.runtime.getGlobalState(this.asaswap.getApplicationId(), key);
+  this.getLocalNumber = (accountAddr, key) => this.runtime.getLocalState(this.asaswap.getApplicationId(), accountAddr, key);
 
   this.beforeEach(() => {
     this.master = new StoreAccount(1e9);

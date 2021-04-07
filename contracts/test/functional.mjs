@@ -1,6 +1,6 @@
 /* globals describe, it */
 
-import { RUNTIME_ERRORS } from '@algorand-builder/runtime/build/errors/errors-list.js';
+import { RUNTIME_ERRORS } from '@algo-builder/runtime/build/errors/errors-list.js';
 import chai from 'chai';
 import { expectTealError } from './utils/errors.mjs';
 import { ALGOS_TO_ASA, ASA_TO_ASA } from './utils/asaswap.mjs';
@@ -10,7 +10,9 @@ import { configureTest } from './base.mjs';
 const {
   USR_LIQ_TOKENS,
   USR_A_BAL,
-  USR_B_BAL
+  USR_B_BAL,
+  GLOBAL_A_BAL,
+  GLOBAL_B_BAL
 } = constants;
 const { assert } = chai;
 
@@ -304,6 +306,27 @@ const { assert } = chai;
         }),
         RUNTIME_ERRORS.TEAL.TEAL_ENCOUNTERED_ERR
       );
+    });
+
+    it('can add liquidity after some swap removes most of some token', () => {
+      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.optIn(this.master.address);
+      this.asaswap.optIn(this.swapper.address);
+      this.asaswap.addLiquidity(this.master.account, this.asaswap.getEscrowAddress(), 10, 10);
+      if (contractType == ALGOS_TO_ASA) {
+        this.asaswap.primaryAssetSwap(this.swapper.account, this.asaswap.getEscrowAddress(), 1000);
+      } else /* contractType == ASA_TO_ASA */ {
+        this.asaswap.primaryAssetSwap(this.swapper.account, this.asaswap.getEscrowAddress(), 1000, { 'assetId': this.primaryAssetId });
+      }
+      this.asaswap.withdraw(this.swapper, 0, this.getLocalNumber(this.swapper.address, USR_B_BAL));
+
+      this.asaswap.addLiquidity(
+        this.master.account, 
+        this.asaswap.getEscrowAddress(), 
+        this.getGlobalNumber(GLOBAL_A_BAL), // make sure to match the exchange ratio
+        this.getGlobalNumber(GLOBAL_B_BAL)
+      );
+      assert.notEqual(this.getLocalNumber(this.master.address, USR_LIQ_TOKENS), 0);
     });
   });
 });

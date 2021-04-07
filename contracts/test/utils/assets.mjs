@@ -1,4 +1,4 @@
-import { SignType, TransactionType } from '@algorand-builder/runtime/build/types.js';
+import { SignType, TransactionType } from '@algo-builder/runtime/build/types.js';
 
 export function setupAssets(runtime, account) {
   return {
@@ -10,6 +10,9 @@ export function setupAssets(runtime, account) {
 }
 
 export const ASSET_TOTAL = 18446744073709551615n; // UINT64_MAX
+
+// Algo builder API doesn't allow easy token creation on runtime
+// Below is the easiest way to do so, however the specified creator of the asset still needs to opt-in to use it
 
 function setupPrimaryAsset(runtime, account) {
   account.addAsset(111, 'ANOTHER', {
@@ -32,7 +35,7 @@ function setupPrimaryAsset(runtime, account) {
 
 function setupSecondaryAsset(runtime, account) {
   account.addAsset(123, 'ASSET', {
-    creator: account.address,
+    creator: 'addr-1',
     total: ASSET_TOTAL,
     decimals: 0,
     defaultFrozen: false,
@@ -68,7 +71,7 @@ function setupInvalidAsset(runtime, account) {
   return 100;
 }
 
-export function fundAccounts(runtime, fundingAccount, accounts, assets, amount=1000000) {
+export function fundAccounts(runtime, fundingAccount, accounts, assets, amount=1000000n) {
   function fund(assetId, account) {
     runtime.optIntoASA(assetId, account.address, {});
     let tx = [

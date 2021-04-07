@@ -20,6 +20,8 @@ const UPDATE = 'U';
 const ADD_LIQUIDITY = 'A';
 const REMOVE_LIQUIDITY = 'R';
 
+const TRADE_MAX = BigInt(2**53); // maximum trade size and liquidity addition that can be executed on the platform
+
 // eslint-disable-next-line no-undef
 module.exports = {
   GLOB_LIQ_TOKENS,
@@ -40,5 +42,6 @@ module.exports = {
   DEPOSIT_LIQUIDITY,
   UPDATE,
   ADD_LIQUIDITY,
-  REMOVE_LIQUIDITY
+  REMOVE_LIQUIDITY,
+  TRADE_MAX
 };
