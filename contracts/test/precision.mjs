@@ -65,6 +65,7 @@ const MASTER_ALGOS = 1e8; // initial amount of microAlgos for master
       let A = random(96) % TRADE_MAX;
       let a = random(96) % TRADE_MAX;
       this.asaswap.addLiquidity(this.swapper.account, this.asaswap.getEscrowAddress(), PT, PT);
+      let PTissued = this.getLocalNumber(this.swapper.address, USR_LIQ_TOKENS);
       this.asaswap.withdrawLiquidity(this.swapper, this.getLocalNumber(this.swapper.address, USR_LIQ_TOKENS));
       // swap tokens so that the first token amount is close to A
       let delta = PT - A;
@@ -78,6 +79,9 @@ const MASTER_ALGOS = 1e8; // initial amount of microAlgos for master
       A = this.getGlobalNumber(GLOBAL_A_BAL); // overwrite with actual A amount
       let B = this.getGlobalNumber(GLOBAL_B_BAL);
       this.asaswap.addLiquidity(this.swapper.account, this.asaswap.getEscrowAddress(), a, a*B/A);
+      let receivedPT = getLocalNumber(this.swapper.address, USR_LIQ_TOKENS);
+      assert(receivedPT * getGlobalNumber(GLOBAL_A_BAL) <= a * PTissued, "User received too many liquidity tokens");
+      assert((receivedPT + 1) * getGlobalNumber(GLOBAL_A_BAL) > a * PTissued, "User could receive more tokens, but didn't")
     });
 
     it('overflow in primary swap transactions', () => {
