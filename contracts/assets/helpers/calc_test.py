@@ -1,6 +1,7 @@
 import calc
 from pyteal import *
 from random import randint
+import sys
 
 def eval_teal(code):
     stack = []
@@ -27,6 +28,12 @@ def eval_teal(code):
             b = stack.pop()
             a = stack.pop()
             ab = a * b
+            x = ab // max_int, ab % max_int
+            stack.extend(x)
+        elif line == 'addw':
+            b = stack.pop()
+            a = stack.pop()
+            ab = a + b
             x = ab // max_int, ab % max_int
             stack.extend(x)
         elif line == '/':
@@ -96,6 +103,28 @@ def test(a, PT, A, iters):
     e = abs(y-x) / y
     return e, size
 
+def test4(a, PT, A, iters):
+    expr = calc.mulw_divw4(Int(a), Int(PT), Int(A), iters)
+    code = compileTeal(expr, Mode.Application)
+    # print(code, file=open("/tmp/my.teal", "w"))
+    stack, slots, size = eval_teal(code)
+    assert len(stack) == 1
+    x = stack[0]
+    y = a * PT // A
+    e = abs(y-x) / y
+    return e, size
+
+top = 2**63-1
+top0 = 2**60
+emax = 0
+sys.setrecursionlimit(1500)
+while True:
+    a = randint(top0, top)
+    PT = randint(top0, top)
+    amin = a * PT // top
+    A = randint(amin, top)
+    test4(a, PT, A, 48)
+exit()
 
 db = [
     # [0, 60, 0, 32],
@@ -107,7 +136,7 @@ db = [
     [31, 835, 0, 62],
 ]
 
-top = 2**64-1
+
 while True:
     a = randint(0, top)
     PT = randint(0, top)
