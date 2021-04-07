@@ -11,7 +11,7 @@ export function configureTest(contractType) {
   this.getLocalNumber = (accountAddr, key) => this.runtime.getLocalState(this.asaswap.getApplicationId(), accountAddr, key);
 
   this.beforeEach(() => {
-    this.master = new StoreAccount(1e9);
+    this.master = new StoreAccount(1e17);
     this.creator = new StoreAccount(this.minBalance);
     this.swapper = new StoreAccount(this.minBalance);
     this.runtime = new Runtime([this.master, this.creator, this.swapper]);
