@@ -30,3 +30,15 @@ class GlobalState(State):
 
     def get(self) -> App:
         return App.globalGet(Bytes(self._name))
+        
+
+class GlobalStateEx(State):
+    """
+    Global state of a foreign stateful contract
+    """
+    def __init__(self, name: str, foreign_id: int):
+        super().__init__(name)
+        self._foreign_id = foreign_id  # Position in Txn.ForeignApps
+
+    def get(self) -> App:
+        return App.globalGetEx(Int(self._foreign_id), Bytes(self._name))
