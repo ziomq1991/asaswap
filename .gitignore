@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Compiled TEAL programs
+/contracts/artifacts/
+
 # C extensions
 *.so
 
