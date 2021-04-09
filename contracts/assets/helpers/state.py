@@ -35,10 +35,13 @@ class GlobalState(State):
 class GlobalStateEx(State):
     """
     Global state of a foreign stateful contract
+    External state variables need to be evaluated before use.
+
+    https://pyteal.readthedocs.io/en/stable/state.html#external-global
     """
-    def __init__(self, name: str, foreign_id: int):
+    def __init__(self, foreign_id: int, name: str):
         super().__init__(name)
         self._foreign_id = foreign_id  # Position in Txn.ForeignApps
 
-    def get(self) -> App:
+    def getEx(self) -> MaybeValue:
         return App.globalGetEx(Int(self._foreign_id), Bytes(self._name))
