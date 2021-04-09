@@ -1,5 +1,7 @@
+# pylint: disable=unused-wildcard-import
 from pyteal import *
-from .helpers.state import GlobalState, GlobalStateEx
+# pylint: disable=import-error
+from helpers.state import GlobalState, GlobalStateEx
 
 class MulDiv64:
     def __init__(self):
@@ -43,20 +45,20 @@ class MulDiv64:
         return Seq([
             # make sure the stored result will be in either of these 2 slots
             Assert(  
-                Or([
+                Or(
                     result_destination == Bytes("1"),
                     result_destination == Bytes("2"),
-                ])
+                )
             ),
             self.initialize_external_globals(),
             # setup calculations based on the 0th argument
-            Cond([ 
+            Cond(
                 [operation_mode == Bytes("L"), self.setup_liquidity_calculation()],
                 [operation_mode == Bytes("SA"), self.setup_swap_a_calculation()],
                 [operation_mode == Bytes("SB"), self.setup_swap_b_calculation()],
                 [operation_mode == Bytes("a"), self.setup_liquidate_a_calculation()],
                 [operation_mode == Bytes("b"), self.setup_liquidate_b_calculation()]
-            ]),
+            ),
             # store the result in requested slot
             App.globalPut(result_destination, self.calculate()),
         ])
@@ -84,7 +86,8 @@ class MulDiv64:
         Returns:
             PyTEAL Expr which calculates (multiplier1 * multiplier2) / divisor
         """
-        return Err  # TODO: insert here divmod expression
+        # TODO: Replace with actual calculation
+        return self.multiplier1.load() * self.multiplier2.load() / self.divisor.load()
 
     def setup_liquidity_calculation(self) -> Expr:
         """
@@ -137,3 +140,6 @@ class MulDiv64:
             self.multiplier2.store(self.b_balance.value()),  # B
             self.divisor.store(self.total_liquidity_tokens.value()),  # LT
         ])
+
+if __name__ == "__main__":
+    print(compileTeal(MulDiv64().get_contract(), Mode.Application))
