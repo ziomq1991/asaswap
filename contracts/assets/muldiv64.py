@@ -10,6 +10,7 @@ class MulDiv64:
         self.total_liquidity_tokens = GlobalStateEx(1, "L").getEx()  # type: MaybeValue
         self.a_balance = GlobalStateEx(1, "A").getEx()  # type: MaybeValue
         self.b_balance = GlobalStateEx(1, "B").getEx()  # type: MaybeValue
+        self.guard_app_ID = GlobalState("G")
         self.multiplier1 = ScratchSlot()
         self.multiplier2 = ScratchSlot()
         self.divisor = ScratchSlot()
@@ -42,26 +43,50 @@ class MulDiv64:
         """
         operation_mode = Txn.application_args[0]
         result_destination = Txn.application_args[1]
-        return Seq([
-            # make sure the stored result will be in either of these 2 slots
-            Assert(  
-                Or(
-                    result_destination == Bytes("1"),
-                    result_destination == Bytes("2"),
-                )
-            ),
-            self.initialize_external_globals(),
-            # setup calculations based on the 0th argument
-            Cond(
-                [operation_mode == Bytes("L"), self.setup_liquidity_calculation()],
-                [operation_mode == Bytes("SA"), self.setup_swap_a_calculation()],
-                [operation_mode == Bytes("SB"), self.setup_swap_b_calculation()],
-                [operation_mode == Bytes("a"), self.setup_liquidate_a_calculation()],
-                [operation_mode == Bytes("b"), self.setup_liquidate_b_calculation()]
-            ),
-            # store the result in requested slot
-            App.globalPut(result_destination, self.calculate()),
-        ])
+        return Cond(
+            [
+                Txn.application_id() == Int(0), 
+                self.on_create()
+            ],
+            [
+                Txn.on_completion() == OnComplete.OptIn,
+                Return(Int(1))
+            ],
+            [
+                Int(1),  # Default case
+                Seq([ # The app is set up, run its primary function
+                    # make sure that the guard is part of the TX group
+                    Assert(self.guard_app_ID.get() == Gtxn[0].application_id()),
+                    # make sure the stored result will be in either of these 2 slots
+                    Assert(  
+                        Or(
+                            result_destination == Bytes("1"),
+                            result_destination == Bytes("2"),
+                        )
+                    ),
+                    self.initialize_external_globals(),
+                    # setup calculations based on the 0th argument
+                    Cond(
+                        [operation_mode == Bytes("L"), self.setup_liquidity_calculation()],
+                        [operation_mode == Bytes("SA"), self.setup_swap_a_calculation()],
+                        [operation_mode == Bytes("SB"), self.setup_swap_b_calculation()],
+                        [operation_mode == Bytes("a"), self.setup_liquidate_a_calculation()],
+                        [operation_mode == Bytes("b"), self.setup_liquidate_b_calculation()]
+                    ),
+                    # store the result in requested slot
+                    App.globalPut(result_destination, self.calculate()),
+                    Return(Int(1)),
+                ])
+            ],
+        )
+
+    def on_create(self) -> Seq:
+        return Seq(
+            [
+                self.guard_app_ID.put(Txn.application_args[0]),
+                Return(Int(1)),
+            ]
+        )
     
     def initialize_external_globals(self) -> Expr:
         """
