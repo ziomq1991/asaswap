@@ -28,6 +28,7 @@ class MulDiv64:
 
         The performed calculations are described below:
         L: a/A * LT (calculate received amount of liquidity tokens when adding liquidity)
+        M: lt'/LT * B (calculate necessary amount of b token when adding liquidity, lt' comes from "L" calculation)
         SA: B/A * a (calculate the amount of secondary token when swapping primary token)
         SB: A/B * b (calculate the amount of primary token when swapping secondary token)
         a: lt/LT * A (calculate the amount of primary token user should receive when removing liquidity)
@@ -68,6 +69,7 @@ class MulDiv64:
                     # setup calculations based on the 0th argument
                     Cond(
                         [operation_mode == Bytes("L"), self.setup_liquidity_calculation()],
+                        [operation_mode == Bytes("M"), self.setup_required_b_calculation()],
                         [operation_mode == Bytes("SA"), self.setup_swap_a_calculation()],
                         [operation_mode == Bytes("SB"), self.setup_swap_b_calculation()],
                         [operation_mode == Bytes("a"), self.setup_liquidate_a_calculation()],
@@ -122,6 +124,17 @@ class MulDiv64:
             self.multiplier1.store(Gtxn[2].asset_amount()),  # a
             self.multiplier2.store(self.total_liquidity_tokens.value()),  # LT
             self.divisor.store(self.a_balance.value()),  # A
+        ])
+
+    def setup_required_b_calculation(self) -> Expr:
+        """
+        Setup calculation for the amount of required secondary tokens for adding liquidity. (lt'/LT * B)
+        """
+        return Seq([
+            # lt' should be calculated in the previous execution of this contract
+            self.multiplier1.store(App.globalGet(Bytes("1"))),  # lt'
+            self.multiplier2.store(self.b_balance.value()),  # B
+            self.divisor.store(self.total_liquidity_tokens.value()),  # LT
         ])
 
     def setup_swap_a_calculation(self) -> Expr:
