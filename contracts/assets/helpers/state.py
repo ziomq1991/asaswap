@@ -1,4 +1,4 @@
-from pyteal import *
+from pyteal import App, MaybeValue, Int, Bytes
 
 
 class State:
@@ -32,16 +32,11 @@ class GlobalState(State):
         return App.globalGet(Bytes(self._name))
         
 
-class GlobalStateEx(State):
+def get_global_state_ex(foreign_id: int, key: str) -> MaybeValue:
     """
-    Global state of a foreign stateful contract
+    Wrapper for global state getter.
     External state variables need to be evaluated before use.
 
     https://pyteal.readthedocs.io/en/stable/state.html#external-global
     """
-    def __init__(self, foreign_id: int, name: str):
-        super().__init__(name)
-        self._foreign_id = foreign_id  # Position in Txn.ForeignApps
-
-    def getEx(self) -> MaybeValue:
-        return App.globalGetEx(Int(self._foreign_id), Bytes(self._name))
+    return App.globalGetEx(Int(foreign_id), Bytes(key))
