@@ -33,7 +33,7 @@ const { assert } = chai;
     });
 
     it('throws errors after trying to remove liquidity bigger than the balance', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
 
       expectTealError(
@@ -48,7 +48,7 @@ const { assert } = chai;
     });
 
     it('throws errors after trying to make empty withdrawal', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
 
       expectTealError(
@@ -58,7 +58,7 @@ const { assert } = chai;
     });
 
     it('throws errors after trying to withdraw amount bigger than the balance', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
 
       expectTealError(
@@ -76,7 +76,7 @@ const { assert } = chai;
     });
 
     it('throws errors after trying to withdraw amount different than the balance', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
 
       this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 6000000);
@@ -101,7 +101,7 @@ const { assert } = chai;
     });
 
     it('throws errors after altering the transaction fee', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
 
       this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 6000000);
@@ -135,7 +135,7 @@ const { assert } = chai;
     });
 
     it('throws error when deposit is made to invalid account', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
       expectTealError(
         () => this.asaswap.addLiquidity(this.master, this.swapper.address, 7000000, 6000000),
@@ -144,7 +144,7 @@ const { assert } = chai;
     });
 
     it('throws error when deposit is made with invalid asset', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
       expectTealError(
         () => this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 6000000, {
@@ -163,7 +163,7 @@ const { assert } = chai;
     });
 
     it('throws error when swap is made with invalid asset', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
       this.asaswap.optIn(this.swapper.address);
       this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 6000000);
@@ -184,7 +184,7 @@ const { assert } = chai;
     });
 
     it('throws error when fee is paid to wrong account', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
 
       this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 6000000);
@@ -211,7 +211,7 @@ const { assert } = chai;
     });
 
     it('throws error when swap is made with invalid account', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
       this.asaswap.optIn(this.swapper.address);
       this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 6000000);
@@ -222,7 +222,7 @@ const { assert } = chai;
     });
 
     it('successfully withdraws liquidity', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
       this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 10);
       assert.equal(this.getLocalNumber(this.master.address, USR_LIQ_TOKENS), 7000000);
@@ -231,7 +231,7 @@ const { assert } = chai;
     });
 
     it('successfully adds liquidity', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
       this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 700000, 10);
       assert.equal(this.getLocalNumber(this.master.address, USR_LIQ_TOKENS), 700000);
@@ -240,7 +240,7 @@ const { assert } = chai;
     });
 
     it('throws error when trying to withdraw liquidity with altered fee', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
       this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 10);
       assert.equal(this.getLocalNumber(this.master.address, USR_LIQ_TOKENS), 7000000);
@@ -253,7 +253,7 @@ const { assert } = chai;
     });
 
     it('throws error when trying to withdraw liquidity with fee being sent to wrong account', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
       this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 10);
       assert.equal(this.getLocalNumber(this.master.address, USR_LIQ_TOKENS), 7000000);
@@ -266,7 +266,7 @@ const { assert } = chai;
     });
 
     it('throws error when trying to withdraw liquidity with invalid asset', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
       this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 10);
       assert.equal(this.getLocalNumber(this.master.address, USR_LIQ_TOKENS), 7000000);
@@ -279,7 +279,7 @@ const { assert } = chai;
     });
 
     it('throws error when trying to withdraw liquidity over balance', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
       this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 7000000, 10);
       assert.equal(this.getLocalNumber(this.master.address, USR_LIQ_TOKENS), 7000000);
@@ -290,7 +290,7 @@ const { assert } = chai;
     });
 
     it('successfully deposits liquidity', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
       assert.equal(this.getLocalNumber(this.master.address, USR_LIQ_TOKENS), 0);
       this.asaswap.depositLiquidity(this.master, 5000000);
@@ -298,7 +298,7 @@ const { assert } = chai;
     });
 
     it('throws error when trying to deposit liquidity with invalid asset id', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
       expectTealError(
         () => this.asaswap.depositLiquidity(this.master, 5000000, {
@@ -309,7 +309,7 @@ const { assert } = chai;
     });
 
     it('can add liquidity after some swap removes most of some token', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
       this.asaswap.optIn(this.swapper.address);
       this.asaswap.addLiquidity(this.master, this.asaswap.getEscrowAddress(), 10, 10);

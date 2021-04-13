@@ -22,7 +22,7 @@ const { assert } = chai;
     };
 
     it('swap preserves constant function', () => {
-      this.asaswap.setupApplicationWithEscrow(this.master);
+      this.asaswap.setupApplicationWithEscrow();
       this.asaswap.optIn(this.master.address);
       this.asaswap.optIn(this.swapper.address);
       let A = 1337n, B = 2137n;
