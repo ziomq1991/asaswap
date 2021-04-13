@@ -26,7 +26,6 @@ const { assert } = chai;
     //   this.asaswap.deployEscrow();
     //   this.asaswap.addFundsToEscrow();
     //   this.asaswap.configureEscrowAddress(this.asaswap.getEscrowAddress());
-
     //   expectTealError(
     //     () => this.asaswap.escrowSetupAssets(),
     //     RUNTIME_ERRORS.TEAL.INVALID_TYPE
