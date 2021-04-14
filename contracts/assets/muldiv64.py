@@ -175,4 +175,4 @@ class MulDiv64:
         ])
 
 if __name__ == "__main__":
-    print(compileTeal(MulDiv64().get_contract(), Mode.Application))
+    print(compileTeal(MulDiv64().get_contract(), Mode.Application, version=3))

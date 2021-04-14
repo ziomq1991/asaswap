@@ -123,13 +123,16 @@ class AlgosToAsaContract:
         )
 
     def on_closeout(self):
-        return Assert(
-            And(
-                self.b_to_withdraw.get() == Int(0),
-                self.a_to_withdraw.get() == Int(0),
-                self.user_liquidity_tokens.get() == Int(0),
-            )
-        )
+        return Seq([
+            Assert(
+                And(
+                    self.b_to_withdraw.get() == Int(0),
+                    self.a_to_withdraw.get() == Int(0),
+                    self.user_liquidity_tokens.get() == Int(0),
+                )
+            ),
+            Return(Int(1)),
+        ])
 
     def on_update(self):
         return Seq(
