@@ -1,9 +1,11 @@
 import sys
 from enum import Enum
 
+# pylint: disable=unused-wildcard-import
 from pyteal import *
 
-from helpers.state import GlobalState, LocalState
+# pylint: disable=import-error
+from helpers.state import GlobalState, LocalState, get_global_state_ex
 from helpers.parse import parse_args
 
 
@@ -13,10 +15,11 @@ class ExchangeType:
 
 
 class AlgosToAsaContract:
-    def __init__(self, ratio_decimal_points: int, fee_pct: int):
+    def __init__(self, ratio_decimal_points: int, fee_pct: int, muldiv_app_id: int):
         self.ratio_decimal_points = ratio_decimal_points
         self.fee_pct = fee_pct
         self.type = type
+        self.muldiv_app_id = muldiv_app_id
         self.setup_globals()
         self.setup_locals()
         self.setup_calculations()
@@ -29,26 +32,22 @@ class AlgosToAsaContract:
         self.creator_addr = GlobalState("C")  # bytes
         self.b_idx = GlobalState("Y")  # uint64
         self.liq_idx = GlobalState("Z")  # uint64
+        # External globals
+        self.muldiv_result_1 = get_global_state_ex(1, "1")
+        self.muldiv_result_2 = get_global_state_ex(1, "2")
 
     def setup_locals(self):
         self.a_to_withdraw = LocalState("1")  # uint64
         self.b_to_withdraw = LocalState("2")  # uint64
         self.user_liquidity_tokens = LocalState("3")  # uint64
 
-    def calculate_exchange_rate(self) -> Expr:
-        self.exchange_rate = ScratchSlot()
-        return self.exchange_rate.store(
-            self.a_balance.get() * Int(self.ratio_decimal_points) / self.b_balance.get()
-        )
-
     def get_exchange_rate(self, inline=False) -> Expr:
-        if inline:
-            return (
-                self.a_balance.get()
-                * Int(self.ratio_decimal_points)
-                / self.b_balance.get()
-            )
-        return self.exchange_rate.load(TealType.uint64)
+        assert(inline)
+        return (
+            self.a_balance.get()
+            * Int(self.ratio_decimal_points)
+            / self.b_balance.get()
+        )
 
     def calculate_tx_ratio(self) -> Expr:
         self.tx_ratio = ScratchSlot()
@@ -60,17 +59,6 @@ class AlgosToAsaContract:
 
     def get_tx_ratio(self) -> Expr:
         return self.tx_ratio.load(TealType.uint64)
-
-    def calculate_liquidity_calc(self) -> Expr:
-        self.liquidity_calc = ScratchSlot()
-        return self.liquidity_calc.store(
-            self.get_incoming_amount_for_primary_asset(Gtxn[2])
-            * self.total_liquidity_tokens.get()
-            / self.a_balance.get()
-        )
-
-    def get_liquidity_calc(self) -> Expr:
-        return self.liquidity_calc.load(TealType.uint64)
 
     def setup_calculations(self):
         self.a_calc = (
@@ -87,22 +75,13 @@ class AlgosToAsaContract:
     def get_contract(self):
         return Cond(
             [Txn.application_id() == Int(0), self.on_create()],
+            [Txn.rekey_to() != Global.zero_address(), Err()],
             [Txn.on_completion() == OnComplete.OptIn, self.on_register()],
-            [
-                Txn.on_completion()
-                == Or(OnComplete.UpdateApplication, OnComplete.DeleteApplication),
-                Return(Int(0)),
-            ],
             [Txn.on_completion() == OnComplete.CloseOut, self.on_closeout()],
+            [Txn.on_completion() != OnComplete.NoOp, Err()], # disallow any other on-complete options
             [Txn.application_args[0] == Bytes("U"), self.on_update()],
-            [
-                Txn.application_args[0] == Bytes("A"),
-                self.on_add_liquidity(),
-            ],
-            [
-                Txn.application_args[0] == Bytes("R"),
-                self.on_remove_liquidity(),
-            ],
+            [Txn.application_args[0] == Bytes("A"), self.on_add_liquidity()],
+            [Txn.application_args[0] == Bytes("R"), self.on_remove_liquidity()],
             [Txn.application_args[0] == Bytes("S"), self.on_swap()],
             [Txn.application_args[0] == Bytes("W"), self.on_withdraw()],
             [Txn.application_args[0] == Bytes("E"), self.setup_escrow()],
@@ -168,76 +147,78 @@ class AlgosToAsaContract:
         )
 
     def on_add_liquidity(self):
+        calculated_lt = self.muldiv_result_1  # how many liquidity tokens user shall receive
+        calculated_b = self.muldiv_result_2  # how many secondary tokens user must provide 
         return Seq(
             [
                 Assert(
                     And(
-                        Global.group_size() == Int(3),
-                        Gtxn[1].type_enum() == TxnType.AssetTransfer,
-                        Gtxn[1].asset_receiver() == self.escrow_addr.get(),
-                        Gtxn[1].xfer_asset() == self.b_idx.get(),
-                        self.validate_incoming_tx_for_primary_asset(Gtxn[2]),
+                        Global.group_size() == Int(5),
+                        # verify that muldiv contract was supplied as foreign app
+                        # so foreign globals come from the right place
+                        Txn.applications[1] == Int(self.muldiv_app_id),
+                        # verify primary asset transfer
+                        self.validate_incoming_tx_for_primary_asset(Gtxn[3]),
+                        # verify secondary asset transfer
+                        Gtxn[4].type_enum() == TxnType.AssetTransfer,
+                        Gtxn[4].asset_receiver() == self.escrow_addr.get(),
+                        Gtxn[4].xfer_asset() == self.b_idx.get(),
+                        # validate muldiv operations
+                        self.validate_muldiv_call(Gtxn[0], "L", "1"),
+                        self.validate_muldiv_call(Gtxn[1], "M", "2"),
                     )
                 ),
                 If(
-                    And(
-                        self.b_balance.get() != Int(0),
-                        self.a_balance.get() != Int(0),
-                    ),
-                    Seq(
-                        [
-                            self.calculate_exchange_rate(),
-                            self.calculate_tx_ratio(),
-                            If(
-                                # Check if transactions exchange rate matches or is max 1% different from current
-                                Ge(self.get_exchange_rate(), self.get_tx_ratio()),
-                                Assert(
-                                    (self.get_exchange_rate() - self.get_tx_ratio())
-                                    * Int(self.ratio_decimal_points)
-                                    / self.get_exchange_rate()
-                                    < Int(int(0.01 * self.ratio_decimal_points))
-                                ),
-                                Assert(
-                                    (self.get_tx_ratio() - self.get_exchange_rate())
-                                    * Int(self.ratio_decimal_points)
-                                    / self.get_exchange_rate()
-                                    < Int(int(0.01 * self.ratio_decimal_points))
-                                ),
-                            ),
-                        ]
-                    ),
-                ),
-                If(
-                    # If its first transaction then add tokens directly from txn amount, else based on calculations
                     self.total_liquidity_tokens.get() == Int(0),
-                    Seq(
-                        [
-                            self.user_liquidity_tokens.put(
-                                self.get_incoming_amount_for_primary_asset(Gtxn[2])
-                            ),
-                            self.total_liquidity_tokens.put(
-                                self.get_incoming_amount_for_primary_asset(Gtxn[2])
-                            ),
-                        ]
-                    ),
-                    Seq(
-                        [
-                            self.calculate_liquidity_calc(),
-                            self.user_liquidity_tokens.put(
-                                self.user_liquidity_tokens.get()
-                                + self.get_liquidity_calc()
-                            ),
-                            self.total_liquidity_tokens.put(
-                                self.total_liquidity_tokens.get()
-                                + self.get_liquidity_calc()
-                            ),
-                        ]
-                    ),
-                ),
-                self.b_balance.put(self.b_balance.get() + Gtxn[1].asset_amount()),
-                self.a_balance.put(
-                    self.a_balance.get()
-                    + self.get_incoming_amount_for_primary_asset(Gtxn[2])
+                    # Handle case when zero liquidity is in the pool
+                    Seq([ 
+                        self.a_balance.put(self.get_incoming_amount_for_primary_asset(Gtxn[3])),
+                        self.b_balance.put(Gtxn[4].asset_amount()),
+                        self.user_liquidity_tokens.put(
+                            self.get_incoming_amount_for_primary_asset(Gtxn[2])
+                        ),
+                        self.total_liquidity_tokens.put(
+                            self.get_incoming_amount_for_primary_asset(Gtxn[2])
+                        ),
+                    ]),
+                    # Handle case when some liquidity is already present
+                    Seq([
+                        # eval foreign values
+                        calculated_b, 
+                        calculated_lt,
+                        Assert(
+                            And(
+                                calculated_b.hasValue(),
+                                calculated_lt.hasValue(),
+                                # make sure that user provided enough secondary tokens, adequate to current exchange rate
+                                calculated_b.value() <= Gtxn[4].asset_amount()
+                            )
+                        ),
+                        self.a_balance.put(
+                            self.a_balance.get()
+                            + self.get_incoming_amount_for_primary_asset(Gtxn[3])
+                        ),
+                        self.b_balance.put(
+                            self.b_balance.get()
+                            + Gtxn[4].asset_amount()
+                        ),
+                        self.user_liquidity_tokens.put(
+                            self.user_liquidity_tokens.get()
+                            + calculated_lt.value()
+                        ),
+                        self.total_liquidity_tokens.put(
+                            self.total_liquidity_tokens.get()
+                            + calculated_lt.value()
+                        ),
+                        # if user provided too many secondary tokens, let them refund them
+                        self.b_to_withdraw.put(
+                            self.b_to_withdraw.get()
+                            + (
+                                Gtxn[4].asset_amount() 
+                                - calculated_b.value()
+                            )
+                        )
+                    ])
                 ),
                 Return(Int(1)),
             ]
@@ -406,6 +387,17 @@ class AlgosToAsaContract:
             tx.sender() == self.escrow_addr.get(),
         )
 
+    def validate_muldiv_call(self, tx: TxnObject, expected_mode: str, expected_dest: str) -> Expr:
+        return And(
+            # check if correct parameters were passed to muldiv
+            tx.application_args[0] == Bytes(expected_mode),
+            tx.application_args[1] == Bytes(expected_dest),
+            # check if the muldiv contract was actually called
+            tx.application_id() == Int(self.muldiv_app_id),
+            # make sure that this application is provided as a foreign app to muldiv
+            tx.applications[1] == Global.current_application_id(),
+        )
+
     def get_outgoing_amount_for_primary_asset(self, tx) -> Expr:
         return tx.amount()
 
@@ -424,8 +416,8 @@ class AlgosToAsaContract:
 
 
 class AsaToAsaContract(AlgosToAsaContract):
-    def __init__(self, ratio_decimal_points: int, fee_pct: int):
-        super().__init__(ratio_decimal_points, fee_pct)
+    def __init__(self, ratio_decimal_points: int, fee_pct: int, muldiv_app_id: int):
+        super().__init__(ratio_decimal_points, fee_pct, muldiv_app_id)
         self.a_idx = GlobalState("X")  # uint64
 
     def get_incoming_amount_for_primary_asset(self, tx) -> Expr:
@@ -468,6 +460,7 @@ if __name__ == "__main__":
         "ratio_decimal_points": 1000000,
         "fee_pct": 3,
         "type": ExchangeType.ALGOS_TO_ASA,
+        "muldiv_app_id": 10
     }
 
     # Overwrite params if sys.argv[1] is passed
@@ -480,8 +473,10 @@ if __name__ == "__main__":
                 AlgosToAsaContract(
                     int(params["ratio_decimal_points"]),
                     int(params["fee_pct"]),
+                    int(params["muldiv_app_id"]),
                 ).get_contract(),
                 Mode.Application,
+                version=3,
             )
         )
     elif params["type"] == ExchangeType.ASA_TO_ASA:
@@ -490,7 +485,9 @@ if __name__ == "__main__":
                 AsaToAsaContract(
                     int(params["ratio_decimal_points"]),
                     int(params["fee_pct"]),
+                    int(params["muldiv_app_id"]),
                 ).get_contract(),
                 Mode.Application,
+                version=3,
             )
         )

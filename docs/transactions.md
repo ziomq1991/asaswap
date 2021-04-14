@@ -40,6 +40,41 @@ When creating ASA to ASA exchange contract, 4 arguments are required, first bein
 4. Set up guard with escrow and main addresses
 5. Opt-in escrow to primary asset (only needed if primary asset is an ASA), secondary asset and liquidity token
 
+### Main contract create call
+Call specification depends on contract type:
+1. Algos to ASA:
+    ```javascript
+    {
+        args: [
+            `secondary_token_id`,
+            `liquidity_token_id`
+        ]
+        flags: {
+            localInts: 3,
+            localBytes: 0,
+            globalInts: 5,
+            globalBytes: 2
+        };
+    }
+    ```
+
+1. ASA to ASA:
+    ```javascript
+    {
+        args: [
+            `secondary_token_id`,
+            `primary_token_id`,
+            `liquidity_token_id`
+        ]
+        flags: {
+            localInts: 3,
+            localBytes: 0,
+            globalInts: 6,
+            globalBytes: 2
+        };
+    }
+    ```
+
 ## Business
 ### Add liquidity
 Group size: 5

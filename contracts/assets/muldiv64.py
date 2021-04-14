@@ -53,6 +53,7 @@ class MulDiv64:
                         Txn.on_completion() == OnComplete.NoOp,
                         Txn.rekey_to() == Global.zero_address(),
                         Txn.application_args.length() == Int(2),
+                        Txn.applications.length() == Int(2),  # this and asaswap
                     )
                 ),
                 # make sure the stored result will be in either of these 2 slots
@@ -65,8 +66,8 @@ class MulDiv64:
                 self.initialize_external_globals(),
                 # setup calculations based on the 0th argument
                 Cond(
-                    [operation_mode == Bytes("L"), self.setup_liquidity_calculation()],
-                    [operation_mode == Bytes("M"), self.setup_required_b_calculation()],
+                    [operation_mode == Bytes("L"), self.setup_liquidity_calculation()], # may terminate execution
+                    [operation_mode == Bytes("M"), self.setup_required_b_calculation()], # may terminate execution
                     [operation_mode == Bytes("SA"), self.setup_swap_a_calculation()],
                     [operation_mode == Bytes("SB"), self.setup_swap_b_calculation()],
                     [operation_mode == Bytes("a"), self.setup_liquidate_a_calculation()],
@@ -89,10 +90,6 @@ class MulDiv64:
             self.total_liquidity_tokens,
             self.a_balance,
             self.b_balance,
-            # make sure the global state vars are available
-            Assert(self.total_liquidity_tokens.hasValue()),
-            Assert(self.a_balance.hasValue()),
-            Assert(self.b_balance.hasValue()),
         ])
 
     def calculate(self) -> Expr:
@@ -109,6 +106,11 @@ class MulDiv64:
         Setup calculation for the amount of received liquidity tokens. (a/A * LT)
         """
         return Seq([
+            # return when there aren't any tokens (it's the first liquidity provision)
+            If(
+                self.a_balance.value() == Int(0), 
+                Return(Int(1))
+            ),
             self.multiplier1.store(Gtxn[2].asset_amount()),  # a
             self.multiplier2.store(self.total_liquidity_tokens.value()),  # LT
             self.divisor.store(self.a_balance.value()),  # A
@@ -119,6 +121,11 @@ class MulDiv64:
         Setup calculation for the amount of required secondary tokens for adding liquidity. (lt'/LT * B)
         """
         return Seq([
+            # return when there aren't any tokens (it's the first liquidity provision)
+            If(
+                self.a_balance.value() == Int(0), 
+                Return(Int(1))
+            ),
             # lt' should be calculated in the previous execution of this contract
             self.multiplier1.store(App.globalGet(Bytes("1"))),  # lt'
             self.multiplier2.store(self.b_balance.value()),  # B
