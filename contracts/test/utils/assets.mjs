@@ -73,7 +73,10 @@ function setupInvalidAsset(runtime, account) {
 
 export function fundAccounts(runtime, fundingAccount, accounts, assets, amount=1000000n) {
   function fund(assetId, account) {
-    runtime.optIntoASA(assetId, account.address, {});
+    // Check if account isn't opted into ASA and conditionlly opt-in
+    if (runtime.getAccount(account.address).getAssetHolding(assetId) === undefined) {
+      runtime.optIntoASA(assetId, account.address, {});
+    }
     let tx = [
       {
         type: TransactionType.TransferAsset,
