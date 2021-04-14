@@ -20,17 +20,16 @@ const { assert } = chai;
   describe(`${contractType} Functional Tests`, function () {
     configureTest.call(this, contractType);
 
-    // Test excluded until algo-builder allows manual OPT-IN
-    // it('throws errors after trying to opt-in escrow after finishing setup', () => {
-    //   this.asaswap.setupApplication(this.master);
-    //   this.asaswap.deployEscrow();
-    //   this.asaswap.addFundsToEscrow();
-    //   this.asaswap.configureEscrowAddress(this.asaswap.getEscrowAddress());
-    //   expectTealError(
-    //     () => this.asaswap.escrowSetupAssets(),
-    //     RUNTIME_ERRORS.TEAL.INVALID_TYPE
-    //   );
-    // });
+    it('throws errors after trying to opt-in escrow after finishing setup', () => {
+      this.asaswap.setupApplication(this.master);
+      this.asaswap.deployEscrow();
+      this.asaswap.addFundsToEscrow();
+      this.asaswap.configureEscrowAddress(this.asaswap.getEscrowAddress());
+      expectTealError(
+        () => this.asaswap.escrowSetupAssets(),
+        RUNTIME_ERRORS.TEAL.INVALID_TYPE
+      );
+    });
 
     it('throws errors after trying to remove liquidity bigger than the balance', () => {
       this.asaswap.setupApplicationWithEscrow();
