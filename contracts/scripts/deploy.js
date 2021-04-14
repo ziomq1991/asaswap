@@ -3,9 +3,9 @@
 
 const { SETUP_ESCROW, UPDATE } = require('../common/constants.js');
 
-const { stringToBytes, updateSSC } = require('@algorand-builder/algob');
-const { executeTransaction } = require('@algorand-builder/algob');
-const { TransactionType, SignType } = require('@algorand-builder/runtime/build/types.js');
+const { stringToBytes, updateSSC } = require('@algo-builder/algob');
+const { executeTransaction } = require('@algo-builder/algob');
+const { TransactionType, SignType } = require('@algo-builder/runtime/build/types.js');
 
 const ALGOS_TO_ASA = 'ALGOS_TO_ASA';
 const ASA_TO_ASA = 'ASA_TO_ASA';

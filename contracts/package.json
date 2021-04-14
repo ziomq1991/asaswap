@@ -4,7 +4,8 @@
   "main": "index.js",
   "license": "GPL-3.0",
   "dependencies": {
-    "chai": "^4.2.0",
+    "@algo-builder/algob": "^0.5.5",
+    "chai": "^4.3.4",
     "mocha": "^8.2.1"
   },
   "scripts": {
@@ -15,6 +16,7 @@
     "build": "echo ok"
   },
   "devDependencies": {
-    "eslint": "^7.19.0"
+    "eslint": "^7.19.0",
+    "random-bigint": "^0.0.1"
   }
 }

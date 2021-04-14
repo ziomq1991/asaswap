@@ -1,6 +1,6 @@
 // Original file: https://github.com/scale-it/algorand-builder/blob/master/packages/runtime/test/helpers/errors.ts
 
-import { RuntimeError } from '@algorand-builder/runtime/build/errors/runtime-errors.js';
+import { RuntimeError } from '@algo-builder/runtime/build/errors/runtime-errors.js';
 import chai from 'chai';
 
 const { assert, AssertionError } = chai;

@@ -53,11 +53,7 @@ You'll also need to look for a compiled escrow contract in the folder `artifacts
 
 ## Dependencies
 
-* You'll need to download the [algorand-builder](https://github.com/scale-it/algorand-builder) repository and link the `algob` and `runtime` packages. The latest tested commit for `algorand-builder` is `606efcfe998f497bccd5b9e92f214664096ad50d`.
-    - To link the `algorand-builder` you need to build it using `yarn build`
-    - Issue `yarn link` command in those folders: `packages/algob, packages/runtime`
-    - Run `yarn link "@algorand-builder/algob"` and `yarn link "@algorand-builder/runtime"` in the contract directory
-* To install the rest of the dependencies run:
+* To install the dependencies run:
   -  `poetry install`
   -  `yarn install`
 

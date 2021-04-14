@@ -1,4 +1,4 @@
-import { SignType, TransactionType } from '@algorand-builder/runtime/build/types.js';
+import { SignType, TransactionType } from '@algo-builder/runtime/build/types.js';
 
 export function setupAssets(runtime, account) {
   return {
@@ -9,11 +9,16 @@ export function setupAssets(runtime, account) {
   };
 }
 
+export const ASSET_TOTAL = 18446744073709551615n; // UINT64_MAX
+
+// Algo builder API doesn't allow easy token creation on runtime
+// Below is the easiest way to do so, however the specified creator of the asset still needs to opt-in to use it
+
 function setupPrimaryAsset(runtime, account) {
   account.addAsset(111, 'ANOTHER', {
     creator: 'addr-1',
-    total: 10000000,
-    decimals: 10,
+    total: ASSET_TOTAL,
+    decimals: 0,
     defaultFrozen: false,
     unitName: 'ASSET',
     name: 'ASSET',
@@ -31,11 +36,11 @@ function setupPrimaryAsset(runtime, account) {
 function setupSecondaryAsset(runtime, account) {
   account.addAsset(123, 'ASSET', {
     creator: 'addr-1',
-    total: 10000000,
-    decimals: 10,
+    total: ASSET_TOTAL,
+    decimals: 0,
     defaultFrozen: false,
-    unitName: 'ASSET',
-    name: 'ASSET',
+    unitName: 'ASSET2',
+    name: 'ASSET2',
     url: 'assetUrl',
     metadataHash: 'hash',
     manager: 'addr-1',
@@ -50,11 +55,11 @@ function setupSecondaryAsset(runtime, account) {
 function setupInvalidAsset(runtime, account) {
   account.addAsset(100, 'INVALID', {
     creator: 'addr-1',
-    total: 10000000,
-    decimals: 10,
+    total: ASSET_TOTAL,
+    decimals: 0,
     defaultFrozen: false,
-    unitName: 'ASSET',
-    name: 'ASSET',
+    unitName: 'ASSET3',
+    name: 'ASSET3',
     url: 'assetUrl',
     metadataHash: 'hash',
     manager: 'addr-1',
@@ -66,9 +71,12 @@ function setupInvalidAsset(runtime, account) {
   return 100;
 }
 
-export function fundAccounts(runtime, fundingAccount, accounts, assets) {
+export function fundAccounts(runtime, fundingAccount, accounts, assets, amount=1000000n) {
   function fund(assetId, account) {
-    runtime.optIntoASA(assetId, account.address, {});
+    // Check if account isn't opted into ASA and conditionlly opt-in
+    if (runtime.getAccount(account.address).getAssetHolding(assetId) === undefined) {
+      runtime.optIntoASA(assetId, account.address, {});
+    }
     let tx = [
       {
         type: TransactionType.TransferAsset,
@@ -76,7 +84,7 @@ export function fundAccounts(runtime, fundingAccount, accounts, assets) {
         sign: SignType.SecretKey,
         fromAccount: fundingAccount.account,
         toAccountAddr: account.address,
-        amount: 1000000,
+        amount: amount,
         payFlags: {
           totalFee: 1000
         }
