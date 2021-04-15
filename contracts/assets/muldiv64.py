@@ -47,7 +47,6 @@ class MulDiv64:
         return If(
             Txn.application_id() != Int(0),
             Seq([ # The app is set up, run its primary function
-                # make sure that the guard is part of the TX group
                 Assert(
                     And(
                         Txn.on_completion() == OnComplete.NoOp,
@@ -86,7 +85,7 @@ class MulDiv64:
         https://pyteal.readthedocs.io/en/stable/state.html#external-global
         """
         return Seq([
-            # evaluate external state so that it can be used
+            # evaluate external state so that they can be used
             self.total_liquidity_tokens,
             self.a_balance,
             self.b_balance,
@@ -108,7 +107,7 @@ class MulDiv64:
         return Seq([
             # return when there aren't any tokens (it's the first liquidity provision)
             If(
-                self.a_balance.value() == Int(0), 
+                self.total_liquidity_tokens.value() == Int(0), 
                 Return(Int(1))
             ),
             self.multiplier1.store(Gtxn[2].asset_amount()),  # a
@@ -123,7 +122,7 @@ class MulDiv64:
         return Seq([
             # return when there aren't any tokens (it's the first liquidity provision)
             If(
-                self.a_balance.value() == Int(0), 
+                self.total_liquidity_tokens.value() == Int(0), 
                 Return(Int(1))
             ),
             # lt' should be calculated in the previous execution of this contract
