@@ -19,11 +19,10 @@
 // ## ACCOUNTS USING mnemonic ##
 const { mkAccounts, algodCredentialsFromEnv } = require("@algo-builder/algob");
 let accounts = mkAccounts([{
-  // This account is created using `make setup-master-account` command from our
-  // `/infrastructure` directory. It already has many ALGOs
+  // This is a test account, it has some algos on the testnet/betanet, don't use on mainnet
   name: "master",
-  addr: "UE77LYTFFBOV4X7QKASX6F5G3Y3337APFW6MLIIGZNXJCDEHZRXCKBILPA",
-  mnemonic: "display asset record between test edge parent romance water only chalk cereal autumn such dance detect auction economy tonight verify hamster knife woman ability pyramid"
+  addr: "VBU276RE4T4H6LIPLMYZDHBIZVSBO35ZGB7CFNH7QQI2UN22ROCGDDXSXM",
+  mnemonic: "castle faculty catalog desert movie level arena chaos earn radio victory salute angry juice border shield category coach into vast illness test crazy absorb pass"
 }]);
 
 // ## ACCOUNTS loaded from a FILE ##

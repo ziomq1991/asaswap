@@ -10,7 +10,7 @@ const { TransactionType, SignType } = require('@algo-builder/runtime/build/types
 const ALGOS_TO_ASA = 'ALGOS_TO_ASA';
 const ASA_TO_ASA = 'ASA_TO_ASA';
 
-const SECONDARY_ASSET_INDEX = 14075549;
+const SECONDARY_ASSET_INDEX = 63139660;
 const PRIMARY_ASSET_INDEX = 14098899;
 const CONTRACT_TYPE = ALGOS_TO_ASA;
 const PAIR = ['ALGOS', 'USDTG'];
@@ -30,10 +30,30 @@ async function run (runtimeEnv, deployer) {
     freeze: masterAccount,
     clawback: masterAccount,
     note: LIQUIDITY_TOKEN_NOTE,
-    unitName: LIQUIDITY_TOKEN_NAME
+    unitName: LIQUIDITY_TOKEN_NAME,
+    totalFee: 1000
   });
-  await deployer.optInToASA('liquidity_token', 'master', {});
   console.log('Deployed Liquidity Token: ', liquidityTokenInfo);
+
+  // Create MulDiv64 contract
+  await deployer.ensureCompiled('muldiv64.py', true, {});
+  const md64res = await deployer.deploySSC(
+    'muldiv64.py',
+    'empty_clear.py',
+    {
+      sender: masterAccount,
+      localInts: 0,
+      localBytes: 0,
+      globalInts: 2,
+      globalBytes: 0,
+      appArgs: []
+    },
+    {
+      totalFee: 1000
+    },
+    {}
+  )
+  console.log(`Created Main contract with ID: ${md64res.appID}`)
 
   // Initialize app arguments
   let appArgs;
@@ -66,12 +86,16 @@ async function run (runtimeEnv, deployer) {
       globalBytes: 2,
       appArgs: appArgs
     },
-    {},
     {
-      type: CONTRACT_TYPE
+      totalFee: 1000,
+    },
+    {
+      type: CONTRACT_TYPE,
+      muldiv_app_id: md64res.appID
     }
   );
   const applicationID = res.appID;
+  console.log(`Created MulDiv64 contract with ID: ${applicationID}`)
 
   // Get escrow account address
   const escrowAccount = await deployer.loadLogic('escrow.py', [], { app_id: applicationID });
@@ -84,7 +108,7 @@ async function run (runtimeEnv, deployer) {
     fromAccount: masterAccount,
     toAccountAddr: escrowAccount.address(),
     amountMicroAlgos: CONTRACT_TYPE === ALGOS_TO_ASA ? 302000 : 405000,
-    payFlags: {}
+    payFlags: { totalFee: 1000 }
   };
   await executeTransaction(deployer, algoTxnParams);
 
@@ -109,7 +133,9 @@ async function run (runtimeEnv, deployer) {
       payFlags: { totalFee: 1000 }
     }
   ];
+  console.log('- Opting-in to secondary asset');
   await executeTransaction(deployer, txnParams);
+
   if (CONTRACT_TYPE === ASA_TO_ASA) {
     txnParams = [
       {
@@ -131,6 +157,7 @@ async function run (runtimeEnv, deployer) {
         payFlags: { totalFee: 1000 }
       }
     ];
+    console.log('- Opting-in to primary asset');
     await executeTransaction(deployer, txnParams);
   }
   txnParams = [
@@ -153,6 +180,7 @@ async function run (runtimeEnv, deployer) {
       payFlags: { totalFee: 1000 }
     }
   ];
+  console.log('- Opting-in to liquidity token');
   await executeTransaction(deployer, txnParams);
 
   // Send all liquidity tokens to escrow
@@ -187,23 +215,18 @@ async function run (runtimeEnv, deployer) {
   await executeTransaction(deployer, assetConfigParams);
   console.log('Updated Liquidity Token: ', assetModFields);
 
-
-  // Update application with escrow account
-  // Note: that the code for the contract will not change.
-  // The update operation links the two contracts.
-  appArgs = [stringToBytes(UPDATE)];
-  let updatedRes = await updateSSC(
+  // The update operation links main contract with escrow
+  let updatedRes = await executeTransaction(
     deployer,
-    masterAccount,
-    {}, // pay flags
-    applicationID,
-    'state.py',
-    'clear.py',
     {
-      appArgs: appArgs,
-      accounts: [escrowAccount.address()],
+      type: TransactionType.CallNoOpSSC,
+      sign: SignType.SecretKey,
+      fromAccount: masterAccount,
+      appId: applicationID,
+      appArgs: [stringToBytes(UPDATE), stringToBytes(escrowAccount.address())],
+      payFlags: { totalFee: 1000 }
     }
-  );
+  )
 
   console.log('Application Updated: ', updatedRes);
 }

@@ -140,11 +140,13 @@ class AlgosToAsaContract:
                 # Update escrow address after creating it
                 Assert(
                     And(
+                        # expected: ["U", escrow_addr]
+                        Txn.application_args.length() == Int(2),
                         Txn.sender() == self.creator_addr.get(),
                         self.escrow_addr.get() == Int(0),
                     )
                 ),
-                self.escrow_addr.put(Txn.accounts[1]),
+                self.escrow_addr.put(Txn.application_args[1]),
                 Return(Int(1)),
             ]
         )
@@ -395,6 +397,7 @@ class AlgosToAsaContract:
             # check if correct parameters were passed to muldiv
             tx.application_args[0] == Bytes(expected_mode),
             tx.application_args[1] == Bytes(expected_dest),
+            tx.type_enum() == TxnType.ApplicationCall,
             # check if the muldiv contract was actually called
             tx.application_id() == Int(self.muldiv_app_id),
             # make sure that this application is provided as a foreign app to muldiv

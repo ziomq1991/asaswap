@@ -10,7 +10,6 @@ class MulDiv64:
         self.total_liquidity_tokens = get_global_state_ex(1, "L")  # type: MaybeValue
         self.a_balance = get_global_state_ex(1, "A")  # type: MaybeValue
         self.b_balance = get_global_state_ex(1, "B")  # type: MaybeValue
-        self.guard_app_ID = GlobalState("G")
         self.multiplier1 = ScratchSlot()
         self.multiplier2 = ScratchSlot()
         self.divisor = ScratchSlot()
@@ -45,7 +44,8 @@ class MulDiv64:
         operation_mode = Txn.application_args[0]
         result_destination = Txn.application_args[1]
         return If(
-            Txn.application_id() != Int(0),
+            Txn.application_id() == Int(0),
+            Return(Int(1)), # The app is being created, nothing to be done
             Seq([ # The app is set up, run its primary function
                 Assert(
                     And(
