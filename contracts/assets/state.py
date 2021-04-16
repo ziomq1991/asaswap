@@ -472,6 +472,10 @@ if __name__ == "__main__":
     # Overwrite params if sys.argv[1] is passed
     if len(sys.argv) > 1:
         params = parse_args(sys.argv[1], params)
+        # perform validation of arguments
+        if params["type"] != ExchangeType.ASA_TO_ASA and params["type"] != ExchangeType.ALGOS_TO_ASA:
+            raise ValueError(f"Contract 'type' must be either '{ExchangeType.ASA_TO_ASA}' or '{ExchangeType.ALGOS_TO_ASA}'")
+        # TODO: validate fee_pct (fee_bps)
 
     if params["type"] == ExchangeType.ALGOS_TO_ASA:
         print(
