@@ -48,12 +48,39 @@ let defaultCfg = {
   port: 8777,
   // Below is a token created through our script in `/infrastructure`
   // If you use other setup, update it accordignly (eg content of algorand-node-data/algod.token)
-  token: "a136e80ac4e1f54add873633eb786f740f19ba839c6c5a59ee6a36744d191583",
+  token: "97f03c7d76c0af95e6a0ebe13514077f96984e16c1ef68373657da453fc9bbf2",
   accounts: accounts,
   // if you want to load accounts from KMD, you need to add the kmdCfg object. Please read
   // algob-config.md documentation for details.
   // kmdCfg: kmdCfg,
 };
+
+// ## Deployed contracts specification
+let contract_specs = {
+  algos_usdg: {
+    // exchange type ("ALGOS_TO_ASA" or "ASA_TO_ASA")
+    type: "ALGOS_TO_ASA",
+    // fee for swaps in basis points
+    fee_bps: 30,
+    // Setup primary asset only when type is "ASA_TO_ASA"
+    // primary_asset_id: 3,
+    // secondary asset id is required
+    secondary_asset_id: 2,
+    // there is only ever need to deploy just one muldiv app. 
+    // Put its id here or leave it to 0 to have muldiv app created for you
+    muldiv_app_id: 0,
+    // totalFee with which each tx will be executed
+    fee: 1000,
+  },
+  usdh_usdg: {
+    type: "ASA_TO_ASA",
+    fee_bps: 30,
+    primary_asset_id: 3,
+    secondary_asset_id: 2,
+    muldiv_app_id: 0, // If more than one contract has this field set to 0, only one muldiv contract will be created still
+    fee: 1000,
+  }
+}
 
 // You can also use Environment variables to get Algod credentials
 // Please check https://github.com/scale-it/algorand-builder/blob/master/docs/algob-config.md#credentials for more details and more methods.
@@ -75,5 +102,6 @@ module.exports = {
   networks: {
     default: defaultCfg,
     prod: envCfg
-  }
+  },
+  contract_specs: contract_specs
 };

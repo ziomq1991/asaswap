@@ -20,6 +20,7 @@ const LIQUIDITY_TOKEN_NAME = `${PAIR[0][0]}${PAIR[1][0]}_LIQ`;
 // updateSSC doesn't support template parameters, edit them manually in state.py
 
 async function run (runtimeEnv, deployer) {
+  let specifications = runtimeEnv.config.contract_specs;
   const masterAccount = deployer.accountsByName.get('master');
 
   // At this moment asa.yaml needs to be edited manually
