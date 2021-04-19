@@ -48,7 +48,7 @@ let defaultCfg = {
   port: 8777,
   // Below is a token created through our script in `/infrastructure`
   // If you use other setup, update it accordignly (eg content of algorand-node-data/algod.token)
-  token: "97f03c7d76c0af95e6a0ebe13514077f96984e16c1ef68373657da453fc9bbf2",
+  token: "a136e80ac4e1f54add873633eb786f740f19ba839c6c5a59ee6a36744d191583",
   accounts: accounts,
   // if you want to load accounts from KMD, you need to add the kmdCfg object. Please read
   // algob-config.md documentation for details.
