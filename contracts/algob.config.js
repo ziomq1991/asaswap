@@ -57,7 +57,9 @@ let defaultCfg = {
 
 // ## Deployed contracts specification
 let contract_specs = {
-  algos_usdg: {
+  // Pair name, this will be visible on the blockchain in liquidity token description
+  // Pairs must have a slash "/" in the name
+  "ALGO/USDG": {
     // exchange type ("ALGOS_TO_ASA" or "ASA_TO_ASA")
     type: "ALGOS_TO_ASA",
     // fee for swaps in basis points
@@ -69,18 +71,23 @@ let contract_specs = {
     // there is only ever need to deploy just one muldiv app. 
     // Put its id here or leave it to 0 to have muldiv app created for you
     muldiv_app_id: 0,
-    // totalFee with which each tx will be executed
-    fee: 1000,
-  },
-  usdh_usdg: {
-    type: "ASA_TO_ASA",
-    fee_bps: 30,
-    primary_asset_id: 3,
-    secondary_asset_id: 2,
-    muldiv_app_id: 0, // If more than one contract has this field set to 0, only one muldiv contract will be created still
+    // totalFee with which each tx will be executed during contract creation
     fee: 1000,
   }
 }
+
+// Another example (ASA_TO_ASA)
+// Unfortunately multiple contracts cannot be created at once with algo-builder without some dirty hacking
+// let contract_specs = {
+//   "USDH/USDG": {
+//     type: "ASA_TO_ASA",
+//     fee_bps: 2,
+//     primary_asset_id: 3,
+//     secondary_asset_id: 2,
+//     muldiv_app_id: 0,
+//     fee: 1000,
+//   }
+// }
 
 // You can also use Environment variables to get Algod credentials
 // Please check https://github.com/scale-it/algorand-builder/blob/master/docs/algob-config.md#credentials for more details and more methods.
