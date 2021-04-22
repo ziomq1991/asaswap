@@ -29,7 +29,6 @@ class AlgosToAsaContract:
         self.a_balance = GlobalState("A")  # uint64
         self.b_balance = GlobalState("B")  # uint64
         self.escrow_addr = GlobalState("E")  # bytes
-        self.creator_addr = GlobalState("C")  # bytes
         self.b_idx = GlobalState("Y")  # uint64
         self.liq_idx = GlobalState("Z")  # uint64
         # External globals
@@ -106,7 +105,6 @@ class AlgosToAsaContract:
                 self.b_balance.put(Int(0)),
                 self.a_balance.put(Int(0)),
                 self.total_liquidity_tokens.put(Int(0)),
-                self.creator_addr.put(Txn.sender()),
                 Return(Int(1)),
             ]
         )
@@ -140,7 +138,7 @@ class AlgosToAsaContract:
                 # Update escrow address after creating it
                 Assert(
                     And(
-                        Txn.sender() == self.creator_addr.get(),
+                        Txn.sender() == Global.creator_address(),
                         self.escrow_addr.get() == Int(0),
                     )
                 ),
@@ -410,7 +408,7 @@ class AlgosToAsaContract:
             [
                 Assert(
                     And(
-                        Gtxn[0].sender() == self.creator_addr.get(),
+                        Gtxn[0].sender() == Global.creator_address(),
                         self.escrow_addr.get() == Int(0),
                     )
                 ),
@@ -453,7 +451,6 @@ class AsaToAsaContract(AlgosToAsaContract):
                 self.b_balance.put(Int(0)),
                 self.a_balance.put(Int(0)),
                 self.total_liquidity_tokens.put(Int(0)),
-                self.creator_addr.put(Txn.sender()),
                 Return(Int(1)),
             ]
         )

@@ -53,7 +53,7 @@ Call specification depends on contract type:
             localInts: 3,
             localBytes: 0,
             globalInts: 5,
-            globalBytes: 2
+            globalBytes: 1
         };
     }
     ```
@@ -70,7 +70,7 @@ Call specification depends on contract type:
             localInts: 3,
             localBytes: 0,
             globalInts: 6,
-            globalBytes: 2
+            globalBytes: 1
         };
     }
     ```

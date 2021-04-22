@@ -113,7 +113,7 @@ async function deployMainContract(deployer, masterAccount, totalFee, deploySpec,
       localInts: 3,
       localBytes: 0,
       globalInts: deploySpec['type'] === ALGOS_TO_ASA ? 5 : 6,
-      globalBytes: 2,
+      globalBytes: 1,
       appArgs: appArgs
     },
     {
