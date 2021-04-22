@@ -11,6 +11,7 @@ const fs = require('fs');
 const ALGOS_TO_ASA = 'ALGOS_TO_ASA';
 const ASA_TO_ASA = 'ASA_TO_ASA';
 const LIQUIDITY_TOKEN_TOTAL = 2n**64n - 1n; // must be the same as in asa.yaml
+const DEPLOYMENT_DIRECTORY = 'artifacts/deployed';
 
 // Only checks if fields are present and have a correct type
 function validateSpecifications(specs) {
@@ -128,20 +129,23 @@ async function deployMainContract(deployer, masterAccount, totalFee, deploySpec,
 }
 
 function saveDeployment(specName, spec, liquidityTokenID, mainID, escrowAccount) {
-  const dirName = 'artifacts/deployed';
   const fileName = specName.replaceAll('/', '_') + '_' + mainID.toString() + '.json';
   const data = {
     pair: specName,
-    specification: spec,
+    type: spec['type'],
+    feeBPS: spec['fee_bps'],
+    secondaryAssetID: spec['secondary_asset_id'],
+    primaryAssetID: spec['primary_asset_id'],
+    muldivAppID: spec['muldiv_app_id'],
     mainAppID: mainID,
     liquidityTokenID: liquidityTokenID,
-    escrowAccount: escrowAccount
+    escrowLogic: Array.from(escrowAccount.logic)
   }
-  if (!fs.existsSync(dirName)) {
-    fs.mkdirSync(dirName);
+  if (!fs.existsSync(DEPLOYMENT_DIRECTORY)) {
+    fs.mkdirSync(DEPLOYMENT_DIRECTORY);
   }
   const dataStr = JSON.stringify(data);
-  fs.writeFileSync(dirName + '/' + fileName, dataStr);
+  fs.writeFileSync(DEPLOYMENT_DIRECTORY + '/' + fileName, dataStr);
 }
 
 async function run (runtimeEnv, deployer) {
@@ -166,12 +170,12 @@ async function run (runtimeEnv, deployer) {
 
     //// Create MulDiv64 contract
     // only create new muldiv if user hasn't specified its ID one hasn't been created already
-    if (spec["muldiv_app_id"] == 0 && savedMuldivID == 0) {
+    if (spec['muldiv_app_id'] == 0 && savedMuldivID == 0) {
       const md64res = await deployMulDiv64(deployer, masterAccount);
       savedMuldivID = md64res.appID;
       console.log(`Created MulDiv64 contract with ID: ${md64res.appID}`)
     } else {
-      console.log("MulDiv64 contract already exists, skipping deployment...");
+      console.log('MulDiv64 contract already exists, skipping deployment...');
     }
     // save MulDiv64 contract id to use with main contract
     if (spec['muldiv_app_id'] == 0) {
@@ -270,7 +274,7 @@ async function run (runtimeEnv, deployer) {
     ];
     await executeTransaction(deployer, txnParams);
 
-    console.log("Sending all liquidity tokens to escrow")
+    console.log('Sending all liquidity tokens to escrow')
     txnParams = [
       {
         type: TransactionType.TransferAsset,
@@ -301,7 +305,7 @@ async function run (runtimeEnv, deployer) {
     };
     await executeTransaction(deployer, assetConfigParams);
 
-    console.log("Linking main contract with escrow")
+    console.log('Linking main contract with escrow')
     await executeTransaction(
       deployer,
       {
@@ -309,7 +313,8 @@ async function run (runtimeEnv, deployer) {
         sign: SignType.SecretKey,
         fromAccount: masterAccount,
         appId: mainID,
-        appArgs: [stringToBytes(UPDATE), stringToBytes(escrowAccount.address())],
+        appArgs: [stringToBytes(UPDATE)],
+        accounts: [escrowAccount.address()],
         payFlags: { totalFee: totalFee }
       }
     );

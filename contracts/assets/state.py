@@ -140,13 +140,11 @@ class AlgosToAsaContract:
                 # Update escrow address after creating it
                 Assert(
                     And(
-                        # expected: ["U", escrow_addr]
-                        Txn.application_args.length() == Int(2),
                         Txn.sender() == self.creator_addr.get(),
                         self.escrow_addr.get() == Int(0),
                     )
                 ),
-                self.escrow_addr.put(Txn.application_args[1]),
+                self.escrow_addr.put(Txn.accounts[1]),
                 Return(Int(1)),
             ]
         )
@@ -159,6 +157,9 @@ class AlgosToAsaContract:
                 Assert(
                     And(
                         Global.group_size() == Int(5),
+                        # validate muldiv operations
+                        self.validate_muldiv_call(Gtxn[0], "L", "1"),
+                        self.validate_muldiv_call(Gtxn[1], "M", "2"),
                         # verify that muldiv contract was supplied as foreign app
                         # so foreign globals come from the right place
                         Txn.applications[1] == Int(self.muldiv_app_id),
@@ -168,9 +169,6 @@ class AlgosToAsaContract:
                         Gtxn[4].type_enum() == TxnType.AssetTransfer,
                         Gtxn[4].asset_receiver() == self.escrow_addr.get(),
                         Gtxn[4].xfer_asset() == self.b_idx.get(),
-                        # validate muldiv operations
-                        self.validate_muldiv_call(Gtxn[0], "L", "1"),
-                        self.validate_muldiv_call(Gtxn[1], "M", "2"),
                     )
                 ),
                 If(
@@ -180,10 +178,10 @@ class AlgosToAsaContract:
                         self.a_balance.put(self.get_incoming_amount_for_primary_asset(Gtxn[3])),
                         self.b_balance.put(Gtxn[4].asset_amount()),
                         self.user_liquidity_tokens.put(
-                            self.get_incoming_amount_for_primary_asset(Gtxn[2])
+                            self.get_incoming_amount_for_primary_asset(Gtxn[3])
                         ),
                         self.total_liquidity_tokens.put(
-                            self.get_incoming_amount_for_primary_asset(Gtxn[2])
+                            self.get_incoming_amount_for_primary_asset(Gtxn[3])
                         ),
                     ]),
                     # Handle case when some liquidity is already present

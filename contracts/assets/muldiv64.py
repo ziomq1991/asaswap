@@ -52,7 +52,7 @@ class MulDiv64:
                         Txn.on_completion() == OnComplete.NoOp,
                         Txn.rekey_to() == Global.zero_address(),
                         Txn.application_args.length() == Int(2),
-                        Txn.applications.length() == Int(2),  # this and asaswap
+                        Txn.applications.length() == Int(1),  # Foreign applications count
                     )
                 ),
                 # make sure the stored result will be in either of these 2 slots
@@ -89,6 +89,9 @@ class MulDiv64:
             self.total_liquidity_tokens,
             self.a_balance,
             self.b_balance,
+            Assert(self.total_liquidity_tokens.hasValue()),
+            Assert(self.a_balance.hasValue()),
+            Assert(self.b_balance.hasValue()),
         ])
 
     def calculate(self) -> Expr:
@@ -100,6 +103,20 @@ class MulDiv64:
         # TODO: Replace with actual calculation
         return self.multiplier1.load() * self.multiplier2.load() / self.divisor.load()
 
+    def get_transferred_value(self, incoming_txn: TxnObject) -> Expr:
+        """
+        Get transferred value from incoming transaction.
+        If the transaction type is asset transfer, then the returned expression
+        will fetch the asset amount, otherwise fetches the amount of transferred Algos.
+        Returns:
+            Expression which should evaluate to transferred value (either ASAs or Algos)
+        """
+        return If(
+            incoming_txn.type_enum() == TxnType.AssetTransfer,
+            incoming_txn.asset_amount(),
+            incoming_txn.amount(),
+        )
+
     def setup_liquidity_calculation(self) -> Expr:
         """
         Setup calculation for the amount of received liquidity tokens. (a/A * LT)
@@ -110,7 +127,7 @@ class MulDiv64:
                 self.total_liquidity_tokens.value() == Int(0), 
                 Return(Int(1))
             ),
-            self.multiplier1.store(Gtxn[2].asset_amount()),  # a
+            self.multiplier1.store(self.get_transferred_value(Gtxn[3])),  # a
             self.multiplier2.store(self.total_liquidity_tokens.value()),  # LT
             self.divisor.store(self.a_balance.value()),  # A
         ])
@@ -136,7 +153,7 @@ class MulDiv64:
         Setup calculation for swapping primary asset to secondary asset. (B/A * a)
         """
         return Seq([
-            self.multiplier1.store(Gtxn[1].asset_amount()),  # a
+            self.multiplier1.store(self.get_transferred_value(Gtxn[1])),  # a
             self.multiplier2.store(self.b_balance.value()),  # B
             self.divisor.store(self.a_balance.value()),  # A
         ])
@@ -146,7 +163,7 @@ class MulDiv64:
         Setup calculation for swapping secondary asset to primary asset. (A/B * b)
         """
         return Seq([
-            self.multiplier1.store(Gtxn[1].asset_amount()),  # b
+            self.multiplier1.store(self.get_transferred_value(Gtxn[1])),  # b
             self.multiplier2.store(self.a_balance.value()),  # A
             self.divisor.store(self.b_balance.value()),  # B
         ])
