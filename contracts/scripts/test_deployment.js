@@ -7,9 +7,13 @@ const { mkTransaction } = require('@algo-builder/runtime');
 const { makeLogicSig } = require('algosdk');
 const { TransactionType, SignType } = require('@algo-builder/runtime/build/types.js');
 
-const { ADD_LIQUIDITY, WITHDRAW_LIQUIDITY, WITHDRAW } = require('../common/constants.js');
-const deploy = require('./deploy.js');
-const { exec } = require('child_process');
+const {
+  ADD_LIQUIDITY,
+  WITHDRAW_LIQUIDITY,
+  WITHDRAW,
+  DEPOSIT_LIQUIDITY,
+  REMOVE_LIQUIDITY
+ } = require('../common/constants.js');
 
 const DEPLOYMENT_DIRECTORY = 'artifacts/deployed';
 const ALGOS_TO_ASA = 'ALGOS_TO_ASA';
@@ -162,6 +166,64 @@ function generateWithdrawGroup(params) {
   ];
 }
 
+function generateDepositLiquidityGroup(params) {
+  return [
+    {
+      type: TransactionType.CallNoOpSSC,
+      sign: SignType.SecretKey,
+      fromAccount: params.sender,
+      appId: params.mainAppID,
+      appArgs: [stringToBytes(DEPOSIT_LIQUIDITY)],
+      payFlags: {
+        totalFee: 1000
+      },
+    },
+    {
+      type: TransactionType.TransferAsset,
+      assetID: params.liquidityTokenID,
+      sign: SignType.SecretKey,
+      fromAccount: params.sender,
+      toAccountAddr: params.escrow.address(),
+      amount: params.amount,
+      payFlags: {
+        totalFee: 1000,
+      },
+    }
+  ];
+}
+
+function generateRemoveLiquidityGroup(params) {
+  return [
+    {
+      type: TransactionType.CallNoOpSSC,
+      sign: SignType.SecretKey,
+      fromAccount: params.sender,
+      appId: params.muldivAppID,
+      appArgs: [stringToBytes('a'), stringToBytes('1')],
+      foreignApps: [params.mainAppID],
+      payFlags: { totalFee: 1000 },
+    },
+    {
+      type: TransactionType.CallNoOpSSC,
+      sign: SignType.SecretKey,
+      fromAccount: params.sender,
+      appId: params.muldivAppID,
+      appArgs: [stringToBytes('b'), stringToBytes('2')],
+      foreignApps: [params.mainAppID],
+      payFlags: { totalFee: 1000 },
+    },
+    {
+      type: TransactionType.CallNoOpSSC,
+      sign: SignType.SecretKey,
+      fromAccount: params.sender,
+      appId: params.mainAppID,
+      appArgs: [stringToBytes(REMOVE_LIQUIDITY), `int:${params.amount}`],
+      foreignApps: [params.muldivAppID],
+      payFlags: { totalFee: 1000 },
+    }
+  ];
+}
+
 async function run (runtimeEnv, deployer) {
   if (!fs.existsSync(DEPLOYMENT_DIRECTORY)) {
     console.log(`Deployment directory doesn't exist "${DEPLOYMENT_DIRECTORY}"`);
@@ -183,16 +245,6 @@ async function run (runtimeEnv, deployer) {
   let escrow = makeLogicSig(Uint8Array.from(deployment['escrowLogic']));
 
   const masterAccount = deployer.accountsByName.get('master');
-  // console.log(
-  //   deployment['mainAppID'],
-  //   deployment['muldivAppID'],
-  //   escrow.address(),
-  //   deployment['secondaryAssetID'],
-  //   TRADE_SIZE,
-  //   TRADE_SIZE
-  // );
-  // opt-in to smart contract
-  // await deployer.optInToSSC(masterAccount, deployment['mainAppID'], { totalFee: 1001 }, {});
 
   console.log('Opting-in master account to main smart contract')
   try {
@@ -233,9 +285,24 @@ async function run (runtimeEnv, deployer) {
   params.primaryAmount = 0;
   params.secondaryAmount = 10; // withdraw the extra, unused tokens
   gtxn = generateWithdrawGroup(params);
-  console.log('Withdrawing extra tokens')
+  console.log('Withdrawing extra tokens');
   await executeTransaction(deployer, gtxn);
 
+  params.amount = TRADE_SIZE;
+  gtxn = generateDepositLiquidityGroup(params);
+  console.log('Depositing some liquidity tokens');
+  await executeTransaction(deployer, gtxn);
+
+  params.amount = TRADE_SIZE;
+  gtxn = generateRemoveLiquidityGroup(params);
+  console.log('Removing liquidity');
+  await executeTransaction(deployer, gtxn);
+
+  params.primaryAmount = TRADE_SIZE;
+  params.secondaryAmount = TRADE_SIZE;
+  gtxn = generateWithdrawGroup(params);
+  console.log('Withdrawing tokens removed from pool');
+  await executeTransaction(deployer, gtxn);
 }
 
 module.exports = { default: run };

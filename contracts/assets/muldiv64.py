@@ -174,7 +174,7 @@ class MulDiv64:
         """
         return Seq([
             # amount of liquidity to remove passed as an argument to main stateful contract
-            self.multiplier1.store(Gtxn[2].application_args[1]),  # lt
+            self.multiplier1.store(Btoi(Gtxn[2].application_args[1])),  # lt
             self.multiplier2.store(self.a_balance.value()),  # A
             self.divisor.store(self.total_liquidity_tokens.value()),  # LT
         ])
@@ -185,7 +185,7 @@ class MulDiv64:
         """
         return Seq([
             # amount of liquidity to remove passed as an argument to main stateful contract
-            self.multiplier1.store(Gtxn[2].application_args[1]),  # lt
+            self.multiplier1.store(Btoi(Gtxn[2].application_args[1])),  # lt
             self.multiplier2.store(self.b_balance.value()),  # B
             self.divisor.store(self.total_liquidity_tokens.value()),  # LT
         ])

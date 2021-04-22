@@ -22,7 +22,6 @@ class AlgosToAsaContract:
         self.muldiv_app_id = muldiv_app_id
         self.setup_globals()
         self.setup_locals()
-        self.setup_calculations()
 
     def setup_globals(self):
         self.total_liquidity_tokens = GlobalState("L")  # uint64
@@ -32,8 +31,8 @@ class AlgosToAsaContract:
         self.b_idx = GlobalState("Y")  # uint64
         self.liq_idx = GlobalState("Z")  # uint64
         # External globals
-        self.muldiv_result_1 = get_global_state_ex(1, "1")
-        self.muldiv_result_2 = get_global_state_ex(1, "2")
+        self.muldiv_result_1 = get_global_state_ex(1, "1")  # type: MaybeValue
+        self.muldiv_result_2 = get_global_state_ex(1, "2")  # type: MaybeValue
 
     def setup_locals(self):
         self.a_to_withdraw = LocalState("1")  # uint64
@@ -58,18 +57,6 @@ class AlgosToAsaContract:
 
     def get_tx_ratio(self) -> Expr:
         return self.tx_ratio.load(TealType.uint64)
-
-    def setup_calculations(self):
-        self.a_calc = (
-            self.a_balance.get()
-            * Btoi(Txn.application_args[1])
-            / self.total_liquidity_tokens.get()
-        )
-        self.b_calc = (
-            self.b_balance.get()
-            * Btoi(Txn.application_args[1])
-            / self.total_liquidity_tokens.get()
-        )
 
     def get_contract(self):
         return Cond(
@@ -201,7 +188,7 @@ class AlgosToAsaContract:
                         ),
                         self.b_balance.put(
                             self.b_balance.get()
-                            + Gtxn[4].asset_amount()
+                            + calculated_b.value()
                         ),
                         self.user_liquidity_tokens.put(
                             self.user_liquidity_tokens.get()
@@ -226,27 +213,39 @@ class AlgosToAsaContract:
         )
 
     def on_remove_liquidity(self):
+        a_calc = self.muldiv_result_1
+        b_calc = self.muldiv_result_2
         return Seq(
             [
                 Assert(
                     And(
-                        Global.group_size() == Int(1),
-                        self.user_liquidity_tokens.get()
-                        >= Btoi(Txn.application_args[1]),
-                        self.a_to_withdraw.get() == Int(0),
-                        self.b_to_withdraw.get() == Int(0),
+                        Global.group_size() == Int(3),
+                        # Validate muldiv calls
+                        self.validate_muldiv_call(Gtxn[0], "a", "1"),
+                        self.validate_muldiv_call(Gtxn[1], "b", "2"),
+                        # Check if user has enough balance
+                        self.user_liquidity_tokens.get() >= Btoi(Txn.application_args[1]),
                     )
                 ),
-                self.a_to_withdraw.put(self.a_calc),
-                self.b_to_withdraw.put(self.b_calc),
+                # eval foreign values
+                a_calc,
+                b_calc,
+                self.a_to_withdraw.put(
+                    self.a_to_withdraw.get()
+                    + a_calc.value()
+                ),
+                self.b_to_withdraw.put(
+                    self.b_to_withdraw.get()
+                    + b_calc.value()
+                ),
                 self.user_liquidity_tokens.put(
                     self.user_liquidity_tokens.get() - Btoi(Txn.application_args[1])
                 ),
                 self.total_liquidity_tokens.put(
                     self.total_liquidity_tokens.get() - Btoi(Txn.application_args[1])
                 ),
-                self.a_balance.put(self.a_balance.get() - self.a_to_withdraw.get()),
-                self.b_balance.put(self.b_balance.get() - self.b_to_withdraw.get()),
+                self.a_balance.put(self.a_balance.get() - a_calc.value()),
+                self.b_balance.put(self.b_balance.get() - b_calc.value()),
                 Return(Int(1)),
             ]
         )
@@ -256,6 +255,7 @@ class AlgosToAsaContract:
             [
                 Assert(
                     And(
+                        Global.group_size() == Int(3),
                         Gtxn[1].xfer_asset() == self.liq_idx.get(),
                         self.user_liquidity_tokens.get() >= Gtxn[1].asset_amount(),
                         Gtxn[1].sender() == self.escrow_addr.get(),
