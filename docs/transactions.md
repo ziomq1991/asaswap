@@ -84,7 +84,8 @@ Group size: 5
         args: [
             "L",
             "1"
-        ]
+        ],
+        foreignApps: [main_contract_id]
     }
     ```
 
@@ -94,7 +95,8 @@ Group size: 5
         args: [
             "M",
             "2"
-        ]
+        ],
+        foreignApps: [main_contract_id]
     }
     ```
 
@@ -103,7 +105,8 @@ Group size: 5
     {
         args: [
             "A"
-        ]
+        ],
+        foreignApps: [muldiv64_contract_id]
     }
     ```
 
@@ -122,7 +125,8 @@ Group size: 3
         args: [
             "a",
             "1"
-        ]
+        ],
+        foreignApps: [main_contract_id]
     }
     ```
 2. MulDiv64
@@ -131,7 +135,8 @@ Group size: 3
         args: [
             "b",
             "2"
-        ]
+        ],
+        foreignApps: [main_contract_id]
     }
     ```
 3. Main contract
@@ -140,7 +145,8 @@ Group size: 3
         args: [
             "R",
             `amount_to_remove`
-        ]
+        ],
+        foreignApps: [muldiv64_contract_id]
     }
     ```
 
@@ -152,7 +158,8 @@ Group size: 3
         args: [
             "SA",
             "1"
-        ]
+        ],
+        foreignApps: [main_contract_id]
     }
     ```
 2. Main contract
@@ -161,7 +168,8 @@ Group size: 3
         args: [
             "S",
             `min_amount` // the minimum amount of secondary token, that you want to receive - prevents slippage
-        ]
+        ],
+        foreignApps: [muldiv64_contract_id]
     }
     ```
 3. Transfer primary asset to escrow
@@ -174,7 +182,8 @@ Group size: 3
         args: [
             "SB",
             "1"
-        ]
+        ],
+        foreignApps: [main_contract_id]
     }
     ```
 2. Main contract
@@ -183,7 +192,8 @@ Group size: 3
         args: [
             "S",
             `min_amount` // the minimum amount of secondary token, that you want to receive - prevents slippage
-        ]
+        ],
+        foreignApps: [muldiv64_contract_id]
     }
     ```
 3. Transfer secondary asset to escrow
