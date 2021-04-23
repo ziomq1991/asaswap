@@ -10,7 +10,6 @@ class MulDiv64:
         self.total_liquidity_tokens = get_global_state_ex(1, "L")  # type: MaybeValue
         self.a_balance = get_global_state_ex(1, "A")  # type: MaybeValue
         self.b_balance = get_global_state_ex(1, "B")  # type: MaybeValue
-        self.guard_app_ID = GlobalState("G")
         self.multiplier1 = ScratchSlot()
         self.multiplier2 = ScratchSlot()
         self.divisor = ScratchSlot()
@@ -29,8 +28,8 @@ class MulDiv64:
         The performed calculations are described below:
         L: a/A * LT (calculate received amount of liquidity tokens when adding liquidity)
         M: lt'/LT * B (calculate necessary amount of b token when adding liquidity, lt' comes from "L" calculation)
-        SA: B/A * a (calculate the amount of secondary token when swapping primary token)
-        SB: A/B * b (calculate the amount of primary token when swapping secondary token)
+        SA: B/(A+a) * a (calculate the amount of secondary token when swapping primary token)
+        SB: A/(B+b) * b (calculate the amount of primary token when swapping secondary token)
         a: lt/LT * A (calculate the amount of primary token user should receive when removing liquidity)
         b: lt/LT * B (calculate the amount of secondary token user should receive when removing liquidity)
 
@@ -45,14 +44,15 @@ class MulDiv64:
         operation_mode = Txn.application_args[0]
         result_destination = Txn.application_args[1]
         return If(
-            Txn.application_id() != Int(0),
+            Txn.application_id() == Int(0),
+            Return(Int(1)), # The app is being created, nothing to be done
             Seq([ # The app is set up, run its primary function
-                # make sure that the guard is part of the TX group
                 Assert(
                     And(
                         Txn.on_completion() == OnComplete.NoOp,
                         Txn.rekey_to() == Global.zero_address(),
                         Txn.application_args.length() == Int(2),
+                        Txn.applications.length() == Int(1),  # Foreign applications count
                     )
                 ),
                 # make sure the stored result will be in either of these 2 slots
@@ -65,12 +65,12 @@ class MulDiv64:
                 self.initialize_external_globals(),
                 # setup calculations based on the 0th argument
                 Cond(
-                    [operation_mode == Bytes("L"), self.setup_liquidity_calculation()],
-                    [operation_mode == Bytes("M"), self.setup_required_b_calculation()],
+                    [operation_mode == Bytes("L"), self.setup_liquidity_calculation()], # may terminate execution
+                    [operation_mode == Bytes("M"), self.setup_required_b_calculation()], # may terminate execution
+                    [operation_mode == Bytes("a"), self.setup_liquidate_a_calculation()],
+                    [operation_mode == Bytes("b"), self.setup_liquidate_b_calculation()],
                     [operation_mode == Bytes("SA"), self.setup_swap_a_calculation()],
                     [operation_mode == Bytes("SB"), self.setup_swap_b_calculation()],
-                    [operation_mode == Bytes("a"), self.setup_liquidate_a_calculation()],
-                    [operation_mode == Bytes("b"), self.setup_liquidate_b_calculation()]
                 ),
                 # store the result in requested slot
                 App.globalPut(result_destination, self.calculate()),
@@ -85,11 +85,10 @@ class MulDiv64:
         https://pyteal.readthedocs.io/en/stable/state.html#external-global
         """
         return Seq([
-            # evaluate external state so that it can be used
+            # evaluate external state so that they can be used
             self.total_liquidity_tokens,
             self.a_balance,
             self.b_balance,
-            # make sure the global state vars are available
             Assert(self.total_liquidity_tokens.hasValue()),
             Assert(self.a_balance.hasValue()),
             Assert(self.b_balance.hasValue()),
@@ -104,12 +103,31 @@ class MulDiv64:
         # TODO: Replace with actual calculation
         return self.multiplier1.load() * self.multiplier2.load() / self.divisor.load()
 
+    def get_transferred_value(self, incoming_txn: TxnObject) -> Expr:
+        """
+        Get transferred value from incoming transaction.
+        If the transaction type is asset transfer, then the returned expression
+        will fetch the asset amount, otherwise fetches the amount of transferred Algos.
+        Returns:
+            Expression which should evaluate to transferred value (either ASAs or Algos)
+        """
+        return If(
+            incoming_txn.type_enum() == TxnType.AssetTransfer,
+            incoming_txn.asset_amount(),
+            incoming_txn.amount(),
+        )
+
     def setup_liquidity_calculation(self) -> Expr:
         """
         Setup calculation for the amount of received liquidity tokens. (a/A * LT)
         """
         return Seq([
-            self.multiplier1.store(Gtxn[2].asset_amount()),  # a
+            # return when there aren't any tokens (it's the first liquidity provision)
+            If(
+                self.total_liquidity_tokens.value() == Int(0), 
+                Return(Int(1))
+            ),
+            self.multiplier1.store(self.get_transferred_value(Gtxn[3])),  # a
             self.multiplier2.store(self.total_liquidity_tokens.value()),  # LT
             self.divisor.store(self.a_balance.value()),  # A
         ])
@@ -119,6 +137,11 @@ class MulDiv64:
         Setup calculation for the amount of required secondary tokens for adding liquidity. (lt'/LT * B)
         """
         return Seq([
+            # return when there aren't any tokens (it's the first liquidity provision)
+            If(
+                self.total_liquidity_tokens.value() == Int(0), 
+                Return(Int(1))
+            ),
             # lt' should be calculated in the previous execution of this contract
             self.multiplier1.store(App.globalGet(Bytes("1"))),  # lt'
             self.multiplier2.store(self.b_balance.value()),  # B
@@ -127,22 +150,26 @@ class MulDiv64:
 
     def setup_swap_a_calculation(self) -> Expr:
         """
-        Setup calculation for swapping primary asset to secondary asset. (B/A * a)
+        Setup calculation for swapping primary asset to secondary asset. (B/(A+a) * a)
         """
+        transferred_amount = ScratchSlot()
         return Seq([
-            self.multiplier1.store(Gtxn[1].asset_amount()),  # a
+            transferred_amount.store(self.get_transferred_value(Gtxn[2])),
+            self.multiplier1.store(transferred_amount.load()),  # a
             self.multiplier2.store(self.b_balance.value()),  # B
-            self.divisor.store(self.a_balance.value()),  # A
+            self.divisor.store(self.a_balance.value() + transferred_amount.load()),  # A + a
         ])
 
     def setup_swap_b_calculation(self) -> Expr:
         """
-        Setup calculation for swapping secondary asset to primary asset. (A/B * b)
+        Setup calculation for swapping secondary asset to primary asset. (A/(B+b) * b)
         """
+        transferred_amount = ScratchSlot()
         return Seq([
-            self.multiplier1.store(Gtxn[1].asset_amount()),  # b
+            transferred_amount.store(self.get_transferred_value(Gtxn[2])),
+            self.multiplier1.store(transferred_amount.load()),  # b
             self.multiplier2.store(self.a_balance.value()),  # A
-            self.divisor.store(self.b_balance.value()),  # B
+            self.divisor.store(self.b_balance.value() + transferred_amount.load()),  # B + b
         ])
         
     def setup_liquidate_a_calculation(self) -> Expr:
@@ -151,7 +178,7 @@ class MulDiv64:
         """
         return Seq([
             # amount of liquidity to remove passed as an argument to main stateful contract
-            self.multiplier1.store(Gtxn[2].application_args[1]),  # lt
+            self.multiplier1.store(Btoi(Gtxn[2].application_args[1])),  # lt
             self.multiplier2.store(self.a_balance.value()),  # A
             self.divisor.store(self.total_liquidity_tokens.value()),  # LT
         ])
@@ -162,10 +189,10 @@ class MulDiv64:
         """
         return Seq([
             # amount of liquidity to remove passed as an argument to main stateful contract
-            self.multiplier1.store(Gtxn[2].application_args[1]),  # lt
+            self.multiplier1.store(Btoi(Gtxn[2].application_args[1])),  # lt
             self.multiplier2.store(self.b_balance.value()),  # B
             self.divisor.store(self.total_liquidity_tokens.value()),  # LT
         ])
 
 if __name__ == "__main__":
-    print(compileTeal(MulDiv64().get_contract(), Mode.Application))
+    print(compileTeal(MulDiv64().get_contract(), Mode.Application, version=3))
