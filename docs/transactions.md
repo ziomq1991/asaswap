@@ -166,7 +166,7 @@ Group size: 3
     ```javascript
     {
         args: [
-            "S",
+            "SA",
             `min_amount` // the minimum amount of secondary token, that you want to receive - prevents slippage
         ],
         foreignApps: [muldiv64_contract_id]
@@ -190,7 +190,7 @@ Group size: 3
     ```javascript
     {
         args: [
-            "S",
+            "SB",
             `min_amount` // the minimum amount of secondary token, that you want to receive - prevents slippage
         ],
         foreignApps: [muldiv64_contract_id]

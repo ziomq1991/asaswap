@@ -1,5 +1,6 @@
 import sys
 from enum import Enum
+from typing import Union
 
 # pylint: disable=unused-wildcard-import
 from pyteal import *
@@ -15,9 +16,8 @@ class ExchangeType:
 
 
 class AlgosToAsaContract:
-    def __init__(self, ratio_decimal_points: int, fee_pct: int, muldiv_app_id: int):
-        self.ratio_decimal_points = ratio_decimal_points
-        self.fee_pct = fee_pct
+    def __init__(self, fee_bps: int, muldiv_app_id: int):
+        self.fee_divisor = 10000 // fee_bps
         self.type = type
         self.muldiv_app_id = muldiv_app_id
         self.setup_globals()
@@ -38,25 +38,6 @@ class AlgosToAsaContract:
         self.a_to_withdraw = LocalState("1")  # uint64
         self.b_to_withdraw = LocalState("2")  # uint64
         self.user_liquidity_tokens = LocalState("3")  # uint64
-
-    def get_exchange_rate(self, inline=False) -> Expr:
-        assert(inline)
-        return (
-            self.a_balance.get()
-            * Int(self.ratio_decimal_points)
-            / self.b_balance.get()
-        )
-
-    def calculate_tx_ratio(self) -> Expr:
-        self.tx_ratio = ScratchSlot()
-        return self.tx_ratio.store(
-            self.get_incoming_amount_for_primary_asset(Gtxn[2])
-            * Int(self.ratio_decimal_points)
-            / Gtxn[1].asset_amount()
-        )
-
-    def get_tx_ratio(self) -> Expr:
-        return self.tx_ratio.load(TealType.uint64)
 
     def get_contract(self):
         return Cond(
@@ -275,7 +256,6 @@ class AlgosToAsaContract:
                 Assert(
                     And(
                         Global.group_size() == Int(2),
-                        Gtxn[0].type_enum() == TxnType.ApplicationCall,
                         Gtxn[1].type_enum() == TxnType.AssetTransfer,
                         Gtxn[1].xfer_asset() == self.liq_idx.get(),
                         Gtxn[1].asset_receiver() == self.escrow_addr.get(),
@@ -289,77 +269,78 @@ class AlgosToAsaContract:
         )
 
     def on_swap(self):
-        return Seq(
-            [
-                Assert(
-                    And(
-                        Global.group_size() == Int(2),
-                        Gtxn[0].type_enum() == TxnType.ApplicationCall,
-                        self.a_to_withdraw.get() == Int(0),
-                        self.b_to_withdraw.get() == Int(0),
+        # how much secondary token user shall receive after the swap
+        received_amount = self.muldiv_result_1
+        expected_minimum = Btoi(Txn.application_args[1])
+        received_after_fee = ScratchSlot()
+        expected_muldiv_mode = ScratchSlot()
+        return Seq([
+            # eval foreign value
+            received_amount,
+            # check expected mode
+            If(
+                And(
+                    Gtxn[2].type_enum() == TxnType.AssetTransfer,
+                    Gtxn[2].xfer_asset() == self.b_idx.get(),
+                    Gtxn[2].asset_receiver() == self.escrow_addr.get(),
+                ),
+                expected_muldiv_mode.store(Bytes("SB")),
+                expected_muldiv_mode.store(Bytes("SA"))
+            ),
+            # common assertions
+            Assert(
+                And(
+                    Global.group_size() == Int(3),
+                    Txn.rekey_to() == Global.zero_address(),
+                    self.a_to_withdraw.get() == Int(0),
+                    self.b_to_withdraw.get() == Int(0),
+                    # validate muldiv call
+                    self.validate_muldiv_call(Gtxn[0], expected_muldiv_mode.load(), "1"),
+                    received_amount.hasValue(),
+                )
+            ),
+            received_after_fee.store(
+                received_amount.value()
+                - (
+                    received_amount.value()
+                    / Int(self.fee_divisor)
+                )
+            ),
+            # make sure the user receives at least the expected amount
+            # The substraction will cause panic when expected_minimum > received_amount
+            # This is to make it easier to tell what happened when contract executes
+            Pop(received_after_fee.load() - expected_minimum),
+            If (
+                expected_muldiv_mode.load() == Bytes("SB"),
+                # swap secondary asset
+                Seq([
+                    # no need to asset if Gtxn[2] transfers secondary asset
+                    self.a_to_withdraw.put(received_after_fee.load()),
+                    self.a_balance.put(
+                        self.a_balance.get()
+                        - received_after_fee.load()
+                    ),
+                    self.b_balance.put(
+                        self.b_balance.get()
+                        + Gtxn[2].asset_amount()
                     )
-                ),
-                Cond(
-                    [
-                        And(
-                            Gtxn[1].type_enum() == TxnType.AssetTransfer,
-                            Gtxn[1].xfer_asset() == self.b_idx.get(),
-                        ),
-                        Seq(
-                            [
-                                Assert(
-                                    Gtxn[1].asset_receiver() == self.escrow_addr.get(),
-                                ),
-                                self.b_balance.put(
-                                    self.b_balance.get() + Gtxn[1].asset_amount()
-                                ),
-                                self.a_to_withdraw.put(
-                                    # Same as (exchange_rate * asset_amount * ((100 - fee_pct)/100)) / ratio_decimal_points
-                                    (
-                                        self.get_exchange_rate(inline=True)
-                                        * Gtxn[1].asset_amount()
-                                        * Int(100 - self.fee_pct)
-                                    )
-                                    / Int(self.ratio_decimal_points)
-                                    / Int(100)
-                                ),
-                                self.a_balance.put(
-                                    self.a_balance.get() - self.a_to_withdraw.get()
-                                ),
-                            ]
-                        ),
-                    ],
-                    [
-                        self.validate_incoming_tx_for_primary_asset(Gtxn[1]),
-                        Seq(
-                            [
-                                self.a_balance.put(
-                                    self.a_balance.get()
-                                    + self.get_incoming_amount_for_primary_asset(
-                                        Gtxn[1]
-                                    )
-                                ),
-                                self.b_to_withdraw.put(
-                                    (
-                                        self.get_incoming_amount_for_primary_asset(
-                                            Gtxn[1]
-                                        )
-                                        * Int(100 - self.fee_pct)
-                                    )
-                                    * Int(self.ratio_decimal_points)
-                                    / Int(100)
-                                    / self.get_exchange_rate(inline=True)
-                                ),
-                                self.b_balance.put(
-                                    self.b_balance.get() - self.b_to_withdraw.get()
-                                ),
-                            ]
-                        ),
-                    ],
-                ),
-                Return(Int(1)),
-            ]
-        )
+                ]),
+                # swap primary asset
+                Seq([
+                    Assert(self.validate_incoming_tx_for_primary_asset(Gtxn[2])),
+                    self.b_to_withdraw.put(received_after_fee.load()),
+                    self.b_balance.put(
+                        self.b_balance.get()
+                        - received_after_fee.load()
+                    ),
+                    self.a_balance.put(
+                        self.a_balance.get()
+                        + self.get_incoming_amount_for_primary_asset(Gtxn[2])
+                    )
+                ])
+            ),
+            Return(Int(1))
+        ])
 
     def on_withdraw(self):
         return Seq(
@@ -388,11 +369,20 @@ class AlgosToAsaContract:
             tx.sender() == self.escrow_addr.get(),
         )
 
-    def validate_muldiv_call(self, tx: TxnObject, expected_mode: str, expected_dest: str) -> Expr:
+    def validate_muldiv_call(
+        self, 
+        tx: TxnObject, 
+        expected_mode: Union[str, Expr], 
+        expected_dest: Union[str, Expr]
+    ) -> Expr:
+        if isinstance(expected_mode, str):
+            expected_mode = Bytes(expected_mode)
+        if isinstance(expected_dest, str):
+            expected_dest = Bytes(expected_dest)
         return And(
             # check if correct parameters were passed to muldiv
-            tx.application_args[0] == Bytes(expected_mode),
-            tx.application_args[1] == Bytes(expected_dest),
+            tx.application_args[0] == expected_mode,
+            tx.application_args[1] == expected_dest,
             tx.type_enum() == TxnType.ApplicationCall,
             # check if the muldiv contract was actually called
             tx.application_id() == Int(self.muldiv_app_id),
@@ -418,8 +408,8 @@ class AlgosToAsaContract:
 
 
 class AsaToAsaContract(AlgosToAsaContract):
-    def __init__(self, ratio_decimal_points: int, fee_pct: int, muldiv_app_id: int):
-        super().__init__(ratio_decimal_points, fee_pct, muldiv_app_id)
+    def __init__(self, fee_bps: int, muldiv_app_id: int):
+        super().__init__(fee_bps, muldiv_app_id)
         self.a_idx = GlobalState("X")  # uint64
 
     def get_incoming_amount_for_primary_asset(self, tx) -> Expr:
@@ -458,8 +448,7 @@ class AsaToAsaContract(AlgosToAsaContract):
 
 if __name__ == "__main__":
     params = {
-        "ratio_decimal_points": 1000000,
-        "fee_pct": 3,
+        "fee_bps": 30,
         "type": ExchangeType.ALGOS_TO_ASA,
         "muldiv_app_id": 10
     }
@@ -469,15 +458,19 @@ if __name__ == "__main__":
         params = parse_args(sys.argv[1], params)
         # perform validation of arguments
         if params["type"] != ExchangeType.ASA_TO_ASA and params["type"] != ExchangeType.ALGOS_TO_ASA:
-            raise ValueError(f"Contract 'type' must be either '{ExchangeType.ASA_TO_ASA}' or '{ExchangeType.ALGOS_TO_ASA}'")
-        # TODO: validate fee_pct (fee_bps)
+            raise ValueError(
+                f"Contract 'type' must be either '{ExchangeType.ASA_TO_ASA}' or '{ExchangeType.ALGOS_TO_ASA}'"
+            )
+        if params["fee_bps"] > 1000 or params["fee_bps"] < 1:
+            raise ValueError(
+                f"Fee must be in range 1-1000 BPS"
+            )
 
     if params["type"] == ExchangeType.ALGOS_TO_ASA:
         print(
             compileTeal(
                 AlgosToAsaContract(
-                    int(params["ratio_decimal_points"]),
-                    int(params["fee_pct"]),
+                    int(params["fee_bps"]),
                     int(params["muldiv_app_id"]),
                 ).get_contract(),
                 Mode.Application,
@@ -488,8 +481,7 @@ if __name__ == "__main__":
         print(
             compileTeal(
                 AsaToAsaContract(
-                    int(params["ratio_decimal_points"]),
-                    int(params["fee_pct"]),
+                    int(params["fee_bps"]),
                     int(params["muldiv_app_id"]),
                 ).get_contract(),
                 Mode.Application,
