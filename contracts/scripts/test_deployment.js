@@ -3,7 +3,6 @@
 // The script will execute a few small trades to check if all aspects of the contract are working
 const fs = require('fs');
 const { stringToBytes, executeTransaction, mkTxParams } = require('@algo-builder/algob');
-const { mkTransaction } = require('@algo-builder/runtime');
 const { makeLogicSig } = require('algosdk');
 const { TransactionType, SignType } = require('@algo-builder/runtime/build/types.js');
 
@@ -12,7 +11,8 @@ const {
   WITHDRAW_LIQUIDITY,
   WITHDRAW,
   DEPOSIT_LIQUIDITY,
-  REMOVE_LIQUIDITY
+  REMOVE_LIQUIDITY,
+  SWAP
  } = require('../common/constants.js');
 
 const DEPLOYMENT_DIRECTORY = 'artifacts/deployed';
@@ -37,7 +37,7 @@ function generateAddLiquidityGroup(params) {
       sign: SignType.SecretKey,
       fromAccount: params.sender,
       appId: params.muldivAppID,
-      appArgs: [stringToBytes('L'), stringToBytes('1')],
+      appArgs: [stringToBytes('X'), stringToBytes('1')],
       foreignApps: [params.mainAppID],
       payFlags: { totalFee: 1000 },
     },
@@ -46,7 +46,7 @@ function generateAddLiquidityGroup(params) {
       sign: SignType.SecretKey,
       fromAccount: params.sender,
       appId: params.muldivAppID,
-      appArgs: [stringToBytes('M'), stringToBytes('2')],
+      appArgs: [stringToBytes('Y'), stringToBytes('2')],
       foreignApps: [params.mainAppID],
       payFlags: { totalFee: 1000 },
     },
@@ -199,7 +199,7 @@ function generateRemoveLiquidityGroup(params) {
       sign: SignType.SecretKey,
       fromAccount: params.sender,
       appId: params.muldivAppID,
-      appArgs: [stringToBytes('a'), stringToBytes('1')],
+      appArgs: [stringToBytes('A'), stringToBytes('1')],
       foreignApps: [params.mainAppID],
       payFlags: { totalFee: 1000 },
     },
@@ -208,7 +208,7 @@ function generateRemoveLiquidityGroup(params) {
       sign: SignType.SecretKey,
       fromAccount: params.sender,
       appId: params.muldivAppID,
-      appArgs: [stringToBytes('b'), stringToBytes('2')],
+      appArgs: [stringToBytes('B'), stringToBytes('2')],
       foreignApps: [params.mainAppID],
       payFlags: { totalFee: 1000 },
     },
@@ -220,6 +220,73 @@ function generateRemoveLiquidityGroup(params) {
       appArgs: [stringToBytes(REMOVE_LIQUIDITY), `int:${params.amount}`],
       foreignApps: [params.muldivAppID],
       payFlags: { totalFee: 1000 },
+    }
+  ];
+}
+
+function generateSwapPrimaryAssetGroup(params) {
+  return [
+    {
+      type: TransactionType.CallNoOpSSC,
+      sign: SignType.SecretKey,
+      fromAccount: params.sender,
+      appId: params.muldivAppID,
+      appArgs: [stringToBytes('1'), stringToBytes('1')],
+      foreignApps: [params.mainAppID],
+      payFlags: { totalFee: 1000 },
+    },
+    {
+      type: TransactionType.CallNoOpSSC,
+      sign: SignType.SecretKey,
+      fromAccount: params.sender,
+      appId: params.mainAppID,
+      appArgs: [stringToBytes(SWAP), `int:${params.minimumExpected}`],
+      foreignApps: [params.muldivAppID],
+      payFlags: { totalFee: 1000 },
+    },
+    {
+      type: TransactionType.TransferAlgo,
+      sign: SignType.SecretKey,
+      fromAccount: params.sender,
+      toAccountAddr: params.escrow.address(),
+      amountMicroAlgos: params.amount,
+      payFlags: {
+        totalFee: 1000,
+      },
+    }
+  ];
+}
+
+function generateSwapSecondaryAssetGroup(params) {
+  return [
+    {
+      type: TransactionType.CallNoOpSSC,
+      sign: SignType.SecretKey,
+      fromAccount: params.sender,
+      appId: params.muldivAppID,
+      appArgs: [stringToBytes('2'), stringToBytes('1')],
+      foreignApps: [params.mainAppID],
+      payFlags: { totalFee: 1000 },
+    },
+    {
+      type: TransactionType.CallNoOpSSC,
+      sign: SignType.SecretKey,
+      fromAccount: params.sender,
+      appId: params.mainAppID,
+      appArgs: [stringToBytes(SWAP), `int:${params.minimumExpected}`],
+      foreignApps: [params.muldivAppID],
+      payFlags: { totalFee: 1000 },
+    },
+    {
+      type: TransactionType.TransferAsset,
+      assetID: params.secondaryAssetID,
+      sign: SignType.SecretKey,
+      fromAccount: params.sender,
+      toAccountAddr: params.escrow.address(),
+      amount: params.amount,
+      payFlags: {
+        totalFee: 1000,
+      },
     }
   ];
 }
@@ -302,6 +369,18 @@ async function run (runtimeEnv, deployer) {
   params.secondaryAmount = TRADE_SIZE;
   gtxn = generateWithdrawGroup(params);
   console.log('Withdrawing tokens removed from pool');
+  await executeTransaction(deployer, gtxn);
+
+  params.amount = 10;
+  params.minimumExpected = 9;
+  gtxn = generateSwapPrimaryAssetGroup(params)
+  console.log('Swapping primary asset');
+  await executeTransaction(deployer, gtxn);
+
+  params.amount = 10;
+  params.minimumExpected = 9;
+  gtxn = generateSwapSecondaryAssetGroup(params)
+  console.log('Swapping secondary asset');
   await executeTransaction(deployer, gtxn);
 }
 

@@ -318,6 +318,7 @@ async function run (runtimeEnv, deployer) {
         payFlags: { totalFee: totalFee }
       }
     );
+    console.log('Saving deployment');
     saveDeployment(specName, spec, liquidityTokenID, mainID, escrowAccount);
   } // for
 } // run

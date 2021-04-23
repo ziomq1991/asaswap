@@ -47,13 +47,16 @@ class AlgosToAsaContract:
             [Txn.on_completion() == OnComplete.CloseOut, self.on_closeout()],
             [Txn.on_completion() != OnComplete.NoOp, Err()], # disallow any other on-complete options
             [Txn.application_args[0] == Bytes("U"), self.on_update()],
-            [Txn.application_args[0] == Bytes("A"), self.on_add_liquidity()],
-            [Txn.application_args[0] == Bytes("R"), self.on_remove_liquidity()],
-            [Txn.application_args[0] == Bytes("1"), self.on_swap()],
             [Txn.application_args[0] == Bytes("W"), self.on_withdraw()],
             [Txn.application_args[0] == Bytes("E"), self.setup_escrow()],
             [Txn.application_args[0] == Bytes("X"), self.on_withdraw_liquidity()],
             [Txn.application_args[0] == Bytes("Y"), self.on_deposit_liquidity()],
+            # calls that use values from muldiv smart contract
+            # This check prevents using external values from anything but muldiv_contract
+            [Txn.applications[1] != Int(self.muldiv_app_id), Err()],
+            [Txn.application_args[0] == Bytes("A"), self.on_add_liquidity()],
+            [Txn.application_args[0] == Bytes("R"), self.on_remove_liquidity()],
+            [Txn.application_args[0] == Bytes("1"), self.on_swap()],
         )
 
     def get_incoming_amount_for_primary_asset(self, tx) -> Expr:
@@ -123,9 +126,6 @@ class AlgosToAsaContract:
                         # validate muldiv operations
                         self.validate_muldiv_call(Gtxn[0], "X", "1"),
                         self.validate_muldiv_call(Gtxn[1], "Y", "2"),
-                        # verify that muldiv contract was supplied as foreign app
-                        # so foreign globals come from the right place
-                        Txn.applications[1] == Int(self.muldiv_app_id),
                         # verify primary asset transfer
                         self.validate_incoming_tx_for_primary_asset(Gtxn[3]),
                         # verify secondary asset transfer
@@ -152,14 +152,8 @@ class AlgosToAsaContract:
                         # eval foreign values
                         calculated_b, 
                         calculated_lt,
-                        Assert(
-                            And(
-                                calculated_b.hasValue(),
-                                calculated_lt.hasValue(),
-                                # make sure that user provided enough secondary tokens, adequate to current exchange rate
-                                calculated_b.value() <= Gtxn[4].asset_amount()
-                            )
-                        ),
+                        # make sure that user provided enough secondary tokens, adequate to current exchange rate
+                        Assert(calculated_b.value() <= Gtxn[4].asset_amount()),
                         self.a_balance.put(
                             self.a_balance.get()
                             + self.get_incoming_amount_for_primary_asset(Gtxn[3])
@@ -274,7 +268,7 @@ class AlgosToAsaContract:
         return Seq([
             # eval foreign value
             received_amount,
-            # load expected mode
+            # set expected mode
             If(
                 And(
                     Gtxn[2].type_enum() == TxnType.AssetTransfer,
@@ -288,11 +282,8 @@ class AlgosToAsaContract:
             Assert(
                 And(
                     Global.group_size() == Int(3),
-                    self.a_to_withdraw.get() == Int(0),
-                    self.b_to_withdraw.get() == Int(0),
                     # validate muldiv call
                     self.validate_muldiv_call(Gtxn[0], expected_muldiv_mode.load(), "1"),
-                    received_amount.hasValue(),
                 )
             ),
             received_after_fee.store(
@@ -311,7 +302,9 @@ class AlgosToAsaContract:
                 # swap secondary asset
                 Seq([
                     # no need to asset if Gtxn[2] transfers secondary asset
-                    self.a_to_withdraw.put(received_after_fee.load()),
+                    self.a_to_withdraw.put(
+                        self.a_to_withdraw.get()
+                        + received_after_fee.load()),
                     self.a_balance.put(
                         self.a_balance.get()
                         - received_after_fee.load()
@@ -324,7 +317,10 @@ class AlgosToAsaContract:
                 # swap primary asset
                 Seq([
                     Assert(self.validate_incoming_tx_for_primary_asset(Gtxn[2])),
-                    self.b_to_withdraw.put(received_after_fee.load()),
+                    self.b_to_withdraw.put(
+                        self.b_to_withdraw.get()
+                        + received_after_fee.load()
+                    ),
                     self.b_balance.put(
                         self.b_balance.get()
                         - received_after_fee.load()

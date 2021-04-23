@@ -17,12 +17,12 @@ Arguments which are passed as Arg[0]:
 
 ## Description of MulDiv64 arguments
 Arg[0] - operation:
-- `L`: a/A * LT (calculate received amount of liquidity tokens when adding liquidity)
-- `M`: lt'/LT * B (calculate necessary amount of b token when adding liquidity, `lt'` comes from `L` calculation)
+- `X`: a/A * LT (calculate received amount of liquidity tokens when adding liquidity)
+- `Y`: lt'/LT * B (calculate necessary amount of b token when adding liquidity, `lt'` comes from `L` calculation)
 - `1`: B/(A+a) * a (calculate the amount of secondary token when swapping primary token)
 - `2`: A/(B+b) * b (calculate the amount of primary token when swapping secondary token)
-- `a`: lt/LT * A (calculate the amount of primary token user should receive when removing liquidity)
-- `b`: lt/LT * B (calculate the amount of secondary token user should receive when removing liquidity)
+- `A`: lt/LT * A (calculate the amount of primary token user should receive when removing liquidity)
+- `B`: lt/LT * B (calculate the amount of secondary token user should receive when removing liquidity)
 
 Arg[1] - destination for calculation:
 - `1`: The result will be stored in global schema with key "1"
@@ -82,7 +82,7 @@ Group size: 5
     ```javascript
     {
         args: [
-            "L",
+            "X",
             "1"
         ],
         foreignApps: [main_contract_id]
@@ -93,7 +93,7 @@ Group size: 5
     ```javascript
     {
         args: [
-            "M",
+            "Y",
             "2"
         ],
         foreignApps: [main_contract_id]
@@ -123,7 +123,7 @@ Group size: 3
     ```javascript
     {
         args: [
-            "a",
+            "A",
             "1"
         ],
         foreignApps: [main_contract_id]
@@ -133,7 +133,7 @@ Group size: 3
     ```javascript
     {
         args: [
-            "b",
+            "B",
             "2"
         ],
         foreignApps: [main_contract_id]
