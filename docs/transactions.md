@@ -19,8 +19,8 @@ Arguments which are passed as Arg[0]:
 Arg[0] - operation:
 - `L`: a/A * LT (calculate received amount of liquidity tokens when adding liquidity)
 - `M`: lt'/LT * B (calculate necessary amount of b token when adding liquidity, `lt'` comes from `L` calculation)
-- `SA`: B/A * a (calculate the amount of secondary token when swapping primary token)
-- `SB`: A/B * b (calculate the amount of primary token when swapping secondary token)
+- `1`: B/(A+a) * a (calculate the amount of secondary token when swapping primary token)
+- `2`: A/(B+b) * b (calculate the amount of primary token when swapping secondary token)
 - `a`: lt/LT * A (calculate the amount of primary token user should receive when removing liquidity)
 - `b`: lt/LT * B (calculate the amount of secondary token user should receive when removing liquidity)
 
@@ -156,7 +156,7 @@ Group size: 3
     ```javascript
     {
         args: [
-            "SA",
+            "1",
             "1"
         ],
         foreignApps: [main_contract_id]
@@ -166,7 +166,7 @@ Group size: 3
     ```javascript
     {
         args: [
-            "SA",
+            "1",
             `min_amount` // the minimum amount of secondary token, that you want to receive - prevents slippage
         ],
         foreignApps: [muldiv64_contract_id]
@@ -180,7 +180,7 @@ Group size: 3
     ```javascript
     {
         args: [
-            "SB",
+            "2",
             "1"
         ],
         foreignApps: [main_contract_id]
@@ -190,7 +190,7 @@ Group size: 3
     ```javascript
     {
         args: [
-            "SB",
+            "1",
             `min_amount` // the minimum amount of secondary token, that you want to receive - prevents slippage
         ],
         foreignApps: [muldiv64_contract_id]

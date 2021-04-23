@@ -11,7 +11,7 @@ const USR_A_BAL = '1';
 const USR_B_BAL = '2';
 const USR_LIQ_TOKENS = '3';
 
-const SWAP = 'S';
+const SWAP = '1';
 const WITHDRAW = 'W';
 const SETUP_ESCROW = 'E';
 const WITHDRAW_LIQUIDITY = 'X';

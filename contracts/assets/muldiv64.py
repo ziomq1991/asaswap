@@ -28,8 +28,8 @@ class MulDiv64:
         The performed calculations are described below:
         L: a/A * LT (calculate received amount of liquidity tokens when adding liquidity)
         M: lt'/LT * B (calculate necessary amount of b token when adding liquidity, lt' comes from "L" calculation)
-        SA: B/(A+a) * a (calculate the amount of secondary token when swapping primary token)
-        SB: A/(B+b) * b (calculate the amount of primary token when swapping secondary token)
+        1: B/(A+a) * a (calculate the amount of secondary token when swapping primary token)
+        2: A/(B+b) * b (calculate the amount of primary token when swapping secondary token)
         a: lt/LT * A (calculate the amount of primary token user should receive when removing liquidity)
         b: lt/LT * B (calculate the amount of secondary token user should receive when removing liquidity)
 
@@ -69,8 +69,8 @@ class MulDiv64:
                     [operation_mode == Bytes("M"), self.setup_required_b_calculation()], # may terminate execution
                     [operation_mode == Bytes("a"), self.setup_liquidate_a_calculation()],
                     [operation_mode == Bytes("b"), self.setup_liquidate_b_calculation()],
-                    [operation_mode == Bytes("SA"), self.setup_swap_a_calculation()],
-                    [operation_mode == Bytes("SB"), self.setup_swap_b_calculation()],
+                    [operation_mode == Bytes("1"), self.setup_swap_a_calculation()],
+                    [operation_mode == Bytes("2"), self.setup_swap_b_calculation()],
                 ),
                 # store the result in requested slot
                 App.globalPut(result_destination, self.calculate()),

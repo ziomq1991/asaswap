@@ -29,7 +29,7 @@ class AlgosToAsaContract:
         self.b_balance = GlobalState("B")  # uint64
         self.escrow_addr = GlobalState("E")  # bytes
         self.b_idx = GlobalState("Y")  # uint64
-        self.liq_idx = GlobalState("Z")  # uint64
+        self.liq_idx = GlobalState("U")  # uint64
         # External globals
         self.muldiv_result_1 = get_global_state_ex(1, "1")  # type: MaybeValue
         self.muldiv_result_2 = get_global_state_ex(1, "2")  # type: MaybeValue
@@ -37,7 +37,7 @@ class AlgosToAsaContract:
     def setup_locals(self):
         self.a_to_withdraw = LocalState("1")  # uint64
         self.b_to_withdraw = LocalState("2")  # uint64
-        self.user_liquidity_tokens = LocalState("3")  # uint64
+        self.user_liquidity_tokens = LocalState("L")  # uint64
 
     def get_contract(self):
         return Cond(
@@ -49,7 +49,7 @@ class AlgosToAsaContract:
             [Txn.application_args[0] == Bytes("U"), self.on_update()],
             [Txn.application_args[0] == Bytes("A"), self.on_add_liquidity()],
             [Txn.application_args[0] == Bytes("R"), self.on_remove_liquidity()],
-            [Txn.application_args[0] == Bytes("S"), self.on_swap()],
+            [Txn.application_args[0] == Bytes("1"), self.on_swap()],
             [Txn.application_args[0] == Bytes("W"), self.on_withdraw()],
             [Txn.application_args[0] == Bytes("E"), self.setup_escrow()],
             [Txn.application_args[0] == Bytes("X"), self.on_withdraw_liquidity()],
@@ -70,9 +70,6 @@ class AlgosToAsaContract:
             [
                 self.b_idx.put(Btoi(Txn.application_args[0])),
                 self.liq_idx.put(Btoi(Txn.application_args[1])),
-                self.b_balance.put(Int(0)),
-                self.a_balance.put(Int(0)),
-                self.total_liquidity_tokens.put(Int(0)),
                 Return(Int(1)),
             ]
         )
@@ -124,8 +121,8 @@ class AlgosToAsaContract:
                     And(
                         Global.group_size() == Int(5),
                         # validate muldiv operations
-                        self.validate_muldiv_call(Gtxn[0], "L", "1"),
-                        self.validate_muldiv_call(Gtxn[1], "M", "2"),
+                        self.validate_muldiv_call(Gtxn[0], "X", "1"),
+                        self.validate_muldiv_call(Gtxn[1], "Y", "2"),
                         # verify that muldiv contract was supplied as foreign app
                         # so foreign globals come from the right place
                         Txn.applications[1] == Int(self.muldiv_app_id),
@@ -202,8 +199,8 @@ class AlgosToAsaContract:
                     And(
                         Global.group_size() == Int(3),
                         # Validate muldiv calls
-                        self.validate_muldiv_call(Gtxn[0], "a", "1"),
-                        self.validate_muldiv_call(Gtxn[1], "b", "2"),
+                        self.validate_muldiv_call(Gtxn[0], "A", "1"),
+                        self.validate_muldiv_call(Gtxn[1], "B", "2"),
                         # Check if user has enough balance
                         self.user_liquidity_tokens.get() >= Btoi(Txn.application_args[1]),
                     )
@@ -277,21 +274,20 @@ class AlgosToAsaContract:
         return Seq([
             # eval foreign value
             received_amount,
-            # check expected mode
+            # load expected mode
             If(
                 And(
                     Gtxn[2].type_enum() == TxnType.AssetTransfer,
                     Gtxn[2].xfer_asset() == self.b_idx.get(),
                     Gtxn[2].asset_receiver() == self.escrow_addr.get(),
                 ),
-                expected_muldiv_mode.store(Bytes("SB")),
-                expected_muldiv_mode.store(Bytes("SA"))
+                expected_muldiv_mode.store(Bytes("2")),
+                expected_muldiv_mode.store(Bytes("1"))
             ),
             # common assertions
             Assert(
                 And(
                     Global.group_size() == Int(3),
-                    Txn.rekey_to() == Global.zero_address(),
                     self.a_to_withdraw.get() == Int(0),
                     self.b_to_withdraw.get() == Int(0),
                     # validate muldiv call
@@ -311,7 +307,7 @@ class AlgosToAsaContract:
             # This is to make it easier to tell what happened when contract executes
             Pop(received_after_fee.load() - expected_minimum),
             If (
-                expected_muldiv_mode.load() == Bytes("SB"),
+                expected_muldiv_mode.load() == Bytes("2"),
                 # swap secondary asset
                 Seq([
                     # no need to asset if Gtxn[2] transfers secondary asset
@@ -438,9 +434,6 @@ class AsaToAsaContract(AlgosToAsaContract):
                 self.b_idx.put(Btoi(Txn.application_args[0])),
                 self.a_idx.put(Btoi(Txn.application_args[1])),
                 self.liq_idx.put(Btoi(Txn.application_args[2])),
-                self.b_balance.put(Int(0)),
-                self.a_balance.put(Int(0)),
-                self.total_liquidity_tokens.put(Int(0)),
                 Return(Int(1)),
             ]
         )
