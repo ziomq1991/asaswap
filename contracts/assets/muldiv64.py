@@ -28,8 +28,8 @@ class MulDiv64:
         The performed calculations are described below:
         L: a/A * LT (calculate received amount of liquidity tokens when adding liquidity)
         M: lt'/LT * B (calculate necessary amount of b token when adding liquidity, lt' comes from "L" calculation)
-        SA: B/A * a (calculate the amount of secondary token when swapping primary token)
-        SB: A/B * b (calculate the amount of primary token when swapping secondary token)
+        SA: B/(A+a) * a (calculate the amount of secondary token when swapping primary token)
+        SB: A/(B+b) * b (calculate the amount of primary token when swapping secondary token)
         a: lt/LT * A (calculate the amount of primary token user should receive when removing liquidity)
         b: lt/LT * B (calculate the amount of secondary token user should receive when removing liquidity)
 
@@ -67,10 +67,10 @@ class MulDiv64:
                 Cond(
                     [operation_mode == Bytes("L"), self.setup_liquidity_calculation()], # may terminate execution
                     [operation_mode == Bytes("M"), self.setup_required_b_calculation()], # may terminate execution
+                    [operation_mode == Bytes("a"), self.setup_liquidate_a_calculation()],
+                    [operation_mode == Bytes("b"), self.setup_liquidate_b_calculation()],
                     [operation_mode == Bytes("SA"), self.setup_swap_a_calculation()],
                     [operation_mode == Bytes("SB"), self.setup_swap_b_calculation()],
-                    [operation_mode == Bytes("a"), self.setup_liquidate_a_calculation()],
-                    [operation_mode == Bytes("b"), self.setup_liquidate_b_calculation()]
                 ),
                 # store the result in requested slot
                 App.globalPut(result_destination, self.calculate()),
@@ -150,22 +150,26 @@ class MulDiv64:
 
     def setup_swap_a_calculation(self) -> Expr:
         """
-        Setup calculation for swapping primary asset to secondary asset. (B/A * a)
+        Setup calculation for swapping primary asset to secondary asset. (B/(A+a) * a)
         """
+        transferred_amount = ScratchSlot()
         return Seq([
-            self.multiplier1.store(self.get_transferred_value(Gtxn[1])),  # a
+            transferred_amount.store(self.get_transferred_value(Gtxn[2])),
+            self.multiplier1.store(transferred_amount.load()),  # a
             self.multiplier2.store(self.b_balance.value()),  # B
-            self.divisor.store(self.a_balance.value()),  # A
+            self.divisor.store(self.a_balance.value() + transferred_amount.load()),  # A + a
         ])
 
     def setup_swap_b_calculation(self) -> Expr:
         """
-        Setup calculation for swapping secondary asset to primary asset. (A/B * b)
+        Setup calculation for swapping secondary asset to primary asset. (A/(B+b) * b)
         """
+        transferred_amount = ScratchSlot()
         return Seq([
-            self.multiplier1.store(self.get_transferred_value(Gtxn[1])),  # b
+            transferred_amount.store(self.get_transferred_value(Gtxn[2])),
+            self.multiplier1.store(transferred_amount.load()),  # b
             self.multiplier2.store(self.a_balance.value()),  # A
-            self.divisor.store(self.b_balance.value()),  # B
+            self.divisor.store(self.b_balance.value() + transferred_amount.load()),  # B + b
         ])
         
     def setup_liquidate_a_calculation(self) -> Expr:
