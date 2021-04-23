@@ -11,10 +11,6 @@ Arguments which are passed as Arg[0]:
 - `X`: Withdraw liquidity
 - `Y`: Deposit liquidity
 
-## Description of Guard arguments
-Arguments which are passed as Arg[0]:
-- `S`: Setup escrow and main contract addresses 
-
 ## Description of MulDiv64 arguments
 Arg[0] - operation:
 - `X`: a/A * LT (calculate received amount of liquidity tokens when adding liquidity)
