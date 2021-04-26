@@ -100,7 +100,7 @@ async function deployMainContract(deployer, masterAccount, totalFee, deploySpec,
     type: deploySpec['type'],
     fee_bps: deploySpec['fee_bps'],
     muldiv_app_id: deploySpec['muldiv_app_id']
-  }
+  };
 
   // Create Application
   // Note: An Account can have maximum of 10 Applications.
@@ -140,7 +140,7 @@ function saveDeployment(specName, spec, liquidityTokenID, mainID, escrowAccount)
     mainAppID: mainID,
     liquidityTokenID: liquidityTokenID,
     escrowLogic: Array.from(escrowAccount.logic)
-  }
+  };
   if (!fs.existsSync(DEPLOYMENT_DIRECTORY)) {
     fs.mkdirSync(DEPLOYMENT_DIRECTORY);
   }
@@ -156,7 +156,7 @@ async function run (runtimeEnv, deployer) {
   let savedMuldivID = 0; // remembers the ID of previously created MulDiv contract
 
   // create all specified contracts, currently for loop serves no purpose due to limitations of algo-builder
-  for (specName in specifications) {
+  for (let specName in specifications) {
     let spec = specifications[specName];
     const totalFee = spec['fee'];
     const contractType = spec['type'];
@@ -173,7 +173,7 @@ async function run (runtimeEnv, deployer) {
     if (spec['muldiv_app_id'] == 0 && savedMuldivID == 0) {
       const md64res = await deployMulDiv64(deployer, masterAccount);
       savedMuldivID = md64res.appID;
-      console.log(`Created MulDiv64 contract with ID: ${md64res.appID}`)
+      console.log(`Created MulDiv64 contract with ID: ${md64res.appID}`);
     } else {
       console.log('MulDiv64 contract already exists, skipping deployment...');
     }
@@ -274,7 +274,7 @@ async function run (runtimeEnv, deployer) {
     ];
     await executeTransaction(deployer, txnParams);
 
-    console.log('Sending all liquidity tokens to escrow')
+    console.log('Sending all liquidity tokens to escrow');
     txnParams = [
       {
         type: TransactionType.TransferAsset,
@@ -305,7 +305,7 @@ async function run (runtimeEnv, deployer) {
     };
     await executeTransaction(deployer, assetConfigParams);
 
-    console.log('Linking main contract with escrow')
+    console.log('Linking main contract with escrow');
     await executeTransaction(
       deployer,
       {

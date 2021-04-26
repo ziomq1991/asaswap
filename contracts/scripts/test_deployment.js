@@ -1,8 +1,10 @@
 // This script file tests the deployment on the blockchain
 // Only the most recent deployment will be tested
 // The script will execute a few small trades to check if all aspects of the contract are working
+/* globals module, require */
+
 const fs = require('fs');
-const { stringToBytes, executeTransaction, mkTxParams } = require('@algo-builder/algob');
+const { stringToBytes, executeTransaction } = require('@algo-builder/algob');
 const { makeLogicSig } = require('algosdk');
 const { TransactionType, SignType } = require('@algo-builder/runtime/build/types.js');
 
@@ -13,22 +15,22 @@ const {
   DEPOSIT_LIQUIDITY,
   REMOVE_LIQUIDITY,
   SWAP
- } = require('../common/constants.js');
+} = require('../common/constants.js');
 
 const DEPLOYMENT_DIRECTORY = 'artifacts/deployed';
 const ALGOS_TO_ASA = 'ALGOS_TO_ASA';
 const TRADE_SIZE = 10000; 
 
-class Params {
-  sender
-  mainAppID
-  muldivAppID
-  escrow
-  secondaryAssetID
-  liquidityTokenID
-  primaryAmount
-  secondaryAmount
-};
+// class Params {
+//   sender
+//   mainAppID
+//   muldivAppID
+//   escrow
+//   secondaryAssetID
+//   liquidityTokenID
+//   primaryAmount
+//   secondaryAmount
+// };
 
 function generateAddLiquidityGroup(params) {
   return [
@@ -86,7 +88,7 @@ function generateAddLiquidityGroup(params) {
 function generateWithdrawLiquidityGroup(params) {
   let appArgs = [stringToBytes(WITHDRAW_LIQUIDITY)];
   // console.log(params.liquidityTokenID);
-  return txGroup = [
+  return [
     {
       type: TransactionType.CallNoOpSSC,
       sign: SignType.SecretKey,
@@ -313,7 +315,7 @@ async function run (runtimeEnv, deployer) {
 
   const masterAccount = deployer.accountsByName.get('master');
 
-  console.log('Opting-in master account to main smart contract')
+  console.log('Opting-in master account to main smart contract');
   try {
     await deployer.optInToSSC(masterAccount, deployment['mainAppID'], { totalFee: 1001 }, {});
   } catch(error) {
@@ -321,7 +323,7 @@ async function run (runtimeEnv, deployer) {
   }
 
   // Params for the upcoming transactions
-  let params = new Params();
+  let params = {}; // Params
   params.sender = masterAccount;
   params.escrow = escrow;
   params.mainAppID = deployment['mainAppID'];
@@ -373,13 +375,13 @@ async function run (runtimeEnv, deployer) {
 
   params.amount = 10;
   params.minimumExpected = 9;
-  gtxn = generateSwapPrimaryAssetGroup(params)
+  gtxn = generateSwapPrimaryAssetGroup(params);
   console.log('Swapping primary asset');
   await executeTransaction(deployer, gtxn);
 
   params.amount = 10;
   params.minimumExpected = 9;
-  gtxn = generateSwapSecondaryAssetGroup(params)
+  gtxn = generateSwapSecondaryAssetGroup(params);
   console.log('Swapping secondary asset');
   await executeTransaction(deployer, gtxn);
 }
