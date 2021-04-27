@@ -139,7 +139,7 @@ function saveDeployment(specName, spec, liquidityTokenID, mainID, escrowAccount)
     muldivAppID: spec['muldiv_app_id'],
     mainAppID: mainID,
     liquidityTokenID: liquidityTokenID,
-    escrowLogic: Array.from(escrowAccount.logic)
+    escrowLogic: Buffer.from(escrowAccount.logic).toString('base64')
   };
   if (!fs.existsSync(DEPLOYMENT_DIRECTORY)) {
     fs.mkdirSync(DEPLOYMENT_DIRECTORY);

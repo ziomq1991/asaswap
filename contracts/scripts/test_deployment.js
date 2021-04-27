@@ -310,7 +310,7 @@ async function run (runtimeEnv, deployer) {
     throw 'Unfortunatelly the test script can only handle ALGOS_TO_ASA contract';
   }
   // convert escrow logic to Uint8Array
-  deployment['escrowLogic'] = Uint8Array.from(deployment['escrowLogic']);
+  deployment['escrowLogic'] = Uint8Array.from(Buffer.from(deployment['escrowLogic'], 'base64'));
   let escrow = makeLogicSig(Uint8Array.from(deployment['escrowLogic']));
 
   const masterAccount = deployer.accountsByName.get('master');
