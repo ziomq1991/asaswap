@@ -10,6 +10,7 @@ pyteal = {git = "https://github.com/algorand/pyteal.git", rev = "120202cf73b4361
 PyYAML = "^5.4.1"
 
 [tool.poetry.dev-dependencies]
+pytest = "^6.2.3"
 
 [build-system]
 requires = ["poetry>=0.12"]
