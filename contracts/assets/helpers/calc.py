@@ -1,16 +1,16 @@
 from pyteal import *
 
-def make_step(op, *args):
+def make_step(options: "CompileOptions", op, *args):
     if op == Op.store:
-        return args[0].store().__teal__()
+        return args[0].store().__teal__(options)
     elif op == Op.load:
-        return args[0].load().__teal__()
+        return args[0].load().__teal__(options)
     else:
-        return TealBlock.FromOp(TealOp(op), *args)
+        return TealBlock.FromOp(options, TealOp(expr=None, op=op), *args)
 
-def make_teal(make_steps):
+def make_teal(options: "CompileOptions", make_steps):
     cmds = make_steps()
-    steps = map(lambda args: make_step(*args), cmds)
+    steps = map(lambda args: make_step(options, *args), cmds)
     start, end = next(steps)
     for step in steps:
         end.setNextBlock(step[0])
@@ -25,7 +25,7 @@ class mulw_divw4(Expr):
         self.m2 = m2
         self.d = d
         self.iters = iters
-    def __teal__(self):
+    def __teal__(self, options: "CompileOptions"):
         def steps():
             A = ScratchSlot()
             MF = ScratchSlot()
@@ -84,7 +84,7 @@ class mulw_divw4(Expr):
             yield Op.load, M
             yield Op.add,
 
-        return make_teal(steps)
+        return make_teal(options, steps)
 
     def __str__(self):
         return "(mulw_divw {} {} {})".format(self.m1, self.m2, self.d)
