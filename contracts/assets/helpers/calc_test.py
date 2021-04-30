@@ -1,4 +1,4 @@
-import calc
+from . import calc
 from pyteal import *
 from random import randint
 import sys
