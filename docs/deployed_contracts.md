@@ -12,6 +12,7 @@ As of now the .json files are structured as follows (example is a testnet USDH/U
     muldivAppID: 54,
     mainAppID: 53,
     liquidityTokenID: 50,
+    escrowAddress: "QS2TBI2WUCKSCS6PUAKHQBMF7O6YFHEC5ZTSWLUET5EX6FKFPRY7HTHB3I",
     escrowLogic: "[base64_encoded]"
   }
 ```
