@@ -88,7 +88,7 @@ def eval_teal(code):
 
 def check_mulw_divw(m1, m2, d, iters):
     expr = calc.mulw_divw4(Int(m1), Int(m2), Int(d), iters)
-    code = compileTeal(expr, Mode.Application)
+    code = compileTeal(expr, Mode.Application, version=3)
     stack, slots = eval_teal(code)
     assert len(stack) == 1
     x = stack[0]
