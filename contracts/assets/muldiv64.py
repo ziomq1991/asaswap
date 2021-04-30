@@ -2,6 +2,7 @@
 from pyteal import *
 # pylint: disable=import-error
 from helpers.state import GlobalState, get_global_state_ex
+from helpers.calc import mulw_divw
 
 class MulDiv64:
     def __init__(self):
@@ -98,8 +99,7 @@ class MulDiv64:
         Returns:
             PyTEAL Expr which calculates (multiplier1 * multiplier2) / divisor
         """
-        # TODO: Replace with actual calculation
-        return self.multiplier1.load() * self.multiplier2.load() / self.divisor.load()
+        return mulw_divw(self.multiplier1.load(), self.multiplier2.load(), self.divisor.load())
 
     def get_transferred_value(self, incoming_txn: TxnObject) -> Expr:
         """
