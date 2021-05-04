@@ -2,39 +2,39 @@
 
 ## Description of main contract arguments
 Arguments which are passed as Arg[0]:
-- `U`: Update escrow address 
-- `A`: Add liquidity
-- `R`: Remove liquidity
-- `S`: Swap
-- `W`: Withdraw
-- `E`: Setup Escrow
-- `X`: Withdraw liquidity
-- `Y`: Deposit liquidity
+| Constant name    | API | Description
+| ---------------- |-----| -----------
+| UPDATE           | `"U"` | Update escrow address (Save escrow address in main smart contract)
+| ADD_LIQUIDITY    | `"A"` | Add liquidity to pool
+| REMOVE_LIQUIDITY | `"R"` | Remove liquidity from pool
+| SWAP             | `"1"` | Swap
+| WITHDRAW         | `"W"` | Withdraw
+| SETUP_ESCROW     | `"E"` | Setup escrow (opt-in to traded ASA and liquidity token)
+|WITHDRAW_LIQUIDITY| `"X"` | Withdraw liquidity tokens
+| DEPOSIT_LIQUIDITY| `"Y"` | Deposit liquidity tokens
 
 ## Description of MulDiv64 arguments
 Arg[0] - operation:
-- `X`: a/A * LT (calculate received amount of liquidity tokens when adding liquidity)
-- `Y`: lt'/LT * B (calculate necessary amount of b token when adding liquidity, `lt'` comes from `L` calculation)
-- `1`: B/(A+a) * a (calculate the amount of secondary token when swapping primary token)
-- `2`: A/(B+b) * b (calculate the amount of primary token when swapping secondary token)
-- `A`: lt/LT * A (calculate the amount of primary token user should receive when removing liquidity)
-- `B`: lt/LT * B (calculate the amount of secondary token user should receive when removing liquidity)
+| Constant name    | API | Description
+| ---------------- |-----| -----------
+| CALC_ADD_LIQ     | `"X"` | `a/A * LT` (calculate received amount of liquidity tokens when adding liquidity)
+| CALC_ADD_LIQ_B   | `"Y"` | `lt'/LT * B` (calculate necessary amount of b token when adding liquidity, `lt'` comes from `X` calculation)
+| CALC_SWAP_A      | `"1"` | `B/(A+a) * a` (calculate the amount of secondary token when swapping primary token)
+| CALC_SWAP_B      | `"2"` | `A/(B+b) * b` (calculate the amount of primary token when swapping secondary token)
+| CALC_REM_LIQ_A   | `"A"` | `lt/LT * A` (calculate the amount of primary token user should receive when removing liquidity)
+| CALC_REM_LIQ_B   | `"B"` | `lt/LT * B` (calculate the amount of secondary token user should receive when removing liquidity)
 
 Arg[1] - destination for calculation:
-- `1`: The result will be stored in global schema with key "1"
-- `2`: The result will be stored in global schema with key "2"
+| Constant name    | API | Description
+| ---------------- | ----- | -----------
+| `CALC_SLOT_1`    | `"1"` | The result will be stored in global schema with key "1"
+| `CALC_SLOT_1`    | `"2"` | The result will be stored in global schema with key "2"
 
 
 **Escrow** doesn't take any arguemts
 
 ## Setup
-0. Create Liquidity token for the pair
-1. The guard needs to be created first, initially it has no information about Escrow and main contract
-2. Create main contract, creation transaction requires 3 arguments: [0] - secondary asset ID, [1] - liquidity token (pool token) ID, [2] - Guard App ID (from step 1).
-When creating ASA to ASA exchange contract, 4 arguments are required, first being the primary asset ID. Other arguments need to be passed after, in the same order.
-3. Set up escrow with Guard App ID and Main App ID
-4. Set up guard with escrow and main addresses
-5. Opt-in escrow to primary asset (only needed if primary asset is an ASA), secondary asset and liquidity token
+The contracts are deployed with a script available in `scripts/deploy.js`
 
 ### Main contract create call
 Call specification depends on contract type:
