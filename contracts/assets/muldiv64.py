@@ -28,7 +28,7 @@ class MulDiv64:
 
         The performed calculations are described below:
         X: a/A * LT (calculate received amount of liquidity tokens when adding liquidity)
-        Y: lt'/LT * B (calculate necessary amount of b token when adding liquidity, lt' comes from "L" calculation)
+        Y: lt'/LT * B (calculate necessary amount of b token when adding liquidity, lt' comes from "X" calculation)
         1: B/(A+a) * a (calculate the amount of secondary token when swapping primary token)
         2: A/(B+b) * b (calculate the amount of primary token when swapping secondary token)
         A: lt/LT * A (calculate the amount of primary token user should receive when removing liquidity)
