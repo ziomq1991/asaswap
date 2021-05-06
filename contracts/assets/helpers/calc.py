@@ -32,6 +32,7 @@ class mulw_divw4(Expr):
             M = ScratchSlot()
 
             for iter in range(self.iters):
+                lastIter = iter == self.iters - 1
                 if iter:
                     yield Op.mulw,
                 else:
@@ -51,7 +52,7 @@ class mulw_divw4(Expr):
                     yield Op.pop,
                     yield Op.add,
 
-                    if iter == self.iters - 1:
+                    if lastIter:
                         yield Op.load, A
                         yield Op.div,
 
@@ -61,12 +62,10 @@ class mulw_divw4(Expr):
                     yield Op.store, M
 
                 yield Op.add,
-                if iter != self.iters - 1:
-                    yield Op.dup,
+                yield Op.dup,
 
                 if iter:
-                    if iter != self.iters - 1:
-                        yield Op.load, MF
+                    yield Op.load, MF
                 else:
                     yield Op.bitwise_not, Int(0)
                     yield Op.dup, self.d
@@ -74,8 +73,11 @@ class mulw_divw4(Expr):
                     yield Op.mod,
                     yield Op.dup,
                     yield Op.store, MF
-            
-            for iter in range(1, self.iters):
+
+            yield Op.mul,
+            yield Op.load, A
+            yield Op.div,
+            for iter in range(self.iters):
                 yield Op.add,
             yield Op.bitwise_not, Int(0)
             yield Op.load, A
