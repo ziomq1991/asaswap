@@ -258,14 +258,14 @@ Group size: 3
     ```javascript
     {
         type: TransferAlgo,
-        amountMicroAlgos: 2000,
+        amountMicroAlgos: 1000,
         from: `yourAddress`,
         to: `escrowAddress`
     }
     ```
 
 ### Deposit liquidity
-Group size: 3
+Group size: 2
 1. Main contract
     ```javascript
     {
@@ -274,21 +274,12 @@ Group size: 3
         ]
     }
     ```
-2. Transfer liquidity token out of escrow
+2. Transfer liquidity token to escrow
     ```javascript
     {
         type: TransferAsset, 
         assetID: LiquidityTokenID,
         amount: `liquidity_token_amount`,
-        from: `yourAddress`,
-        to: `escrowAddress`
-    }
-    ```
-3. Transfer service fee to escrow
-    ```javascript
-    {
-        type: TransferAlgo,
-        amountMicroAlgos: 2000,
         from: `yourAddress`,
         to: `escrowAddress`
     }
