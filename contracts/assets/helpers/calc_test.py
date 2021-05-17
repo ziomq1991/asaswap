@@ -1,7 +1,11 @@
 from . import calc
 from pyteal import *
 from random import randint
+import pytest
 import sys
+
+class Panic(Exception):
+    pass
 
 def eval_teal(code):
     stack = []
@@ -36,13 +40,15 @@ def eval_teal(code):
         elif line == '/':
             b = stack.pop()
             a = stack.pop()
-            assert b
+            if not b:
+                raise Panic
             x = a // b
             stack.append(x)
         elif line == '%':
             b = stack.pop()
             a = stack.pop()
-            assert b
+            if not b:
+                raise Panic
             x = a % b
             stack.append(x)
         elif line == '!':
@@ -56,13 +62,15 @@ def eval_teal(code):
         elif line == '+':
             b = stack.pop()
             a = stack.pop()
-            assert a + b < max_int
+            if a + b >= max_int:
+                raise Panic
             x = a + b
             stack.append(x)
         elif line == '*':
             b = stack.pop()
             a = stack.pop()
-            assert a * b < max_int
+            if a * b >= max_int:
+                raise Panic
             x = a * b
             stack.append(x)
         elif ' ' in line:
@@ -91,11 +99,9 @@ def check_mulw_divw(m1, m2, d, iters):
     code = compileTeal(expr, Mode.Application, version=3)
     stack, slots = eval_teal(code)
     assert len(stack) == 1
-    x = stack[0]
-    y = m1 * m2 // d
-    e = abs(y-x)
-    assert not e    
-
+    actual = stack[0]
+    expected = m1 * m2 // d
+    assert actual == expected
 
 def test_mulw_divw_2():
     check_mulw_divw(2973999501496, 7565846369408, 13248381314791, 2)
@@ -235,19 +241,22 @@ def test_mulw_divw_46():
 def test_mulw_divw_47():
     check_mulw_divw(6016894876310150656, 6339701158618493834, 2546575015533607658, 47)
 
+def test_mulw_divw_2_should_fail_for_big_numbers():
+    with pytest.raises(Panic):
+        check_mulw_divw(6016894876310150656, 6339701158618493834, 2546575015533607658, 2)
 
 sys.setrecursionlimit(1500)
 
-if __name__ == "__main__":    
+if __name__ == "__main__":
     for iters in range(2, 48):
-        p = 64        
+        p = 64
         while True:
             top = 2**p-1
             top0 = top // 2**5
             m1 = randint(top0, top)
             m2 = randint(top0, top)
             dmin = m1 * m2 // top
-            d = randint(dmin, top)            
+            d = randint(dmin, top)
             try:
                 check_mulw_divw(m1, m2, d, iters)
                 print(f'def test_mulw_divw_{iters}():\n    check_mulw_divw({m1}, {m2}, {d}, {iters})\n')
