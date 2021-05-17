@@ -7,7 +7,7 @@ The interface for end-user has just 3 operations:
 2. Removing liquidity from the pool
 3. Swap
 
-Liquidity providers get 3% on any swap and they could collect that automatically when removing liquidity.
+Liquidity providers get 0.3% on any swap and they could collect that automatically when removing liquidity.
 
 # Using with Algorand BetaNet
 
