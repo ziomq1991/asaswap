@@ -9,6 +9,18 @@ The interface for end-user has just 3 operations:
 
 Liquidity providers get 3% on any swap and they could collect that automatically when removing liquidity.
 
+# Using with Algorand BetaNet
+
+Currenty, ASASwap works with TEALv3 which is available only in Algorand BetaNeta.  
+Setting up BetaNet with AlgoSigner and PureStake:
+* Create a new network in AlgoSigner
+* Use "betanet-v1.0" as genesis ID
+* Use Purestake endpoints for Indexer and Algob (requires account on Purestake)
+* Use structure below in the network headers field (use your Purestake Algorand developer API key)
+```
+{"Algod":{"x-api-key":"[API_KEY]"},"Indexer":{"x-api-key":"[API_KEY]"}}
+```
+
 ## Compiling and deploying the contract
 
 Before deploying or compiling the contract you'll need to configure the deployment script. 
