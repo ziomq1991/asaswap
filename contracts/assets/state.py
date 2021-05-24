@@ -91,11 +91,10 @@ class AlgosToAsaContract:
     def on_closeout(self):
         return Seq([
             Assert(
-                And(
-                    self.b_to_withdraw.get() == Int(0),
-                    self.a_to_withdraw.get() == Int(0),
-                    self.user_liquidity_tokens.get() == Int(0),
-                )
+                self.b_to_withdraw.get()
+                + self.a_to_withdraw.get()
+                + self.user_liquidity_tokens.get()
+                == Int(0),
             ),
             Return(Int(1)),
         ])
