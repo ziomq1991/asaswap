@@ -2,7 +2,7 @@ from . import calc
 from pyteal import *
 from random import randint
 import pytest
-from hypothesis import given, assume
+from hypothesis import assume, given, settings
 from hypothesis.strategies import integers
 import sys
 
@@ -90,22 +90,23 @@ def eval_teal(code):
                     x = slots[i]
                     stack.append(x)
                 else:
-                    raise Panic
+                    raise Exception("Operation is not supported by the simulator")
         else:
-            raise Panic
+            raise Exception("Operation is not supported by the simulator")
 
     return stack, slots
 
 def check_mulw_divw(m1, m2, d, iters):
     expr = calc.mulw_divw4(Int(m1), Int(m2), Int(d), iters)
     code = compileTeal(expr, Mode.Application, version=3)
-    stack, slots = eval_teal(code)
+    stack, _ = eval_teal(code)
     assert len(stack) == 1
     actual = stack[0]
     expected = m1 * m2 // d
     assert actual == expected
 
-
+@pytest.mark.slow
+@settings(max_examples=1000000)
 @given(
     m1=integers(min_value=0,max_value=2**64-1),
     m2=integers(min_value=0,max_value=2**64-1),
@@ -113,8 +114,14 @@ def check_mulw_divw(m1, m2, d, iters):
 )
 def test_mulw_divw_extra(m1, m2, d):
     assume(m1*m2//d < 2**64)
-    # run with the same number of iterations as production code
-    check_mulw_divw(m1, m2, d, 29)
+    # run with the same number of iterations (29) as production code
+    try:
+        check_mulw_divw(m1, m2, d, 29)
+    except Panic:
+        # With only 29 iterations we expect the division to succeed if the product of arguments is less than 2**186
+        # Therefore, we accept failures, should this limit be exceeded
+        if m1 * m2 * d < 2**186:
+            raise Exception("Runtime raised an exception despite arguments having product less than 2**186")
 
 def test_mulw_divw_2():
     check_mulw_divw(2973999501496, 7565846369408, 13248381314791, 2)

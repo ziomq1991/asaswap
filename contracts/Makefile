@@ -18,9 +18,9 @@ image:		## Build the docker image
 tests: 		## Run eslint and tests
 	docker run -it --rm \
 		$(REPO) yarn lint && docker run -it --rm $(REPO) poetry run yarn test
-	cd assets/helpers && docker run -it --rm $(REPO) poetry run python -m pytest
+	cd assets/helpers && docker run -it --rm $(REPO) poetry run pytest -m "not slow"
 
 ci-tests:       ## Run eslint and tests
 	docker run --rm \
 		$(REPO) yarn lint && docker run --rm $(REPO) poetry run yarn test
-	cd assets/helpers && docker run --rm $(REPO) poetry run python -m pytest
+	cd assets/helpers && docker run --rm $(REPO) poetry run pytest -m "not slow"
