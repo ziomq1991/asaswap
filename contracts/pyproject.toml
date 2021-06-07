@@ -11,6 +11,7 @@ PyYAML = "^5.4.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.3"
+hypothesis = "^6.13.10"
 
 [build-system]
 requires = ["poetry>=0.12"]

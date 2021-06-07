@@ -2,6 +2,8 @@ from . import calc
 from pyteal import *
 from random import randint
 import pytest
+from hypothesis import given, assume
+from hypothesis.strategies import integers
 import sys
 
 class Panic(Exception):
@@ -88,9 +90,9 @@ def eval_teal(code):
                     x = slots[i]
                     stack.append(x)
                 else:
-                    raise
+                    raise Panic
         else:
-            raise
+            raise Panic
 
     return stack, slots
 
@@ -102,6 +104,17 @@ def check_mulw_divw(m1, m2, d, iters):
     actual = stack[0]
     expected = m1 * m2 // d
     assert actual == expected
+
+
+@given(
+    m1=integers(min_value=0,max_value=2**64-1),
+    m2=integers(min_value=0,max_value=2**64-1),
+    d=integers(min_value=1,max_value=2**64-1)
+)
+def test_mulw_divw_extra(m1, m2, d):
+    assume(m1*m2//d < 2**64)
+    # run with the same number of iterations as production code
+    check_mulw_divw(m1, m2, d, 29)
 
 def test_mulw_divw_2():
     check_mulw_divw(2973999501496, 7565846369408, 13248381314791, 2)
