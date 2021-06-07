@@ -89,15 +89,18 @@ class AlgosToAsaContract:
         )
 
     def on_closeout(self):
-        return Seq([
-            Assert(
-                self.b_to_withdraw.get()
-                + self.a_to_withdraw.get()
-                + self.user_liquidity_tokens.get()
-                == Int(0),
-            ),
-            Return(Int(1)),
-        ])
+        """
+        Produces an expression that returns 0 when any of the local state variables are non-zero 
+        """
+        return Return(
+            Not(
+                Or(
+                    self.b_to_withdraw.get(),
+                    self.a_to_withdraw.get(),
+                    self.user_liquidity_tokens.get()
+                )
+            )
+        )
 
     def on_update(self):
         return Seq(
