@@ -51,11 +51,6 @@ class mulw_divw4(Expr):
                     yield Op.dup2,
                     yield Op.pop,
                     yield Op.add,
-
-                    if lastIter:
-                        yield Op.load, A
-                        yield Op.div,
-
                     yield Op.store, M
                     yield Op.add,
                 else:
@@ -75,15 +70,20 @@ class mulw_divw4(Expr):
                     yield Op.store, MF
 
             yield Op.mul,
-            yield Op.load, A
-            yield Op.div,
-            for iter in range(self.iters):
+            yield Op.load, M
+            yield Op.add,
+            yield Op.store, M
+
+            for iter in range(self.iters-1):
                 yield Op.add,
             yield Op.bitwise_not, Int(0)
             yield Op.load, A
             yield Op.div,
             yield Op.mul,
+
             yield Op.load, M
+            yield Op.load, A
+            yield Op.div,
             yield Op.add,
 
         return make_teal(options, steps)

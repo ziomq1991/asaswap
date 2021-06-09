@@ -2,7 +2,7 @@ from . import calc
 from pyteal import *
 from random import randint
 import pytest
-from hypothesis import assume, given, settings
+from hypothesis import assume, given, settings, example
 from hypothesis.strategies import integers
 import sys
 
@@ -112,6 +112,7 @@ def check_mulw_divw(m1, m2, d, iters):
     m2=integers(min_value=0,max_value=2**64-1),
     d=integers(min_value=1,max_value=2**64-1)
 )
+@example(m1=845440975373315, m2=7362476843216198217, d=6559227162326473294)
 def test_mulw_divw_extra(m1, m2, d):
     assume(m1*m2//d < 2**64)
     # run with the same number of iterations (29) as production code
