@@ -108,9 +108,9 @@ class MulwDivwTemplate:
 
     def get_lines(self, m1, m2, d):
         return self.code \
-            .replace('int '+self.m1, f'int {m1}') \
-            .replace('int '+self.m2, f'int {m2}') \
-            .replace('int '+self.d, f'int {d}') \
+            .replace(self.m1, str(m1)) \
+            .replace(self.m2, str(m2)) \
+            .replace(self.d, str(d)) \
             .splitlines()
 
 mulw_divw29 = MulwDivwTemplate(29)
