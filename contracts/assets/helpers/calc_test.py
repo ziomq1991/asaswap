@@ -9,12 +9,11 @@ import sys
 class Panic(Exception):
     pass
 
-def eval_teal(code):
+def eval_teal(lines):
     stack = []
     slots = [0 for _ in range(256)]
     max_int = 2**64
 
-    lines = code.splitlines()
     for nr, line in enumerate(lines):
         if line.startswith('#'):
             continue
@@ -96,10 +95,33 @@ def eval_teal(code):
 
     return stack, slots
 
+
+
+class MulwDivwTemplate:
+    def __init__(self, iters):
+        self.m1 = '123456789'
+        self.m2 = '234567891'
+        self.d = '345678912'
+        expr = calc.mulw_divw4(Int(int(self.m1)), Int(int(self.m2)), Int(int(self.d)), iters)
+        self.code = compileTeal(expr, Mode.Application, version=3)
+
+    def get_lines(self, m1, m2, d):
+        return self.code \
+            .replace('int '+self.m1, f'int {m1}') \
+            .replace('int '+self.m2, f'int {m2}') \
+            .replace('int '+self.d, f'int {d}') \
+            .splitlines()
+
+mulw_divw29 = MulwDivwTemplate(29)
+
 def check_mulw_divw(m1, m2, d, iters):
-    expr = calc.mulw_divw4(Int(m1), Int(m2), Int(d), iters)
-    code = compileTeal(expr, Mode.Application, version=3)
-    stack, _ = eval_teal(code)
+    lines = mulw_divw29.get_lines(m1, m2, d)
+
+    # expr = calc.mulw_divw4(Int(m1), Int(m2), Int(d), iters)
+    # code = compileTeal(expr, Mode.Application, version=3)
+    # assert '\n'.join(lines) == code
+
+    stack, _ = eval_teal(lines)
     assert len(stack) == 1
     actual = stack[0]
     expected = m1 * m2 // d
