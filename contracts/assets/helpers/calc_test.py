@@ -1,3 +1,4 @@
+from pyteal.ast.tmpl import Tmpl
 from . import calc
 from pyteal import *
 from random import randint
@@ -99,10 +100,10 @@ def eval_teal(lines):
 
 class MulwDivwTemplate:
     def __init__(self, iters):
-        self.m1 = '123456789'
-        self.m2 = '234567891'
-        self.d = '345678912'
-        expr = calc.mulw_divw4(Int(int(self.m1)), Int(int(self.m2)), Int(int(self.d)), iters)
+        self.m1 = "TMPL_M1"
+        self.m2 = "TMPL_M2"
+        self.d = "TMPL_D"
+        expr = calc.mulw_divw4(Tmpl.Int(self.m1), Tmpl.Int(self.m2), Tmpl.Int(self.d), iters)
         self.code = compileTeal(expr, Mode.Application, version=3)
 
     def get_lines(self, m1, m2, d):
