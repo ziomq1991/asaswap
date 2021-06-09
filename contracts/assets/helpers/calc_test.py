@@ -112,21 +112,19 @@ class MulwDivwTemplate:
             .replace(self.m2, str(m2)) \
             .replace(self.d, str(d)) \
             .splitlines()
+    def check(self, m1, m2, d):
+        lines = self.get_lines(m1, m2, d)
+        stack, _ = eval_teal(lines)
+        assert len(stack) == 1
+        actual = stack[0]
+        expected = m1 * m2 // d
+        assert actual == expected
 
 mulw_divw29 = MulwDivwTemplate(29)
 
 def check_mulw_divw(m1, m2, d, iters):
-    lines = mulw_divw29.get_lines(m1, m2, d)
-
-    # expr = calc.mulw_divw4(Int(m1), Int(m2), Int(d), iters)
-    # code = compileTeal(expr, Mode.Application, version=3)
-    # assert '\n'.join(lines) == code
-
-    stack, _ = eval_teal(lines)
-    assert len(stack) == 1
-    actual = stack[0]
-    expected = m1 * m2 // d
-    assert actual == expected
+    mdt = MulwDivwTemplate(iters)
+    mdt.check(m1, m2, d)
 
 @pytest.mark.slow
 @settings(max_examples=1000000, deadline=None)
@@ -140,7 +138,7 @@ def test_mulw_divw_extra(m1, m2, d):
     assume(m1*m2//d < 2**64)
     # run with the same number of iterations (29) as production code
     try:
-        check_mulw_divw(m1, m2, d, 29)
+        mulw_divw29.check(m1, m2, d)
     except Panic:
         # With only 29 iterations we expect the division to succeed if the product of arguments is less than 2**186
         # Therefore, we accept failures, should this limit be exceeded
@@ -247,7 +245,7 @@ def test_mulw_divw_34():
     check_mulw_divw(9498403006808533114, 8458466659348487952, 16096801602589653961, 34)
 
 def test_mulw_divw_35():
-    check_mulw_divw(4265019110968528768, 17873447453393957827, 13216399468813391580, 35)
+    check_mulw_divw(4265019110968528768, 17873447453393957627, 13216399468813391580, 35)
 
 def test_mulw_divw_36():
     check_mulw_divw(1534996399970574195, 6076067921801593936, 5972067442504555525, 36)
@@ -290,20 +288,3 @@ def test_mulw_divw_2_should_fail_for_big_numbers():
         check_mulw_divw(6016894876310150656, 6339701158618493834, 2546575015533607658, 2)
 
 sys.setrecursionlimit(1500)
-
-if __name__ == "__main__":
-    for iters in range(2, 48):
-        p = 64
-        while True:
-            top = 2**p-1
-            top0 = top // 2**5
-            m1 = randint(top0, top)
-            m2 = randint(top0, top)
-            dmin = m1 * m2 // top
-            d = randint(dmin, top)
-            try:
-                check_mulw_divw(m1, m2, d, iters)
-                print(f'def test_mulw_divw_{iters}():\n    check_mulw_divw({m1}, {m2}, {d}, {iters})\n')
-                break
-            except:
-                p = p-1
